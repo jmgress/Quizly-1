@@ -372,6 +372,8 @@
             selectedAnswer = null;
             showingFeedback = false;
             document.getElementById('submit-btn').disabled = true;
+            // Reset inline display to default so button reappears
+            document.getElementById('submit-btn').style.display = '';
             document.getElementById('feedback').classList.add('hidden');
         }
 
