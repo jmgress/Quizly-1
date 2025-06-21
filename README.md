@@ -1,6 +1,6 @@
 # 🧠 Quizly - Knowledge Testing Application
 
-An interactive web-based quiz application that allows users to test their knowledge on various topics. Built with FastAPI backend and a responsive HTML/JavaScript frontend.
+An interactive web-based quiz application that allows users to test their knowledge on various topics. Built with a FastAPI backend and a React frontend.
 
 ## Features
 
@@ -22,16 +22,16 @@ An interactive web-based quiz application that allows users to test their knowle
 - **Uvicorn**: ASGI server for running FastAPI
 
 ### Frontend
-- **HTML5/CSS3**: Semantic markup and modern styling
-- **Vanilla JavaScript**: Interactive quiz functionality
-- **Fetch API**: Communication with backend
-- **CSS Grid/Flexbox**: Responsive layout
+- **React**: Component-based UI library
+- **Axios**: Communication with the backend API
+- **CSS Flexbox/Grid**: Responsive layout
 
 ## Quick Start
 
 ### Prerequisites
 - Python 3.8+
 - Modern web browser
+- Node.js & npm
 
 ### Backend Setup
 
@@ -65,17 +65,14 @@ An interactive web-based quiz application that allows users to test their knowle
    cd frontend
    ```
 
-2. **Serve the frontend:**
+2. **Install dependencies and start the React dev server:**
    ```bash
-   # Option 1: Using Python's built-in server
-   python3 -m http.server 3000
-   
-   # Option 2: Using Node.js (if available)
-   npx serve -p 3000
+   npm install
+   npm start
    ```
 
 3. **Open in browser:**
-   Visit `http://localhost:3000/index.html`
+   Visit `http://localhost:3000`
 
 ## API Endpoints
 
@@ -182,9 +179,10 @@ Quizly-1/
 │   ├── test_backend.py      # Backend tests
 │   └── quiz.db             # SQLite database (auto-generated)
 ├── frontend/
-│   ├── index.html          # Main application
-│   ├── package.json        # React dependencies (optional)
-│   └── src/                # React components (optional)
+│   ├── package.json        # React dependencies
+│   ├── public/
+│   │   └── index.html      # HTML entry point
+│   └── src/                # React components
 │       ├── App.js
 │       ├── index.js
 │       ├── index.css
