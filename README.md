@@ -22,15 +22,17 @@ An interactive web-based quiz application that allows users to test their knowle
 - **Uvicorn**: ASGI server for running FastAPI
 
 ### Frontend
-- **HTML5/CSS3**: Semantic markup and modern styling
-- **Vanilla JavaScript**: Interactive quiz functionality
-- **Fetch API**: Communication with backend
-- **CSS Grid/Flexbox**: Responsive layout
+- **React**: Modern JavaScript library for building user interfaces
+- **React Hooks**: For state management and component lifecycle
+- **Axios**: HTTP client for API communication
+- **CSS3**: Modern styling with responsive design
 
 ## Quick Start
 
 ### Prerequisites
 - Python 3.8+
+- Node.js 14+
+- npm (Node Package Manager)
 - Modern web browser
 
 ### Backend Setup
@@ -65,17 +67,36 @@ An interactive web-based quiz application that allows users to test their knowle
    cd frontend
    ```
 
-2. **Serve the frontend:**
+2. **Install dependencies:**
    ```bash
-   # Option 1: Using Python's built-in server
-   python3 -m http.server 3000
-   
-   # Option 2: Using Node.js (if available)
-   npx serve -p 3000
+   npm install
    ```
 
-3. **Open in browser:**
-   Visit `http://localhost:3000/index.html`
+3. **Start the React development server:**
+   ```bash
+   npm start
+   ```
+
+4. **Open in browser:**
+   Visit `http://localhost:3000`
+
+The React dev server will automatically reload when you make changes to the code.
+
+### Automated Setup (Recommended)
+
+For the easiest setup, use the provided startup script that handles both backend and frontend:
+
+```bash
+./start.sh
+```
+
+This script will:
+- Check for required dependencies (Python 3.8+, Node.js, npm)
+- Install npm packages if needed
+- Start both backend and frontend servers
+- Display the URLs where the application is running
+
+Press `Ctrl+C` to stop both servers when done.
 
 ## API Endpoints
 
@@ -182,16 +203,18 @@ Quizly-1/
 │   ├── test_backend.py      # Backend tests
 │   └── quiz.db             # SQLite database (auto-generated)
 ├── frontend/
-│   ├── index.html          # Main application
-│   ├── package.json        # React dependencies (optional)
-│   └── src/                # React components (optional)
-│       ├── App.js
-│       ├── index.js
-│       ├── index.css
+│   ├── package.json        # React dependencies
+│   ├── public/             # Public assets
+│   │   └── index.html      # HTML template for React
+│   └── src/                # React components
+│       ├── App.js          # Main App component
+│       ├── index.js        # React entry point
+│       ├── index.css       # Global styles
 │       └── components/
-│           ├── Quiz.js
-│           ├── Question.js
-│           └── ScoreDisplay.js
+│           ├── Quiz.js     # Quiz logic component
+│           ├── Question.js # Question display component
+│           └── ScoreDisplay.js # Score display component
+├── start.sh                # Application launcher
 ├── README.md
 └── LICENSE
 ```

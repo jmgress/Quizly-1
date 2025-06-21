@@ -12,6 +12,18 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
+# Check if Node.js is available
+if ! command -v node &> /dev/null; then
+    echo "❌ Node.js is required but not installed."
+    exit 1
+fi
+
+# Check if npm is available
+if ! command -v npm &> /dev/null; then
+    echo "❌ npm is required but not installed."
+    exit 1
+fi
+
 # Function to check if a port is in use
 check_port() {
     if lsof -Pi :$1 -sTCP:LISTEN -t >/dev/null 2>&1; then
@@ -31,7 +43,8 @@ fi
 # Check if frontend port is already in use
 if check_port 3000; then
     echo "⚠️  Port 3000 is already in use. Trying to stop existing frontend..."
-    pkill -f "http.server.*3000" 2>/dev/null || true
+    pkill -f "react-scripts.*start" 2>/dev/null || true
+    pkill -f "node.*start" 2>/dev/null || true
     sleep 2
 fi
 
@@ -55,14 +68,21 @@ else
 fi
 
 # Start frontend server
-echo "🌐 Starting frontend on http://localhost:3000..."
+echo "🌐 Starting React frontend on http://localhost:3000..."
 cd frontend
-python3 -m http.server 3000 &
+
+# Install dependencies if node_modules doesn't exist
+if [ ! -d "node_modules" ]; then
+    echo "📦 Installing frontend dependencies..."
+    npm install
+fi
+
+npm start &
 FRONTEND_PID=$!
 cd ..
 
 # Wait for frontend to start
-sleep 2
+sleep 5
 
 # Check if frontend started successfully
 if check_port 3000; then
@@ -76,7 +96,7 @@ fi
 echo ""
 echo "🎉 Quizly is now running!"
 echo "=================================="
-echo "🌐 Frontend: http://localhost:3000/index.html"
+echo "🌐 Frontend: http://localhost:3000"
 echo "🔧 Backend API: http://localhost:8000"
 echo "📚 API Docs: http://localhost:8000/docs"
 echo ""
