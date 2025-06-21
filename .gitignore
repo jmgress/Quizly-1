@@ -27,12 +27,11 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# Node.js (if using React version)
+# Node.js
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
 yarn.lock
 
 # React build
