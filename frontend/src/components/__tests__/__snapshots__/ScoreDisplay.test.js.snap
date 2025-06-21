@@ -1,0 +1,199 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ScoreDisplay Component matches snapshot for different score values - high score 1`] = `
+<div
+  class="card"
+>
+  <div
+    class="score-display"
+  >
+    <h2>
+      🎯 Quiz Complete!
+    </h2>
+    <div
+      class="score-number"
+    >
+      2
+      /
+      2
+    </div>
+    <div
+      class="score-message"
+    >
+      100
+      % Correct
+    </div>
+    <p>
+      🏆 Excellent! You're a quiz master!
+    </p>
+    <div
+      style="margin-top: 30px; text-align: left;"
+    >
+      <h3>
+        📋 Review Your Answers:
+      </h3>
+      <div
+        style="margin-bottom: 20px; padding: 15px; background-color: rgb(212, 237, 218); border: 1px solid #c3e6cb; border-radius: 8px;"
+      >
+        <p
+          style="font-weight: bold; margin-bottom: 8px;"
+        >
+          Q
+          1
+          : 
+          What is the capital of France?
+        </p>
+        <p
+          style="margin-bottom: 4px;"
+        >
+          <strong>
+            Your answer:
+          </strong>
+           
+          Paris
+           ✅
+        </p>
+      </div>
+      <div
+        style="margin-bottom: 20px; padding: 15px; background-color: rgb(212, 237, 218); border: 1px solid #c3e6cb; border-radius: 8px;"
+      >
+        <p
+          style="font-weight: bold; margin-bottom: 8px;"
+        >
+          Q
+          2
+          : 
+          What is 2 + 2?
+        </p>
+        <p
+          style="margin-bottom: 4px;"
+        >
+          <strong>
+            Your answer:
+          </strong>
+           
+          4
+           ✅
+        </p>
+      </div>
+    </div>
+    <div
+      style="margin-top: 30px;"
+    >
+      <button
+        class="button"
+      >
+        Take Another Quiz
+      </button>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`ScoreDisplay Component matches snapshot for different score values - low score 1`] = `
+<div
+  class="card"
+>
+  <div
+    class="score-display"
+  >
+    <h2>
+      🎯 Quiz Complete!
+    </h2>
+    <div
+      class="score-number"
+    >
+      0
+      /
+      2
+    </div>
+    <div
+      class="score-message"
+    >
+      0
+      % Correct
+    </div>
+    <p>
+      📚 Keep studying and try again!
+    </p>
+    <div
+      style="margin-top: 30px; text-align: left;"
+    >
+      <h3>
+        📋 Review Your Answers:
+      </h3>
+      <div
+        style="margin-bottom: 20px; padding: 15px; background-color: rgb(248, 215, 218); border: 1px solid #f5c6cb; border-radius: 8px;"
+      >
+        <p
+          style="font-weight: bold; margin-bottom: 8px;"
+        >
+          Q
+          1
+          : 
+          What is the capital of France?
+        </p>
+        <p
+          style="margin-bottom: 4px;"
+        >
+          <strong>
+            Your answer:
+          </strong>
+           
+          London
+           ❌
+        </p>
+        <p
+          style="margin-bottom: 0px; color: rgb(21, 87, 36);"
+        >
+          <strong>
+            Correct answer:
+          </strong>
+           
+          Paris
+        </p>
+      </div>
+      <div
+        style="margin-bottom: 20px; padding: 15px; background-color: rgb(248, 215, 218); border: 1px solid #f5c6cb; border-radius: 8px;"
+      >
+        <p
+          style="font-weight: bold; margin-bottom: 8px;"
+        >
+          Q
+          2
+          : 
+          What is 2 + 2?
+        </p>
+        <p
+          style="margin-bottom: 4px;"
+        >
+          <strong>
+            Your answer:
+          </strong>
+           
+          3
+           ❌
+        </p>
+        <p
+          style="margin-bottom: 0px; color: rgb(21, 87, 36);"
+        >
+          <strong>
+            Correct answer:
+          </strong>
+           
+          4
+        </p>
+      </div>
+    </div>
+    <div
+      style="margin-top: 30px;"
+    >
+      <button
+        class="button"
+      >
+        Take Another Quiz
+      </button>
+    </div>
+  </div>
+</div>
+`;

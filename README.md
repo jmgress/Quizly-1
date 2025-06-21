@@ -179,6 +179,38 @@ cd backend
 python test_backend.py
 ```
 
+### Testing the Frontend
+
+The frontend is configured with Jest and React Testing Library for unit testing. Tests are available for the core components.
+
+**Running Tests:**
+```bash
+cd frontend
+npm test
+```
+
+**Running Tests with Coverage:**
+```bash
+cd frontend
+npm test -- --coverage --collectCoverageFrom="src/components/**/*.{js,jsx}"
+```
+
+**Running Tests in CI Mode (no watch):**
+```bash
+cd frontend
+npm test -- --watchAll=false
+```
+
+**Test Files:**
+- `src/components/__tests__/Question.test.js` - Tests for Question component
+- `src/components/__tests__/ScoreDisplay.test.js` - Tests for ScoreDisplay component
+
+**What's Tested:**
+- Question component rendering and user interactions
+- ScoreDisplay component score display and answer review functionality
+- Component snapshots for visual regression testing
+- Coverage targets: ≥80% for tested components
+
 ### CORS Configuration
 
 The backend is configured to accept requests from `http://localhost:3000`. To change this, modify the CORS settings in `backend/main.py`:
