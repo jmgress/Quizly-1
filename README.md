@@ -179,6 +179,15 @@ cd backend
 python test_backend.py
 ```
 
+### Testing the Frontend
+
+Run the Jest test suite for the React components:
+
+```bash
+cd frontend
+npm test
+```
+
 ### CORS Configuration
 
 The backend is configured to accept requests from `http://localhost:3000`. To change this, modify the CORS settings in `backend/main.py`:
