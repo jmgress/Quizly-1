@@ -37,6 +37,9 @@ yarn.lock
 # React build
 /frontend/build/
 
+# Test coverage
+/frontend/coverage/
+
 # IDE
 .vscode/
 .idea/
