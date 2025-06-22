@@ -24,6 +24,21 @@ const ScoreDisplay = ({ results, questions, onRestart }) => {
     return option?.text || 'Unknown';
   };
 
+  // Get original question number based on the order questions were presented
+  const getOriginalQuestionNumber = (questionId) => {
+    const questionIndex = questions.findIndex(q => q.id === questionId);
+    return questionIndex >= 0 ? questionIndex + 1 : '?';
+  };
+
+  // Sort answers to match original question order for consistent display
+  const getSortedAnswers = () => {
+    return [...results.answers].sort((a, b) => {
+      const indexA = questions.findIndex(q => q.id === a.question_id);
+      const indexB = questions.findIndex(q => q.id === b.question_id);
+      return indexA - indexB;
+    });
+  };
+
   return (
     <div className="card">
       <div className="score-display">
@@ -42,9 +57,11 @@ const ScoreDisplay = ({ results, questions, onRestart }) => {
         <div style={{ marginTop: '30px', textAlign: 'left' }}>
           <h3>📋 Review Your Answers:</h3>
           
-          {results.answers.map((answer, index) => {
+          {getSortedAnswers().map((answer) => {
             const question = getQuestionById(answer.question_id);
             if (!question) return null;
+            
+            const questionNumber = getOriginalQuestionNumber(answer.question_id);
             
             return (
               <div 
@@ -58,7 +75,7 @@ const ScoreDisplay = ({ results, questions, onRestart }) => {
                 }}
               >
                 <p style={{ fontWeight: 'bold', marginBottom: '8px' }}>
-                  Q{index + 1}: {question.text}
+                  Q{questionNumber}: {question.text}
                 </p>
                 
                 <p style={{ marginBottom: '4px' }}>
