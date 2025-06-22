@@ -19,7 +19,7 @@ const Quiz = ({ onRestart, category, source }) => {
 
   useEffect(() => {
     fetchQuestions();
-  }, [category, source]);
+  }, [category, source]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Cleanup timeout on component unmount or when moving to next question
   useEffect(() => {
