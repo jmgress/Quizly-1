@@ -6,6 +6,7 @@ import sqlite3
 import json
 import uuid
 from datetime import datetime
+import requests
 
 app = FastAPI(title="Quizly API", description="Knowledge Testing Application API")
 
@@ -43,6 +44,11 @@ class QuizResult(BaseModel):
     correct_answers: int
     score_percentage: float
     answers: List[dict]
+
+class GenerateQuestionRequest(BaseModel):
+    """Request body for AI question generation"""
+    category: str
+    model: Optional[str] = "llama2"
 
 # Database initialization
 def init_db():
@@ -172,6 +178,37 @@ def get_questions(category: Optional[str] = None, limit: Optional[int] = 10):
     
     conn.close()
     return questions
+
+
+@app.post("/api/questions/generate", response_model=Question)
+def generate_question(req: GenerateQuestionRequest):
+    """Generate a quiz question using the Ollama LLM"""
+    prompt = (
+        f"Generate a multiple-choice question about {req.category}. "
+        "Return JSON with keys 'text', 'options', 'correct_answer'. "
+        "Options should be an array of four objects with 'id' (a-d) and 'text'."
+    )
+
+    try:
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={"model": req.model, "prompt": prompt},
+            timeout=30,
+        )
+        response.raise_for_status()
+        data_text = response.json().get("response", "")
+        data = json.loads(data_text)
+        if "category" not in data:
+            data["category"] = req.category
+        return Question(
+            id=0,
+            text=data["text"],
+            options=data["options"],
+            correct_answer=data["correct_answer"],
+            category=data.get("category", req.category),
+        )
+    except Exception as e:
+        raise HTTPException(status_code=503, detail="LLM service unavailable") from e
 
 @app.post("/api/quiz/submit", response_model=QuizResult)
 def submit_quiz(submission: QuizSubmission):

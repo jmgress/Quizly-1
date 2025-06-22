@@ -11,6 +11,7 @@ An interactive web-based quiz application that allows users to test their knowle
 - 📱 **Responsive Design**: Works on desktop and mobile devices
 - 🎨 **Modern UI**: Clean, gradient-based design with smooth animations
 - 🔄 **Multiple Categories**: Questions across geography, science, math, and literature
+- 🤖 **AI-Generated Questions**: Request fresh questions from a local Ollama LLM
 - 🚀 **Fast API**: RESTful API with automatic documentation
 
 ## Tech Stack
@@ -49,6 +50,12 @@ An interactive web-based quiz application that allows users to test their knowle
    
    # Option 2: Using system packages (Ubuntu/Debian)
    sudo apt install python3-fastapi python3-uvicorn
+   ```
+
+   To enable AI-generated questions, ensure a local Ollama server is running on
+   `http://localhost:11434` and install the `requests` package:
+   ```bash
+   pip install requests
    ```
 
 3. **Run the backend server:**
@@ -101,8 +108,9 @@ Press `Ctrl+C` to stop both servers when done.
 ## API Endpoints
 
 ### Questions
-- **GET** `/api/questions` - Get quiz questions (supports `?category=<category>&limit=<limit>`)
+- **GET** `/api/questions` - Get quiz questions (supports `?category=<category>&limit=<limit>`) 
 - **GET** `/api/categories` - Get available question categories
+- **POST** `/api/questions/generate` - Generate a new question using Ollama LLM
 
 ### Quiz Management
 - **POST** `/api/quiz/submit` - Submit quiz answers and get results

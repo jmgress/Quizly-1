@@ -5,7 +5,7 @@ import ScoreDisplay from './ScoreDisplay';
 
 const API_BASE_URL = 'http://localhost:8000';
 
-const Quiz = ({ onRestart }) => {
+const Quiz = ({ onRestart, category, aiMode }) => {
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState([]);
@@ -18,13 +18,27 @@ const Quiz = ({ onRestart }) => {
 
   useEffect(() => {
     fetchQuestions();
-  }, []);
+  }, [category, aiMode]);
 
   const fetchQuestions = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/api/questions`);
-      setQuestions(response.data);
+      if (aiMode) {
+        const generated = [];
+        for (let i = 0; i < 5; i++) {
+          const res = await axios.post(`${API_BASE_URL}/api/questions/generate`, {
+            category,
+          });
+          generated.push(res.data);
+        }
+        setQuestions(generated);
+      } else {
+        const url = category
+          ? `${API_BASE_URL}/api/questions?category=${encodeURIComponent(category)}`
+          : `${API_BASE_URL}/api/questions`;
+        const response = await axios.get(url);
+        setQuestions(response.data);
+      }
       setLoading(false);
     } catch (err) {
       setError('Failed to load questions. Please try again later.');
