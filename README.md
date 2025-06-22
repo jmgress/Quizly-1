@@ -11,6 +11,9 @@ An interactive web-based quiz application that allows users to test their knowle
 - 📱 **Responsive Design**: Works on desktop and mobile devices
 - 🎨 **Modern UI**: Clean, gradient-based design with smooth animations
 - 🔄 **Multiple Categories**: Questions across geography, science, math, and literature
+- 🎯 **Subject Selection**: Choose your preferred quiz category before starting
+- 🤖 **AI-Powered Questions**: Generate fresh questions using Ollama LLM integration
+- 📚 **Dual Question Sources**: Select between curated database questions or AI-generated content
 - 🚀 **Fast API**: RESTful API with automatic documentation
 
 ## Tech Stack
@@ -18,6 +21,7 @@ An interactive web-based quiz application that allows users to test their knowle
 ### Backend
 - **FastAPI**: Modern, fast web framework for Python
 - **SQLite**: Lightweight database for question storage
+- **Ollama**: AI integration for question generation
 - **Pydantic**: Data validation and serialization
 - **Uvicorn**: ASGI server for running FastAPI
 
@@ -94,14 +98,49 @@ This script will:
 - Check for required dependencies (Python 3.8+, Node.js, npm)
 - Install npm packages if needed
 - Start both backend and frontend servers
-- Display the URLs where the application is running
+
+### AI Question Generation Setup (Optional)
+
+To enable AI-powered question generation, you need to install and configure Ollama:
+
+1. **Install Ollama:**
+   - Visit [ollama.ai](https://ollama.ai) and follow the installation instructions for your platform
+   - Or use the command line:
+     ```bash
+     curl -fsSL https://ollama.ai/install.sh | sh
+     ```
+
+2. **Pull the required model:**
+   ```bash
+   ollama pull llama3.2
+   ```
+
+3. **Start Ollama service:**
+   ```bash
+   ollama serve
+   ```
+
+Once Ollama is running with the llama3.2 model, the AI question generation feature will work automatically. If Ollama is not available, users can still use curated database questions.
+
+The startup script will also display the URLs where the application is running.
 
 Press `Ctrl+C` to stop both servers when done.
+
+## How to Use
+
+1. **Start Quiz**: Click "Start Quiz" on the home screen
+2. **Select Subject**: Choose your preferred quiz category (Geography, Science, Math, Literature)
+3. **Choose Question Source**:
+   - **📚 Curated Questions**: High-quality pre-written questions from the database
+   - **🤖 AI-Generated Questions**: Fresh questions powered by Ollama (requires Ollama setup)
+4. **Take Quiz**: Answer questions and see immediate feedback
+5. **View Results**: Review your score and answer details at the end
 
 ## API Endpoints
 
 ### Questions
 - **GET** `/api/questions` - Get quiz questions (supports `?category=<category>&limit=<limit>`)
+- **GET** `/api/questions/ai` - Generate AI-powered questions (supports `?subject=<subject>&limit=<limit>`)
 - **GET** `/api/categories` - Get available question categories
 
 ### Quiz Management
@@ -113,6 +152,16 @@ Press `Ctrl+C` to stop both servers when done.
 **Get Questions:**
 ```bash
 curl http://localhost:8000/api/questions
+```
+
+**Get Questions by Category:**
+```bash
+curl "http://localhost:8000/api/questions?category=geography&limit=5"
+```
+
+**Generate AI Questions:**
+```bash
+curl "http://localhost:8000/api/questions/ai?subject=history&limit=3"
 ```
 
 **Submit Quiz:**
