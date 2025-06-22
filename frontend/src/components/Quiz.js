@@ -53,9 +53,11 @@ const Quiz = ({ onRestart, category, source }) => {
   const handleAnswerSubmit = () => {
     if (!selectedAnswer) return;
 
+    const currentQuestion = questions[currentQuestionIndex];
     const newAnswer = {
-      question_id: questions[currentQuestionIndex].id,
-      selected_answer: selectedAnswer
+      question_id: currentQuestion.id,
+      selected_answer: selectedAnswer,
+      correct_answer: currentQuestion.correct_answer,
     };
 
     setAnswers([...answers, newAnswer]);

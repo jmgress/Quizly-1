@@ -34,6 +34,7 @@ class Question(BaseModel):
 class QuizAnswer(BaseModel):
     question_id: int
     selected_answer: str
+    correct_answer: Optional[str] = None
 
 class QuizSubmission(BaseModel):
     answers: List[QuizAnswer]
@@ -182,24 +183,29 @@ def submit_quiz(submission: QuizSubmission):
     
     # Get correct answers for submitted questions
     question_ids = [answer.question_id for answer in submission.answers]
-    placeholders = ','.join(['?'] * len(question_ids))
-    cursor.execute(f"SELECT id, correct_answer FROM questions WHERE id IN ({placeholders})", question_ids)
-    
-    correct_answers_map = {row[0]: row[1] for row in cursor.fetchall()}
+    placeholders = ','.join(['?'] * len(question_ids)) if question_ids else ''
+    db_correct_answers = {}
+    if placeholders:
+        cursor.execute(
+            f"SELECT id, correct_answer FROM questions WHERE id IN ({placeholders})",
+            question_ids
+        )
+        db_correct_answers = {row[0]: row[1] for row in cursor.fetchall()}
     
     # Calculate score
     correct_count = 0
     answer_details = []
-    
+
     for answer in submission.answers:
-        is_correct = correct_answers_map.get(answer.question_id) == answer.selected_answer
+        correct_answer = db_correct_answers.get(answer.question_id) or answer.correct_answer
+        is_correct = correct_answer == answer.selected_answer
         if is_correct:
             correct_count += 1
-        
+
         answer_details.append({
             "question_id": answer.question_id,
             "selected_answer": answer.selected_answer,
-            "correct_answer": correct_answers_map.get(answer.question_id),
+            "correct_answer": correct_answer,
             "is_correct": is_correct
         })
     

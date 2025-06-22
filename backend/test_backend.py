@@ -65,10 +65,10 @@ def test_quiz_logic():
     
     # Sample answers
     answers = [
-        {"question_id": 1, "selected_answer": "c"},  # Correct
-        {"question_id": 2, "selected_answer": "a"},  # Incorrect (correct is "b")
+        {"question_id": 1, "selected_answer": "c", "correct_answer": "c"},  # Correct
+        {"question_id": 2, "selected_answer": "a", "correct_answer": "b"},  # Incorrect
     ]
-    
+
     correct_answers_map = {1: "c", 2: "b"}
     
     correct_count = 0
