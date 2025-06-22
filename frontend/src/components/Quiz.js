@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Question from './Question';
 import ScoreDisplay from './ScoreDisplay';
@@ -15,10 +15,21 @@ const Quiz = ({ onRestart, category, source }) => {
   const [results, setResults] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const timeoutRef = useRef(null);
 
   useEffect(() => {
     fetchQuestions();
   }, [category, source]);
+
+  // Cleanup timeout on component unmount or when moving to next question
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+    };
+  }, [currentQuestionIndex]);
 
   const fetchQuestions = async () => {
     try {
@@ -53,6 +64,12 @@ const Quiz = ({ onRestart, category, source }) => {
   const handleAnswerSubmit = () => {
     if (!selectedAnswer) return;
 
+    // Clear any existing timeout to prevent multiple timeouts
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
     const currentQuestion = questions[currentQuestionIndex];
     const newAnswer = {
       question_id: currentQuestion.id,
@@ -64,7 +81,7 @@ const Quiz = ({ onRestart, category, source }) => {
     setShowFeedback(true);
 
     // Auto-advance to next question after showing feedback
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       if (currentQuestionIndex < questions.length - 1) {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
         setSelectedAnswer(null);
@@ -73,6 +90,7 @@ const Quiz = ({ onRestart, category, source }) => {
         // Quiz complete - submit answers
         submitQuiz([...answers, newAnswer]);
       }
+      timeoutRef.current = null;
     }, 2000);
   };
 
