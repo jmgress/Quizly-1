@@ -5,7 +5,7 @@ import ScoreDisplay from './ScoreDisplay';
 
 const API_BASE_URL = 'http://localhost:8000';
 
-const Quiz = ({ onRestart }) => {
+const Quiz = ({ onRestart, category, source }) => {
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState([]);
@@ -18,16 +18,30 @@ const Quiz = ({ onRestart }) => {
 
   useEffect(() => {
     fetchQuestions();
-  }, []);
+  }, [category, source]);
 
   const fetchQuestions = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_BASE_URL}/api/questions`);
+      let url;
+      
+      if (source === 'ai') {
+        // Fetch AI-generated questions
+        url = `${API_BASE_URL}/api/questions/ai?subject=${encodeURIComponent(category)}&limit=5`;
+      } else {
+        // Fetch database questions with category filter
+        url = `${API_BASE_URL}/api/questions?category=${encodeURIComponent(category)}&limit=10`;
+      }
+      
+      const response = await axios.get(url);
       setQuestions(response.data);
       setLoading(false);
     } catch (err) {
-      setError('Failed to load questions. Please try again later.');
+      if (source === 'ai') {
+        setError('Failed to generate AI questions. Please ensure Ollama is running with the llama3.2 model, or try using curated questions instead.');
+      } else {
+        setError('Failed to load questions. Please try again later.');
+      }
       setLoading(false);
     }
   };
@@ -81,9 +95,13 @@ const Quiz = ({ onRestart }) => {
   };
 
   if (loading) {
+    const loadingMessage = source === 'ai' 
+      ? `Generating AI questions about ${category}...`
+      : `Loading ${category} questions...`;
+    
     return (
       <div className="card">
-        <div className="loading">Loading questions...</div>
+        <div className="loading">{loadingMessage}</div>
       </div>
     );
   }
