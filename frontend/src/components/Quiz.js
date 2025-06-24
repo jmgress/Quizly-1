@@ -21,16 +21,6 @@ const Quiz = ({ onRestart, category, source }) => {
     fetchQuestions();
   }, [category, source]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Cleanup timeout on component unmount or when moving to next question
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = null;
-      }
-    };
-  }, [currentQuestionIndex]);
-
   const fetchQuestions = async () => {
     try {
       setLoading(true);
@@ -64,10 +54,9 @@ const Quiz = ({ onRestart, category, source }) => {
   const handleAnswerSubmit = () => {
     if (!selectedAnswer) return;
 
-    // Clear any existing timeout to prevent multiple timeouts
+    // Clear any existing timeout to prevent multiple concurrent timeouts
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
-      timeoutRef.current = null;
     }
 
     const currentQuestion = questions[currentQuestionIndex];
