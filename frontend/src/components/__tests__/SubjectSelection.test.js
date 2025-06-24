@@ -61,13 +61,13 @@ describe('SubjectSelection Component', () => {
       expect(screen.getByText('Geography')).toBeInTheDocument();
     });
 
-    // Select a category
-    const categorySelect = screen.getByLabelText('Subject:');
-    fireEvent.change(categorySelect, { target: { value: 'geography' } });
-
-    // Select AI questions
+    // Switch to AI questions
     const aiRadio = screen.getByDisplayValue('ai');
     fireEvent.click(aiRadio);
+
+    // Enter custom subject
+    const customInput = screen.getByPlaceholderText('Type any subject...');
+    fireEvent.change(customInput, { target: { value: 'history' } });
 
     // Click start quiz button
     const startButton = screen.getByText('Start Quiz');
@@ -75,7 +75,7 @@ describe('SubjectSelection Component', () => {
 
     // Check that callback was called with correct parameters
     expect(mockOnSelectionComplete).toHaveBeenCalledWith({
-      category: 'geography',
+      category: 'history',
       source: 'ai'
     });
   });

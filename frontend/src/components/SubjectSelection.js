@@ -6,6 +6,7 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:800
 const SubjectSelection = ({ onSelectionComplete }) => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [customCategory, setCustomCategory] = useState('');
   const [questionSource, setQuestionSource] = useState('database'); // 'database' or 'ai'
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,13 +28,15 @@ const SubjectSelection = ({ onSelectionComplete }) => {
   };
 
   const handleStartQuiz = () => {
-    if (!selectedCategory) {
-      setError('Please select a subject to continue.');
+    const finalCategory = questionSource === 'ai' ? customCategory || selectedCategory : selectedCategory;
+
+    if (!finalCategory) {
+      setError('Please select or enter a subject to continue.');
       return;
     }
 
     onSelectionComplete({
-      category: selectedCategory,
+      category: finalCategory,
       source: questionSource
     });
   };
@@ -63,22 +66,38 @@ const SubjectSelection = ({ onSelectionComplete }) => {
       <p>Choose a subject and question source to start your personalized quiz!</p>
 
       <div className="subject-selection">
-        <div className="form-group">
-          <label htmlFor="category-select">Subject:</label>
-          <select
-            id="category-select"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="category-select"
-          >
-            <option value="">Choose a subject...</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
+        {questionSource === 'database' && (
+          <div className="form-group">
+            <label htmlFor="category-select">Subject:</label>
+            <select
+              id="category-select"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="category-select"
+            >
+              <option value="">Choose a subject...</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {questionSource === 'ai' && (
+          <div className="form-group">
+            <label htmlFor="custom-subject">Subject:</label>
+            <input
+              id="custom-subject"
+              type="text"
+              className="category-select"
+              placeholder="Type any subject..."
+              value={customCategory}
+              onChange={(e) => setCustomCategory(e.target.value)}
+            />
+          </div>
+        )}
 
         <div className="form-group">
           <label>Question Source:</label>
@@ -112,10 +131,10 @@ const SubjectSelection = ({ onSelectionComplete }) => {
           </div>
         </div>
 
-        <button 
+        <button
           className="button"
           onClick={handleStartQuiz}
-          disabled={!selectedCategory}
+          disabled={!(questionSource === 'ai' ? (customCategory || selectedCategory) : selectedCategory)}
         >
           Start Quiz
         </button>
