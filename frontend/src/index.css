@@ -253,7 +253,18 @@ body {
   transition: border-color 0.3s ease;
 }
 
-.category-select:focus {
+.category-input { /* Added for the text input */
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 8px;
+  font-size: 16px;
+  background: white;
+  transition: border-color 0.3s ease;
+}
+
+.category-select:focus,
+.category-input:focus { /* Added focus for text input */
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
@@ -300,4 +311,13 @@ body {
 .radio-label input[type="radio"]:checked + .radio-text {
   color: #667eea;
   font-weight: 600;
+}
+
+/* Styling for the small helper text under the custom category input */
+.form-group small {
+  display: block;
+  font-size: 0.85em;
+  color: #666;
+  margin-top: 6px; /* Increased margin-top slightly */
+  padding-left: 2px; /* Align with input text if needed */
 }
