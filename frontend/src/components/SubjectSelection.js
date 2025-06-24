@@ -6,6 +6,7 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:800
 const SubjectSelection = ({ onSelectionComplete }) => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [customTopic, setCustomTopic] = useState('');
   const [questionSource, setQuestionSource] = useState('database'); // 'database' or 'ai'
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,13 +28,18 @@ const SubjectSelection = ({ onSelectionComplete }) => {
   };
 
   const handleStartQuiz = () => {
-    if (!selectedCategory) {
-      setError('Please select a subject to continue.');
+    const selectedTopic = questionSource === 'ai' ? customTopic : selectedCategory;
+    
+    if (!selectedTopic) {
+      const errorMsg = questionSource === 'ai' 
+        ? 'Please enter a custom topic to continue.'
+        : 'Please select a subject to continue.';
+      setError(errorMsg);
       return;
     }
 
     onSelectionComplete({
-      category: selectedCategory,
+      category: selectedTopic,
       source: questionSource
     });
   };
@@ -64,23 +70,6 @@ const SubjectSelection = ({ onSelectionComplete }) => {
 
       <div className="subject-selection">
         <div className="form-group">
-          <label htmlFor="category-select">Subject:</label>
-          <select
-            id="category-select"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="category-select"
-          >
-            <option value="">Choose a subject...</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category.charAt(0).toUpperCase() + category.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="form-group">
           <label>Question Source:</label>
           <div className="radio-group">
             <label className="radio-label">
@@ -93,7 +82,7 @@ const SubjectSelection = ({ onSelectionComplete }) => {
               />
               <span className="radio-text">
                 📚 Curated Questions
-                <small>High-quality pre-written questions</small>
+                <small>High-quality pre-written questions from predefined categories</small>
               </span>
             </label>
             <label className="radio-label">
@@ -106,16 +95,50 @@ const SubjectSelection = ({ onSelectionComplete }) => {
               />
               <span className="radio-text">
                 🤖 AI-Generated Questions
-                <small>Fresh questions powered by Ollama</small>
+                <small>Fresh questions powered by Ollama - enter any custom topic!</small>
               </span>
             </label>
           </div>
         </div>
 
+        {questionSource === 'database' ? (
+          <div className="form-group">
+            <label htmlFor="category-select">Subject:</label>
+            <select
+              id="category-select"
+              value={selectedCategory}
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              className="category-select"
+            >
+              <option value="">Choose a subject...</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category.charAt(0).toUpperCase() + category.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div className="form-group">
+            <label htmlFor="custom-topic">Custom Topic:</label>
+            <input
+              id="custom-topic"
+              type="text"
+              value={customTopic}
+              onChange={(e) => setCustomTopic(e.target.value)}
+              placeholder="Enter any topic you want to be quizzed on..."
+              className="custom-topic-input"
+            />
+            <small className="input-help">
+              Examples: "Ancient Rome", "JavaScript Programming", "Marine Biology", "Medieval History"
+            </small>
+          </div>
+        )}
+
         <button 
           className="button"
           onClick={handleStartQuiz}
-          disabled={!selectedCategory}
+          disabled={questionSource === 'database' ? !selectedCategory : !customTopic}
         >
           Start Quiz
         </button>
