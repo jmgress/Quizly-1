@@ -136,10 +136,36 @@ Press `Ctrl+C` to stop both servers when done.
 4. **Take Quiz**: Answer questions and see immediate feedback
 5. **View Results**: Review your score and answer details at the end
 
+### Admin Interface
+
+The admin interface allows you to view and edit all quiz questions stored in the database.
+
+**Access the Admin Panel:**
+1. Navigate to the Quizly homepage
+2. Click the "Admin Panel" button, or
+3. Go directly to `http://localhost:3000/#admin`
+
+**Admin Features:**
+- **View All Questions**: See all questions with their options, correct answers, and categories
+- **Edit Questions**: Click "Edit" on any question to modify:
+  - Question text
+  - Answer options (A, B, C, D)
+  - Correct answer selection
+  - Category assignment
+- **Save Changes**: Click "Save" to update questions or "Cancel" to discard changes
+- **Error Handling**: Validation ensures all required fields are filled and correct answers are valid
+
+**Admin Interface Usage:**
+- No authentication required (access via direct URL)
+- Real-time feedback on save operations
+- Mobile-responsive design for editing on any device
+- Automatic validation of question format and correct answers
+
 ## API Endpoints
 
 ### Questions
 - **GET** `/api/questions` - Get quiz questions (supports `?category=<category>&limit=<limit>`)
+- **PUT** `/api/questions/{id}` - Update a question's content (admin endpoint)
 - **GET** `/api/questions/ai` - Generate AI-powered questions (supports `?subject=<subject>&limit=<limit>`)
 - **GET** `/api/categories` - Get available question categories
 
@@ -169,6 +195,13 @@ curl "http://localhost:8000/api/questions/ai?subject=history&limit=3"
 curl -X POST http://localhost:8000/api/quiz/submit \
   -H "Content-Type: application/json" \
   -d '{"answers": [{"question_id": 1, "selected_answer": "c"}]}'
+```
+
+**Update Question (Admin):**
+```bash
+curl -X PUT http://localhost:8000/api/questions/1 \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Updated question text?", "category": "updated_category"}'
 ```
 
 ## Database Schema
