@@ -136,12 +136,17 @@ Press `Ctrl+C` to stop both servers when done.
 4. **Take Quiz**: Answer questions and see immediate feedback
 5. **View Results**: Review your score and answer details at the end
 
+### Admin Interface
+
+To manage questions, open `http://localhost:3000/admin` in your browser. This page lists all questions in a table and lets you edit the text, options, correct answer and category. After making changes, click **Save** to update the question in the database or **Cancel** to discard your edits.
+
 ## API Endpoints
 
 ### Questions
 - **GET** `/api/questions` - Get quiz questions (supports `?category=<category>&limit=<limit>`)
 - **GET** `/api/questions/ai` - Generate AI-powered questions (supports `?subject=<subject>&limit=<limit>`)
 - **GET** `/api/categories` - Get available question categories
+- **PUT** `/api/questions/{id}` - Update an existing question
 
 ### Quiz Management
 - **POST** `/api/quiz/submit` - Submit quiz answers and get results

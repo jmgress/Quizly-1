@@ -31,6 +31,13 @@ class Question(BaseModel):
     correct_answer: str
     category: Optional[str] = "general"
 
+class QuestionUpdate(BaseModel):
+    """Model for updating an existing question"""
+    text: str
+    options: List[QuestionOption]
+    correct_answer: str
+    category: Optional[str] = "general"
+
 class QuizAnswer(BaseModel):
     question_id: int
     selected_answer: str
@@ -263,6 +270,41 @@ def get_categories():
     
     conn.close()
     return {"categories": categories}
+
+@app.put("/api/questions/{question_id}", response_model=Question)
+def update_question(question_id: int, question: QuestionUpdate):
+    """Update an existing quiz question"""
+    conn = sqlite3.connect('quiz.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT id FROM questions WHERE id = ?", (question_id,))
+    if not cursor.fetchone():
+        conn.close()
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    cursor.execute(
+        "UPDATE questions SET text = ?, options = ?, correct_answer = ?, category = ? WHERE id = ?",
+        (
+            question.text,
+            json.dumps([{'id': opt.id, 'text': opt.text} for opt in question.options]),
+            question.correct_answer,
+            question.category,
+            question_id,
+        ),
+    )
+    conn.commit()
+
+    cursor.execute("SELECT * FROM questions WHERE id = ?", (question_id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    return {
+        "id": row[0],
+        "text": row[1],
+        "options": json.loads(row[2]),
+        "correct_answer": row[3],
+        "category": row[4],
+    }
 
 @app.get("/api/questions/ai", response_model=List[Question])
 def generate_ai_questions(subject: str, limit: Optional[int] = 5):

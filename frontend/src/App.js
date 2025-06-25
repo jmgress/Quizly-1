@@ -1,9 +1,17 @@
 import React, { useState } from 'react';
 import Quiz from './components/Quiz';
 import SubjectSelection from './components/SubjectSelection';
+import AdminQuestions from './components/AdminQuestions';
 import './index.css';
 
 function App() {
+  if (window.location.pathname === '/admin') {
+    return (
+      <div className="container">
+        <AdminQuestions />
+      </div>
+    );
+  }
   const [currentScreen, setCurrentScreen] = useState('home'); // 'home', 'selection', 'quiz'
   const [quizConfig, setQuizConfig] = useState(null);
 
