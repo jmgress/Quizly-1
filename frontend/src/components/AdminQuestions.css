@@ -1,0 +1,112 @@
+.admin-questions-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.admin-questions-container h1 {
+  text-align: center;
+  color: #333;
+}
+
+.admin-loading, .admin-error {
+  text-align: center;
+  padding: 20px;
+  font-size: 1.2em;
+}
+
+.admin-error {
+  color: red;
+}
+
+.admin-questions-container table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+}
+
+.admin-questions-container th, .admin-questions-container td {
+  border: 1px solid #ddd;
+  padding: 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.admin-questions-container th {
+  background-color: #f4f4f4;
+  color: #333;
+  font-weight: bold;
+}
+
+.admin-questions-container tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.admin-questions-container tr:hover {
+  background-color: #f1f1f1;
+}
+
+.admin-questions-container button {
+  padding: 8px 12px;
+  margin-right: 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+}
+
+.admin-questions-container button:hover {
+  opacity: 0.9;
+}
+
+.admin-questions-container button:first-of-type {
+ margin-left: 0;
+}
+
+/* Save button */
+.admin-questions-container td button:nth-of-type(1) {
+  background-color: #4CAF50; /* Green */
+  color: white;
+}
+
+/* Cancel button */
+.admin-questions-container td button:nth-of-type(2) {
+  background-color: #f44336; /* Red */
+  color: white;
+}
+
+/* Edit button */
+.admin-questions-container td button:nth-of-type(1):not(:only-child) {
+   background-color: #007bff; /* Blue */
+   color: white;
+}
+.admin-questions-container td button {
+  background-color: #007bff; /* Blue for single Edit button */
+  color: white;
+}
+
+
+.admin-questions-container textarea,
+.admin-questions-container input[type="text"] {
+  width: 95%;
+  padding: 8px;
+  margin: 2px 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+.admin-questions-container textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.admin-questions-container ul {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+.admin-questions-container ul li {
+  margin-bottom: 4px;
+  font-size: 0.9em;
+}

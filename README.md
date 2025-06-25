@@ -321,4 +321,26 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - 🎮 Multiplayer quiz mode
 - 📱 Progressive Web App (PWA) support
 - 🌐 Internationalization
-- 📊 Admin dashboard for question management
+- 📊 **Admin Interface for Question Management**: A new admin page to view, edit, and correct quiz questions.
+
+## Admin Interface
+
+A new admin interface has been added to allow for easy management of quiz questions.
+
+**Accessing the Admin Interface:**
+
+1.  Ensure the application is running (both backend and frontend).
+2.  Navigate to `http://localhost:3000/admin` in your web browser.
+
+**Features:**
+
+*   **View All Questions**: Displays a table of all questions from the database, including their ID, text, options, correct answer, and category.
+*   **Edit Questions**:
+    *   Click the "Edit" button next to any question to enable inline editing.
+    *   You can modify the question text, options (in JSON format), correct answer ID, and category.
+    *   **Important**: When editing options, ensure the JSON is valid and each option object contains `id` and `text` fields. The `correct_answer` must match one of the `id` values in the options.
+*   **Save Changes**: Click "Save" to submit your changes to the backend. A success or error message will be displayed.
+*   **Cancel Edits**: Click "Cancel" to discard any changes made to a question during editing.
+*   **Refresh Questions**: A "Refresh Questions" button is available to reload the latest data from the database.
+
+This interface helps maintain high-quality questions and allows for quick corrections of any errors or typos.

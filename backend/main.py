@@ -152,15 +152,28 @@ def read_root():
     return {"message": "Welcome to Quizly API"}
 
 @app.get("/api/questions", response_model=List[Question])
-def get_questions(category: Optional[str] = None, limit: Optional[int] = 10):
-    """Get quiz questions, optionally filtered by category"""
+def get_questions(category: Optional[str] = None, limit: Optional[int] = 10, admin: Optional[bool] = False):
+    """Get quiz questions, optionally filtered by category.
+    If admin is true, returns all questions without randomization, ignoring limit for practical purposes if set high by client.
+    """
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
-    if category:
-        cursor.execute("SELECT * FROM questions WHERE category = ? ORDER BY RANDOM() LIMIT ?", (category, limit))
+    query = "SELECT * FROM questions"
+    params = []
+
+    if admin:
+        # Admin mode: Fetch all questions, ordered by ID
+        query += " ORDER BY id"
     else:
-        cursor.execute("SELECT * FROM questions ORDER BY RANDOM() LIMIT ?", (limit,))
+        # Regular mode: Filter by category and limit, randomize
+        if category:
+            query += " WHERE category = ?"
+            params.append(category)
+        query += " ORDER BY RANDOM() LIMIT ?"
+        params.append(limit)
+
+    cursor.execute(query, tuple(params))
     
     questions = []
     for row in cursor.fetchall():
@@ -174,6 +187,81 @@ def get_questions(category: Optional[str] = None, limit: Optional[int] = 10):
     
     conn.close()
     return questions
+
+# Pydantic model for updating a question
+class QuestionUpdate(BaseModel):
+    text: Optional[str] = None
+    options: Optional[List[QuestionOption]] = None
+    correct_answer: Optional[str] = None
+    category: Optional[str] = None
+
+@app.put("/api/questions/{question_id}", response_model=Question)
+def update_question(question_id: int, question_update: QuestionUpdate):
+    """Update a question's details."""
+    conn = sqlite3.connect('quiz.db')
+    cursor = conn.cursor()
+
+    # Fetch the current question
+    cursor.execute("SELECT * FROM questions WHERE id = ?", (question_id,))
+    current_q_row = cursor.fetchone()
+    if not current_q_row:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Question not found")
+
+    current_q = {
+        "id": current_q_row[0],
+        "text": current_q_row[1],
+        "options": json.loads(current_q_row[2]),
+        "correct_answer": current_q_row[3],
+        "category": current_q_row[4]
+    }
+
+    update_data = question_update.model_dump(exclude_unset=True)
+
+    if not update_data:
+        conn.close()
+        raise HTTPException(status_code=400, detail="No update data provided")
+
+    updated_q = current_q.copy()
+    updated_q.update(update_data)
+
+    # Validate options and correct_answer if they are being updated
+    if 'options' in update_data or 'correct_answer' in update_data:
+        options_to_validate = updated_q['options']
+        correct_answer_to_validate = updated_q['correct_answer']
+
+        if not isinstance(options_to_validate, list) or not all(isinstance(opt, dict) and 'id' in opt and 'text' in opt for opt in options_to_validate):
+            conn.close()
+            raise HTTPException(status_code=400, detail="Invalid options format. Each option must have 'id' and 'text'.")
+
+        option_ids = [opt['id'] for opt in options_to_validate]
+        if correct_answer_to_validate not in option_ids:
+            conn.close()
+            raise HTTPException(status_code=400, detail=f"Correct answer '{correct_answer_to_validate}' not found in provided options ids: {option_ids}")
+
+    try:
+        cursor.execute(
+            """UPDATE questions SET
+                text = ?,
+                options = ?,
+                correct_answer = ?,
+                category = ?
+            WHERE id = ?""",
+            (
+                updated_q["text"],
+                json.dumps(updated_q["options"]),
+                updated_q["correct_answer"],
+                updated_q["category"],
+                question_id
+            )
+        )
+        conn.commit()
+    except sqlite3.Error as e:
+        conn.close()
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
+    conn.close()
+    return updated_q
 
 @app.post("/api/quiz/submit", response_model=QuizResult)
 def submit_quiz(submission: QuizSubmission):
