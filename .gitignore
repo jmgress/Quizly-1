@@ -67,3 +67,4 @@ venv/
 /tmp/
 *.tmp
 *.temp
+backend/quiz.db
