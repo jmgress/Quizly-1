@@ -325,3 +325,289 @@ body {
   color: #667eea;
   font-weight: 600;
 }
+
+/* Admin Interface Styles */
+.admin-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.admin-header {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.admin-header h1 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.admin-header p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.admin-stats {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 20px;
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.admin-stats p {
+  margin: 0;
+  color: #333;
+}
+
+.questions-table {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.question-row {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.question-id {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.question-category {
+  color: #666;
+  font-style: italic;
+}
+
+.edit-button {
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.edit-button:hover {
+  background: #218838;
+}
+
+.question-content {
+  margin-top: 15px;
+}
+
+.question-text {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.question-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #f8f9fa;
+  border: 1px solid #e1e5e9;
+}
+
+.option.correct-option {
+  background: #d4edda;
+  border-color: #c3e6cb;
+}
+
+.option-id {
+  font-weight: 600;
+  margin-right: 10px;
+  color: #667eea;
+  min-width: 25px;
+}
+
+.option-text {
+  flex: 1;
+  color: #333;
+}
+
+.correct-indicator {
+  color: #28a745;
+  font-weight: 600;
+  margin-left: 10px;
+}
+
+/* Edit Form Styles */
+.edit-form {
+  margin-top: 15px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e1e5e9;
+}
+
+.edit-form .form-group {
+  margin-bottom: 20px;
+}
+
+.edit-form label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e1e5e9;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.option-edit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 8px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e1e5e9;
+}
+
+.option-edit .option-id {
+  min-width: 25px;
+  font-weight: 600;
+  color: #667eea;
+}
+
+.option-input {
+  flex: 1;
+  margin: 0;
+}
+
+.option-edit input[type="radio"] {
+  margin: 0 5px;
+  accent-color: #667eea;
+}
+
+.option-edit label {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.save-button {
+  background: #28a745;
+  margin: 0;
+}
+
+.save-button:hover {
+  background: #218838;
+}
+
+.cancel-button {
+  background: #6c757d;
+  margin: 0;
+}
+
+.cancel-button:hover {
+  background: #5a6268;
+}
+
+.save-status {
+  margin-top: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.save-status.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.save-status.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.save-status.saving {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+@media (max-width: 768px) {
+  .admin-container {
+    padding: 10px;
+  }
+  
+  .admin-stats {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+  
+  .question-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .option-edit {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+}

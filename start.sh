@@ -55,8 +55,19 @@ python3 main.py &
 BACKEND_PID=$!
 cd ..
 
-# Wait for backend to start
-sleep 3
+# Wait for backend to start (up to 20s)
+BACKEND_TIMEOUT=20
+BACKEND_WAITED=0
+while ! check_port 8000; do
+    sleep 1
+    BACKEND_WAITED=$((BACKEND_WAITED+1))
+    if [ $BACKEND_WAITED -ge $BACKEND_TIMEOUT ]; then
+        echo "❌ Backend failed to start after $BACKEND_TIMEOUT seconds."
+        kill $BACKEND_PID 2>/dev/null || true
+        exit 1
+    fi
+    echo "⏳ Waiting for backend to start... ($BACKEND_WAITED s)"
+done
 
 # Check if backend started successfully
 if check_port 8000; then
@@ -81,8 +92,19 @@ npm start &
 FRONTEND_PID=$!
 cd ..
 
-# Wait for frontend to start
-sleep 5
+# Wait for frontend to start (up to 30s)
+FRONTEND_TIMEOUT=30
+FRONTEND_WAITED=0
+while ! check_port 3000; do
+    sleep 1
+    FRONTEND_WAITED=$((FRONTEND_WAITED+1))
+    if [ $FRONTEND_WAITED -ge $FRONTEND_TIMEOUT ]; then
+        echo "❌ Frontend failed to start after $FRONTEND_TIMEOUT seconds."
+        kill $BACKEND_PID $FRONTEND_PID 2>/dev/null || true
+        exit 1
+    fi
+    echo "⏳ Waiting for frontend to start... ($FRONTEND_WAITED s)"
+done
 
 # Check if frontend started successfully
 if check_port 3000; then
