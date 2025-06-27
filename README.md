@@ -307,6 +307,26 @@ app.add_middleware(
 )
 ```
 
+## Logging
+
+Quizly writes logs to the console and to `backend/quizly.log`. Each entry has the
+format `YYYY-MM-DD HH:MM:SS [LEVEL] module: message`.
+
+### Change Log Level
+
+Use the `/api/loglevel` endpoint to update the verbosity:
+
+```bash
+curl -X POST http://localhost:8000/api/loglevel \
+  -H "Content-Type: application/json" \
+  -d '{"level": "DEBUG"}'
+```
+
+### Retrieve Logs
+
+`/api/logs` returns recent log entries and accepts the query parameters
+`level`, `start`, `end`, `module`, `limit`, and `offset`.
+
 ## Project Structure
 
 ```
