@@ -6,9 +6,13 @@ import sqlite3
 import json
 import uuid
 from datetime import datetime
+import logging
 import ollama
+from logger import get_logs, set_level, get_level
 
 app = FastAPI(title="Quizly API", description="Knowledge Testing Application API")
+
+logger = logging.getLogger(__name__)
 
 # CORS configuration
 app.add_middleware(
@@ -54,6 +58,7 @@ class QuizResult(BaseModel):
 
 # Database initialization
 def init_db():
+    logger.info("Initializing database")
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
@@ -149,17 +154,20 @@ def init_db():
     
     conn.commit()
     conn.close()
+    logger.info("Database initialized")
 
 # Initialize database on startup
 init_db()
 
 @app.get("/")
 def read_root():
+    logger.info("Root endpoint accessed")
     return {"message": "Welcome to Quizly API"}
 
 @app.get("/api/questions", response_model=List[Question])
 def get_questions(category: Optional[str] = None, limit: Optional[int] = 10):
     """Get quiz questions, optionally filtered by category"""
+    logger.debug(f"Fetching questions category={category} limit={limit}")
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
@@ -183,11 +191,13 @@ def get_questions(category: Optional[str] = None, limit: Optional[int] = 10):
         })
     
     conn.close()
+    logger.debug(f"Returned {len(questions)} questions")
     return questions
 
 @app.post("/api/quiz/submit", response_model=QuizResult)
 def submit_quiz(submission: QuizSubmission):
     """Submit quiz answers and get results"""
+    logger.info("Quiz submitted with %d answers", len(submission.answers))
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
@@ -231,6 +241,7 @@ def submit_quiz(submission: QuizSubmission):
     
     conn.commit()
     conn.close()
+    logger.info("Saved quiz session %s", quiz_id)
     
     return QuizResult(
         quiz_id=quiz_id,
@@ -243,6 +254,7 @@ def submit_quiz(submission: QuizSubmission):
 @app.get("/api/quiz/{quiz_id}", response_model=QuizResult)
 def get_quiz_result(quiz_id: str):
     """Get quiz results by ID"""
+    logger.debug(f"Fetching quiz result {quiz_id}")
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
@@ -250,6 +262,7 @@ def get_quiz_result(quiz_id: str):
     row = cursor.fetchone()
     
     if not row:
+        logger.warning("Quiz session %s not found", quiz_id)
         raise HTTPException(status_code=404, detail="Quiz session not found")
     
     conn.close()
@@ -265,6 +278,7 @@ def get_quiz_result(quiz_id: str):
 @app.put("/api/questions/{question_id}", response_model=Question)
 def update_question(question_id: int, question_update: QuestionUpdate):
     """Update a question's fields"""
+    logger.info("Updating question %s", question_id)
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
@@ -274,6 +288,7 @@ def update_question(question_id: int, question_update: QuestionUpdate):
     
     if not row:
         conn.close()
+        logger.warning("Question %s not found", question_id)
         raise HTTPException(status_code=404, detail="Question not found")
     
     # Get current question data
@@ -316,6 +331,7 @@ def update_question(question_id: int, question_update: QuestionUpdate):
         values = list(update_data.values()) + [question_id]
         cursor.execute(query, values)
         conn.commit()
+        logger.debug("Question %s updated", question_id)
     
     # Return updated question
     cursor.execute("SELECT * FROM questions WHERE id = ?", (question_id,))
@@ -333,6 +349,7 @@ def update_question(question_id: int, question_update: QuestionUpdate):
 @app.get("/api/categories")
 def get_categories():
     """Get available quiz categories"""
+    logger.debug("Fetching categories")
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
@@ -340,11 +357,13 @@ def get_categories():
     categories = [row[0] for row in cursor.fetchall()]
     
     conn.close()
+    logger.debug("Returned %d categories", len(categories))
     return {"categories": categories}
 
 @app.get("/api/questions/ai", response_model=List[Question])
 def generate_ai_questions(subject: str, limit: Optional[int] = 5):
     """Generate AI-powered questions for a specific subject using Ollama"""
+    logger.info("Generating AI questions for %s", subject)
     try:
         # Create a prompt for generating quiz questions
         prompt = f"""Generate {limit} multiple-choice quiz questions about {subject}. 
@@ -426,10 +445,33 @@ def generate_ai_questions(subject: str, limit: Optional[int] = 5):
         
     except Exception as e:
         # If Ollama fails, return a fallback error
+        logger.error("AI generation failed: %s", e)
         raise HTTPException(
-            status_code=503, 
+            status_code=503,
             detail=f"AI question generation failed: {str(e)}. Please ensure Ollama is running and the llama3.2 model is available."
         )
+
+
+@app.get("/api/logs")
+def api_get_logs(level: Optional[str] = None, start: Optional[str] = None, end: Optional[str] = None,
+                 module: Optional[str] = None, limit: int = 100, offset: int = 0):
+    """Return recent log entries with optional filtering and pagination"""
+    log_entries = get_logs(level, start, end, module, limit, offset)
+    return {"logs": log_entries}
+
+
+@app.get("/api/loglevel")
+def api_get_log_level():
+    """Get current logging level"""
+    return {"level": get_level()}
+
+
+@app.post("/api/loglevel")
+def api_set_log_level(level: str):
+    """Set logging level dynamically"""
+    set_level(level)
+    logger.info("Log level changed to %s", level.upper())
+    return {"level": get_level()}
 
 if __name__ == "__main__":
     import uvicorn

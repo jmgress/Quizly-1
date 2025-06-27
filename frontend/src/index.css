@@ -607,7 +607,30 @@ body {
     gap: 5px;
   }
   
-  .form-actions {
-    flex-direction: column;
-  }
+.form-actions {
+  flex-direction: column;
+}
+}
+
+/* Log viewer styles */
+.log-table-container {
+  overflow-y: auto;
+  max-height: 500px;
+}
+
+.log-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.log-table th,
+.log-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.log-message {
+  word-break: break-all;
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import LogViewer from './LogViewer';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
@@ -10,6 +11,7 @@ const AdminQuestions = ({ onGoHome }) => {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [saveStatus, setSaveStatus] = useState({});
+  const [activeTab, setActiveTab] = useState('questions');
 
   useEffect(() => {
     fetchAllQuestions();
@@ -138,21 +140,38 @@ const AdminQuestions = ({ onGoHome }) => {
   return (
     <div className="admin-container">
       <div className="admin-header">
-        <h1>🛠️ Admin: Question Management</h1>
-        <p>View and edit all quiz questions</p>
-        <button className="button" onClick={onGoHome}>
-          Back to Home
-        </button>
+        <h1>🛠️ Admin Panel</h1>
+        <div style={{ marginBottom: '10px' }}>
+          <button
+            className="button"
+            onClick={() => setActiveTab('questions')}
+            disabled={activeTab === 'questions'}
+          >
+            Manage Questions
+          </button>
+          <button
+            className="button"
+            onClick={() => setActiveTab('logs')}
+            disabled={activeTab === 'logs'}
+          >
+            View Logs
+          </button>
+          <button className="button" onClick={onGoHome} style={{ float: 'right' }}>
+            Back to Home
+          </button>
+        </div>
       </div>
 
-      <div className="admin-stats">
-        <p><strong>Total Questions:</strong> {questions.length}</p>
-        <p><strong>Categories:</strong> {[...new Set(questions.map(q => q.category))].join(', ')}</p>
-      </div>
+      {activeTab === 'questions' && (
+        <>
+        <div className="admin-stats">
+          <p><strong>Total Questions:</strong> {questions.length}</p>
+          <p><strong>Categories:</strong> {[...new Set(questions.map(q => q.category))].join(', ')}</p>
+        </div>
 
-      <div className="questions-table">
-        {questions.map(question => (
-          <div key={question.id} className="question-row">
+        <div className="questions-table">
+          {questions.map(question => (
+            <div key={question.id} className="question-row">
             <div className="question-header">
               <span className="question-id">ID: {question.id}</span>
               <span className="question-category">Category: {question.category}</span>
@@ -261,8 +280,14 @@ const AdminQuestions = ({ onGoHome }) => {
               </div>
             )}
           </div>
-        ))}
-      </div>
+          ))}
+        </div>
+        </>
+      )}
+
+      {activeTab === 'logs' && (
+        <LogViewer />
+      )}
     </div>
   );
 };
