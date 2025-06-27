@@ -7,6 +7,7 @@ import json
 import uuid
 from datetime import datetime
 import ollama
+from logger import info, debug, warning, error, get_logs
 
 app = FastAPI(title="Quizly API", description="Knowledge Testing Application API")
 
@@ -52,8 +53,12 @@ class QuizResult(BaseModel):
     score_percentage: float
     answers: List[dict]
 
+class LogConfig(BaseModel):
+    level: str
+
 # Database initialization
 def init_db():
+    info("Initializing database", "database")
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
@@ -67,6 +72,7 @@ def init_db():
             category TEXT DEFAULT 'general'
         )
     ''')
+    debug("Questions table created/verified", "database")
     
     # Create quiz_sessions table
     cursor.execute('''
@@ -79,10 +85,13 @@ def init_db():
             answers TEXT
         )
     ''')
+    debug("Quiz sessions table created/verified", "database")
     
     # Insert sample questions if table is empty
     cursor.execute("SELECT COUNT(*) FROM questions")
-    if cursor.fetchone()[0] == 0:
+    question_count = cursor.fetchone()[0]
+    if question_count == 0:
+        info("No questions found, inserting sample questions", "database")
         sample_questions = [
             {
                 "text": "What is the capital of France?",
@@ -146,31 +155,41 @@ def init_db():
                 "INSERT INTO questions (text, options, correct_answer, category) VALUES (?, ?, ?, ?)",
                 (q["text"], json.dumps(q["options"]), q["correct_answer"], q["category"])
             )
+        info(f"Inserted {len(sample_questions)} sample questions", "database")
+    else:
+        info(f"Found {question_count} existing questions", "database")
     
     conn.commit()
     conn.close()
+    info("Database initialization completed", "database")
 
 # Initialize database on startup
+info("Starting Quizly API", "startup")
 init_db()
 
 @app.get("/")
 def read_root():
+    info("Root endpoint accessed", "api")
     return {"message": "Welcome to Quizly API"}
 
 @app.get("/api/questions", response_model=List[Question])
 def get_questions(category: Optional[str] = None, limit: Optional[int] = 10):
     """Get quiz questions, optionally filtered by category"""
+    info(f"Fetching questions: category={category}, limit={limit}", "api")
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
     if category:
         cursor.execute("SELECT * FROM questions WHERE category = ? ORDER BY RANDOM() LIMIT ?", (category, limit))
+        debug(f"Querying questions for category: {category}", "database")
     else:
         # For admin interface, allow fetching all questions by setting a high limit
         if limit and limit > 1000:
             cursor.execute("SELECT * FROM questions ORDER BY id")
+            debug("Querying all questions for admin interface", "database")
         else:
             cursor.execute("SELECT * FROM questions ORDER BY RANDOM() LIMIT ?", (limit,))
+            debug(f"Querying random questions with limit: {limit}", "database")
     
     questions = []
     for row in cursor.fetchall():
@@ -183,11 +202,13 @@ def get_questions(category: Optional[str] = None, limit: Optional[int] = 10):
         })
     
     conn.close()
+    info(f"Returned {len(questions)} questions", "api")
     return questions
 
 @app.post("/api/quiz/submit", response_model=QuizResult)
 def submit_quiz(submission: QuizSubmission):
     """Submit quiz answers and get results"""
+    info(f"Quiz submission received with {len(submission.answers)} answers", "quiz")
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
@@ -201,6 +222,7 @@ def submit_quiz(submission: QuizSubmission):
             question_ids
         )
         db_correct_answers = {row[0]: row[1] for row in cursor.fetchall()}
+        debug(f"Retrieved correct answers for {len(db_correct_answers)} questions", "quiz")
     
     # Calculate score
     correct_count = 0
@@ -232,6 +254,8 @@ def submit_quiz(submission: QuizSubmission):
     conn.commit()
     conn.close()
     
+    info(f"Quiz {quiz_id} completed: {correct_count}/{total_questions} ({score_percentage:.1f}%)", "quiz")
+    
     return QuizResult(
         quiz_id=quiz_id,
         total_questions=total_questions,
@@ -243,6 +267,7 @@ def submit_quiz(submission: QuizSubmission):
 @app.get("/api/quiz/{quiz_id}", response_model=QuizResult)
 def get_quiz_result(quiz_id: str):
     """Get quiz results by ID"""
+    info(f"Retrieving quiz result for ID: {quiz_id}", "api")
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
@@ -250,9 +275,11 @@ def get_quiz_result(quiz_id: str):
     row = cursor.fetchone()
     
     if not row:
+        warning(f"Quiz session not found: {quiz_id}", "api")
         raise HTTPException(status_code=404, detail="Quiz session not found")
     
     conn.close()
+    debug(f"Quiz result retrieved successfully for: {quiz_id}", "api")
     
     return QuizResult(
         quiz_id=row[0],
@@ -265,6 +292,7 @@ def get_quiz_result(quiz_id: str):
 @app.put("/api/questions/{question_id}", response_model=Question)
 def update_question(question_id: int, question_update: QuestionUpdate):
     """Update a question's fields"""
+    info(f"Updating question {question_id}", "admin")
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
@@ -274,6 +302,7 @@ def update_question(question_id: int, question_update: QuestionUpdate):
     
     if not row:
         conn.close()
+        warning(f"Question not found for update: {question_id}", "admin")
         raise HTTPException(status_code=404, detail="Question not found")
     
     # Get current question data
@@ -292,9 +321,11 @@ def update_question(question_id: int, question_update: QuestionUpdate):
     if question_update.options is not None:
         # Validate options format
         if len(question_update.options) != 4:
+            error(f"Invalid options count for question {question_id}: {len(question_update.options)}", "admin")
             raise HTTPException(status_code=400, detail="Question must have exactly 4 options")
         option_ids = [opt.id for opt in question_update.options]
         if len(set(option_ids)) != 4 or not all(id in ['a', 'b', 'c', 'd'] for id in option_ids):
+            error(f"Invalid option IDs for question {question_id}: {option_ids}", "admin")
             raise HTTPException(status_code=400, detail="Options must have unique IDs 'a', 'b', 'c', 'd'")
         update_data["options"] = json.dumps([{"id": opt.id, "text": opt.text} for opt in question_update.options])
     if question_update.correct_answer is not None:
@@ -304,6 +335,7 @@ def update_question(question_id: int, question_update: QuestionUpdate):
         else:
             valid_ids = [opt["id"] for opt in current_question["options"]]
         if question_update.correct_answer not in valid_ids:
+            error(f"Invalid correct answer for question {question_id}: {question_update.correct_answer}", "admin")
             raise HTTPException(status_code=400, detail="Correct answer must be one of the option IDs")
         update_data["correct_answer"] = question_update.correct_answer
     if question_update.category is not None:
@@ -316,11 +348,14 @@ def update_question(question_id: int, question_update: QuestionUpdate):
         values = list(update_data.values()) + [question_id]
         cursor.execute(query, values)
         conn.commit()
+        debug(f"Question {question_id} updated with fields: {list(update_data.keys())}", "admin")
     
     # Return updated question
     cursor.execute("SELECT * FROM questions WHERE id = ?", (question_id,))
     row = cursor.fetchone()
     conn.close()
+    
+    info(f"Question {question_id} update completed successfully", "admin")
     
     return {
         "id": row[0],
@@ -333,6 +368,7 @@ def update_question(question_id: int, question_update: QuestionUpdate):
 @app.get("/api/categories")
 def get_categories():
     """Get available quiz categories"""
+    debug("Fetching available categories", "api")
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
@@ -340,11 +376,13 @@ def get_categories():
     categories = [row[0] for row in cursor.fetchall()]
     
     conn.close()
+    info(f"Returned {len(categories)} categories", "api")
     return {"categories": categories}
 
 @app.get("/api/questions/ai", response_model=List[Question])
 def generate_ai_questions(subject: str, limit: Optional[int] = 5):
     """Generate AI-powered questions for a specific subject using Ollama"""
+    info(f"AI question generation requested: subject={subject}, limit={limit}", "ai")
     try:
         # Create a prompt for generating quiz questions
         prompt = f"""Generate {limit} multiple-choice quiz questions about {subject}. 
@@ -364,6 +402,7 @@ def generate_ai_questions(subject: str, limit: Optional[int] = 5):
         
         Return only the JSON array, no additional text."""
 
+        debug(f"Calling Ollama with prompt for {subject}", "ai")
         # Call Ollama to generate questions
         response = ollama.chat(
             model='llama3.2',  # Using a common model, can be configurable
@@ -397,11 +436,14 @@ def generate_ai_questions(subject: str, limit: Optional[int] = 5):
                 })
             
             if not questions:
+                error(f"No valid questions generated for subject: {subject}", "ai")
                 raise ValueError("No valid questions generated")
-                
+            
+            info(f"Successfully generated {len(questions)} AI questions for {subject}", "ai")
             return questions
             
         except json.JSONDecodeError:
+            warning("JSON parsing failed, attempting to extract JSON from response", "ai")
             # If JSON parsing fails, try to extract JSON from the response
             content = response['message']['content']
             # Look for JSON array in the response
@@ -420,17 +462,62 @@ def generate_ai_questions(subject: str, limit: Optional[int] = 5):
                         "correct_answer": q_data["correct_answer"],
                         "category": subject.lower()
                     })
+                info(f"Successfully extracted {len(questions)} AI questions for {subject}", "ai")
                 return questions
             else:
+                error(f"Could not parse AI response for subject: {subject}", "ai")
                 raise ValueError("Could not parse AI response")
         
     except Exception as e:
+        error(f"AI question generation failed for {subject}: {str(e)}", "ai")
         # If Ollama fails, return a fallback error
         raise HTTPException(
             status_code=503, 
             detail=f"AI question generation failed: {str(e)}. Please ensure Ollama is running and the llama3.2 model is available."
         )
 
+@app.get("/api/logs")
+def get_log_entries(
+    limit: Optional[int] = 100,
+    offset: Optional[int] = 0,
+    level: Optional[str] = None,
+    module: Optional[str] = None,
+    start_time: Optional[str] = None,
+    end_time: Optional[str] = None
+):
+    """Get application logs with filtering and pagination"""
+    info(f"Log retrieval requested: limit={limit}, offset={offset}, level={level}, module={module}", "logs")
+    
+    try:
+        result = get_logs(
+            limit=limit,
+            offset=offset,
+            level=level,
+            module=module,
+            start_time=start_time,
+            end_time=end_time
+        )
+        debug(f"Retrieved {len(result['logs'])} log entries", "logs")
+        return result
+    except Exception as e:
+        error(f"Failed to retrieve logs: {str(e)}", "logs")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve logs: {str(e)}")
+
+@app.post("/api/logs/config")
+def configure_logging(config: LogConfig):
+    """Configure logging level dynamically"""
+    info(f"Log level change requested: {config.level}", "config")
+    
+    try:
+        from logger import set_log_level
+        set_log_level(config.level)
+        info(f"Log level changed to: {config.level}", "config")
+        return {"message": f"Log level set to {config.level}", "level": config.level}
+    except Exception as e:
+        error(f"Failed to set log level: {str(e)}", "config")
+        raise HTTPException(status_code=400, detail=f"Invalid log level: {config.level}")
+
 if __name__ == "__main__":
     import uvicorn
+    info("Starting Quizly API server", "startup")
     uvicorn.run(app, host="0.0.0.0", port=8000)
