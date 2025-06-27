@@ -15,6 +15,8 @@ An interactive web-based quiz application that allows users to test their knowle
 - 🤖 **AI-Powered Questions**: Generate fresh questions using Ollama LLM integration
 - 📚 **Dual Question Sources**: Select between curated database questions or AI-generated content
 - 🚀 **Fast API**: RESTful API with automatic documentation
+- 📜 **Comprehensive Logging**: Backend logging with rotating files and console output.
+- 뷰 **Admin Log Viewer**: Real-time log viewing, filtering, and searching in the admin panel.
 
 ## Tech Stack
 
@@ -152,14 +154,43 @@ The admin interface allows you to view and edit all quiz questions stored in the
   - Answer options (A, B, C, D)
   - Correct answer selection
   - Category assignment
-- **Save Changes**: Click "Save" to update questions or "Cancel" to discard changes
-- **Error Handling**: Validation ensures all required fields are filled and correct answers are valid
+- **Save Changes**: Click "Save" to update questions or "Cancel" to discard changes.
+- **Error Handling**: Validation ensures all required fields are filled and correct answers are valid.
+- **View Application Logs**: A dedicated "View Logs" tab to monitor application behavior.
+  - **Real-time Display**: Shows logs as they are generated (with auto-refresh option).
+  - **Filtering**: Filter logs by level (DEBUG, INFO, WARNING, ERROR, CRITICAL), module/logger name, timestamp range, and message content.
+  - **Sorting**: Sort logs by timestamp, level, logger, or module.
+  - **Pagination**: Navigate through logs with page controls and selectable page size.
+  - **Auto-Refresh**: Toggle auto-refresh (default 15s interval) to see new logs.
+  - **Expandable Messages**: View long log messages easily.
+  - **Persistent Level Filter**: Your preferred log level filter is saved in `localStorage`.
 
 **Admin Interface Usage:**
-- No authentication required (access via direct URL)
-- Real-time feedback on save operations
-- Mobile-responsive design for editing on any device
-- Automatic validation of question format and correct answers
+- No authentication required (access via direct URL).
+- Real-time feedback on save operations for questions.
+- Mobile-responsive design for editing on any device.
+- Automatic validation of question format and correct answers.
+
+## Logging System
+
+The application features a comprehensive logging system:
+
+- **Backend Logger (`backend/logger.py`)**:
+  - Uses Python's built-in `logging` module.
+  - **Configurable Log Level**: Set the `LOG_LEVEL` environment variable (e.g., `LOG_LEVEL=DEBUG`) to change verbosity. Defaults to `INFO`. Supported levels: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`.
+  - **Dual Output**: Logs to both the console and a rotating file.
+  - **Rotating Log File (`backend/quizly.log`)**:
+    - Located in the `backend` directory.
+    - Maximum file size: 1MB.
+    - Backup count: 5 (e.g., `quizly.log.1`, `quizly.log.2`, ...).
+  - **Log Format**: `%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d - %(message)s`
+    - Example: `2023-10-27 10:00:00,123 - quizly - INFO - main:42 - This is a log message.`
+- **Logged Events**:
+  - API requests (incoming, response status, processing time).
+  - Database initialization and operations.
+  - Quiz submissions and results.
+  - AI question generation process (requests, responses, errors).
+  - Key application lifecycle events (startup, shutdown).
 
 ## API Endpoints
 
@@ -172,6 +203,23 @@ The admin interface allows you to view and edit all quiz questions stored in the
 ### Quiz Management
 - **POST** `/api/quiz/submit` - Submit quiz answers and get results
 - **GET** `/api/quiz/{quiz_id}` - Get quiz results by ID
+
+### Logging
+- **GET** `/api/logs` - Retrieve application logs.
+  - **Query Parameters**:
+    - `level` (Optional[str]): Filter by log level (e.g., `INFO`, `ERROR`).
+    - `module_filter` (Optional[str]): Filter by module or logger name (substring match).
+    - `start_time` (Optional[datetime]): Show logs after this ISO timestamp (e.g., `2023-10-27T10:00:00`).
+    - `end_time` (Optional[datetime]): Show logs before this ISO timestamp.
+    - `limit` (int, default 100): Number of log entries per page.
+    - `offset` (int, default 0): Offset for pagination.
+  - **Response**: A JSON array of log entries. Each entry includes:
+    - `timestamp` (str)
+    - `logger_name` (str)
+    - `level` (str)
+    - `module` (str)
+    - `line` (int)
+    - `message` (str)
 
 ### Example API Usage
 
@@ -202,6 +250,12 @@ curl -X POST http://localhost:8000/api/quiz/submit \
 curl -X PUT http://localhost:8000/api/questions/1 \
   -H "Content-Type: application/json" \
   -d '{"text": "Updated question text?", "category": "updated_category"}'
+```
+
+**Get Logs (Admin):**
+```bash
+# Get latest 50 INFO logs from 'main' module
+curl "http://localhost:8000/api/logs?level=INFO&module_filter=main&limit=50"
 ```
 
 ## Database Schema
@@ -313,6 +367,8 @@ app.add_middleware(
 Quizly-1/
 ├── backend/
 │   ├── main.py              # FastAPI application
+│   ├── logger.py            # Logging configuration module
+│   ├── quizly.log           # Rotating log file (auto-generated, in .gitignore)
 │   ├── requirements.txt     # Python dependencies
 │   ├── test_backend.py      # Backend tests
 │   └── quiz.db             # SQLite database (auto-generated)
@@ -327,7 +383,11 @@ Quizly-1/
 │       └── components/
 │           ├── Quiz.js     # Quiz logic component
 │           ├── Question.js # Question display component
-│           └── ScoreDisplay.js # Score display component
+│           ├── ScoreDisplay.js # Score display component
+│           ├── AdminQuestions.js # Admin panel component (manages questions and logs)
+│           ├── AdminQuestions.css # Styles for AdminQuestions tabs and layout
+│           ├── LogViewer.js    # Log viewing component
+│           └── LogViewer.css   # Styles for LogViewer
 ├── start.sh                # Application launcher
 ├── README.md
 └── LICENSE

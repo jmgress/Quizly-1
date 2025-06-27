@@ -1,32 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import LogViewer from './LogViewer'; // Import LogViewer
+import './AdminQuestions.css'; // Create this for Admin specific styles if needed
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
 const AdminQuestions = ({ onGoHome }) => {
+  const [activeTab, setActiveTab] = useState('questions'); // 'questions' or 'logs'
+
+  // State for Question Management Tab
   const [questions, setQuestions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [loadingQuestions, setLoadingQuestions] = useState(true);
+  const [errorQuestions, setErrorQuestions] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [saveStatus, setSaveStatus] = useState({});
 
   useEffect(() => {
-    fetchAllQuestions();
-  }, []);
+    if (activeTab === 'questions') {
+      fetchAllQuestions();
+    }
+    // LogViewer fetches its own data, so no specific fetch needed here for 'logs' tab
+  }, [activeTab]);
 
   const fetchAllQuestions = async () => {
     try {
-      setLoading(true);
-      setError(null);
+      setLoadingQuestions(true);
+      setErrorQuestions(null);
       // Use high limit to get all questions for admin
-      const response = await axios.get(`${API_BASE_URL}/api/questions?limit=1000`);
+      const response = await axios.get(`${API_BASE_URL}/api/questions?limit=1000`); // Consider making limit a const
       setQuestions(response.data);
     } catch (err) {
-      setError('Failed to load questions. Please try again later.');
+      setErrorQuestions('Failed to load questions. Please try again later.');
       console.error('Error fetching questions:', err);
     } finally {
-      setLoading(false);
+      setLoadingQuestions(false);
     }
   };
 
@@ -113,155 +121,182 @@ const AdminQuestions = ({ onGoHome }) => {
     }));
   };
 
-  if (loading) {
-    return (
-      <div className="card">
-        <div className="loading">Loading all questions...</div>
-      </div>
-    );
-  }
+  const renderQuestionsTab = () => {
+    if (loadingQuestions) {
+      return (
+        <div className="card">
+          <div className="loading">Loading all questions...</div>
+        </div>
+      );
+    }
 
-  if (error) {
+    if (errorQuestions) {
+      return (
+        <div className="card">
+          <div className="error">{errorQuestions}</div>
+          <button className="button" onClick={fetchAllQuestions}>
+            Try Again
+          </button>
+        </div>
+      );
+    }
+
     return (
-      <div className="card">
-        <div className="error">{error}</div>
-        <button className="button" onClick={fetchAllQuestions}>
-          Try Again
-        </button>
-        <button className="button" onClick={onGoHome}>
-          Back to Home
-        </button>
-      </div>
+      <>
+        <div className="admin-header">
+          <h1>🛠️ Admin: Question Management</h1>
+          <p>View and edit all quiz questions</p>
+        </div>
+        <div className="admin-stats card">
+          <p><strong>Total Questions:</strong> {questions.length}</p>
+          <p><strong>Categories:</strong> {[...new Set(questions.map(q => q.category))].join(', ')}</p>
+        </div>
+        <div className="questions-table card">
+          {questions.map(question => (
+            <div key={question.id} className="question-row">
+              <div className="question-header">
+                <span className="question-id">ID: {question.id}</span>
+                <span className="question-category">Category: {question.category}</span>
+                {editingId !== question.id && (
+                  <button
+                    className="edit-button"
+                    onClick={() => handleEditClick(question)}
+                  >
+                    Edit
+                  </button>
+                )}
+              </div>
+
+              {editingId === question.id ? (
+                // Edit mode
+                <div className="edit-form">
+                  <div className="form-group">
+                    <label>Question Text:</label>
+                    <textarea
+                      value={editForm.text}
+                      onChange={(e) => handleFormChange('text', e.target.value)}
+                      rows="3"
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Category:</label>
+                    <input
+                      type="text"
+                      value={editForm.category}
+                      onChange={(e) => handleFormChange('category', e.target.value)}
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Options:</label>
+                    {editForm.options?.map((option, index) => (
+                      <div key={option.id} className="option-edit">
+                        <span className="option-id">{option.id.toUpperCase()})</span>
+                        <input
+                          type="text"
+                          value={option.text}
+                          onChange={(e) => handleOptionChange(index, e.target.value)}
+                          className="form-input option-input"
+                        />
+                        <input
+                          type="radio"
+                          name={`correct-${question.id}`}
+                          checked={editForm.correct_answer === option.id}
+                          onChange={() => handleFormChange('correct_answer', option.id)}
+                        />
+                        <label>Correct</label>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="form-actions">
+                    <button
+                      className="button save-button"
+                      onClick={() => handleSaveEdit(question.id)}
+                    >
+                      Save
+                    </button>
+                    <button
+                      className="button cancel-button"
+                      onClick={handleCancelEdit}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+
+                  {saveStatus[question.id] && (
+                    <div className={`save-status ${saveStatus[question.id].type}`}>
+                      {saveStatus[question.id].message}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                // View mode
+                <div className="question-content">
+                  <div className="question-text">
+                    <strong>Q:</strong> {question.text}
+                  </div>
+                  <div className="question-options">
+                    {question.options.map(option => (
+                      <div
+                        key={option.id}
+                        className={`option ${option.id === question.correct_answer ? 'correct-option' : ''}`}
+                      >
+                        <span className="option-id">{option.id.toUpperCase()})</span>
+                        <span className="option-text">{option.text}</span>
+                        {option.id === question.correct_answer && (
+                          <span className="correct-indicator">✓ Correct</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {saveStatus[question.id] && editingId !== question.id && (
+                <div className={`save-status ${saveStatus[question.id].type}`}>
+                  {saveStatus[question.id].message}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </>
     );
-  }
+  };
+
+  const renderLogsTab = () => {
+    return <LogViewer />;
+  };
 
   return (
     <div className="admin-container">
-      <div className="admin-header">
-        <h1>🛠️ Admin: Question Management</h1>
-        <p>View and edit all quiz questions</p>
-        <button className="button" onClick={onGoHome}>
+      <div className="admin-navigation card">
+        <div className="tabs">
+          <button
+            className={`tab-button ${activeTab === 'questions' ? 'active' : ''}`}
+            onClick={() => setActiveTab('questions')}
+          >
+            Question Management
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'logs' ? 'active' : ''}`}
+            onClick={() => setActiveTab('logs')}
+          >
+            View Logs
+          </button>
+        </div>
+        <button className="button go-home-button" onClick={onGoHome}>
           Back to Home
         </button>
       </div>
 
-      <div className="admin-stats">
-        <p><strong>Total Questions:</strong> {questions.length}</p>
-        <p><strong>Categories:</strong> {[...new Set(questions.map(q => q.category))].join(', ')}</p>
-      </div>
-
-      <div className="questions-table">
-        {questions.map(question => (
-          <div key={question.id} className="question-row">
-            <div className="question-header">
-              <span className="question-id">ID: {question.id}</span>
-              <span className="question-category">Category: {question.category}</span>
-              {editingId !== question.id && (
-                <button 
-                  className="edit-button"
-                  onClick={() => handleEditClick(question)}
-                >
-                  Edit
-                </button>
-              )}
-            </div>
-
-            {editingId === question.id ? (
-              // Edit mode
-              <div className="edit-form">
-                <div className="form-group">
-                  <label>Question Text:</label>
-                  <textarea
-                    value={editForm.text}
-                    onChange={(e) => handleFormChange('text', e.target.value)}
-                    rows="3"
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Category:</label>
-                  <input
-                    type="text"
-                    value={editForm.category}
-                    onChange={(e) => handleFormChange('category', e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Options:</label>
-                  {editForm.options?.map((option, index) => (
-                    <div key={option.id} className="option-edit">
-                      <span className="option-id">{option.id.toUpperCase()})</span>
-                      <input
-                        type="text"
-                        value={option.text}
-                        onChange={(e) => handleOptionChange(index, e.target.value)}
-                        className="form-input option-input"
-                      />
-                      <input
-                        type="radio"
-                        name={`correct-${question.id}`}
-                        checked={editForm.correct_answer === option.id}
-                        onChange={() => handleFormChange('correct_answer', option.id)}
-                      />
-                      <label>Correct</label>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="form-actions">
-                  <button 
-                    className="button save-button"
-                    onClick={() => handleSaveEdit(question.id)}
-                  >
-                    Save
-                  </button>
-                  <button 
-                    className="button cancel-button"
-                    onClick={handleCancelEdit}
-                  >
-                    Cancel
-                  </button>
-                </div>
-
-                {saveStatus[question.id] && (
-                  <div className={`save-status ${saveStatus[question.id].type}`}>
-                    {saveStatus[question.id].message}
-                  </div>
-                )}
-              </div>
-            ) : (
-              // View mode
-              <div className="question-content">
-                <div className="question-text">
-                  <strong>Q:</strong> {question.text}
-                </div>
-                <div className="question-options">
-                  {question.options.map(option => (
-                    <div 
-                      key={option.id} 
-                      className={`option ${option.id === question.correct_answer ? 'correct-option' : ''}`}
-                    >
-                      <span className="option-id">{option.id.toUpperCase()})</span>
-                      <span className="option-text">{option.text}</span>
-                      {option.id === question.correct_answer && (
-                        <span className="correct-indicator">✓ Correct</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {saveStatus[question.id] && editingId !== question.id && (
-              <div className={`save-status ${saveStatus[question.id].type}`}>
-                {saveStatus[question.id].message}
-              </div>
-            )}
-          </div>
-        ))}
+      <div className="admin-content">
+        {activeTab === 'questions' && renderQuestionsTab()}
+        {activeTab === 'logs' && renderLogsTab()}
       </div>
     </div>
   );

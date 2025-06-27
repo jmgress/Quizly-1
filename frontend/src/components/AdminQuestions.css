@@ -1,0 +1,299 @@
+/* General Admin Container Styles */
+.admin-container {
+  padding: 20px;
+  background-color: #f9f9f9; /* Light grey background for the whole admin area */
+}
+
+/* Card style for distinct sections like navigation, stats, tables */
+.card {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* Admin Navigation Bar */
+.admin-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.tabs {
+  display: flex;
+  gap: 10px; /* Space between tab buttons */
+}
+
+.tab-button {
+  padding: 10px 20px;
+  font-size: 1em;
+  cursor: pointer;
+  border: 1px solid transparent;
+  border-bottom: 3px solid transparent; /* Underline effect for active tab */
+  background-color: transparent;
+  color: #555;
+  transition: color 0.3s ease, border-bottom-color 0.3s ease;
+}
+
+.tab-button:hover {
+  color: #007bff;
+}
+
+.tab-button.active {
+  color: #007bff;
+  border-bottom-color: #007bff; /* Active tab underline */
+  font-weight: bold;
+}
+
+.go-home-button {
+  /* Uses .button styles from LogViewer.css or global if defined */
+  /* Add specific overrides if needed */
+}
+
+/* Header for sections like Question Management */
+.admin-header {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #eee;
+}
+.admin-header h1 {
+  font-size: 1.8em;
+  color: #333;
+  margin: 0 0 5px 0;
+}
+.admin-header p {
+  font-size: 1em;
+  color: #777;
+  margin: 0;
+}
+
+
+/* Question Management Specific Styles */
+.admin-stats p {
+  margin: 5px 0;
+  font-size: 0.95em;
+}
+.admin-stats p strong {
+  color: #333;
+}
+
+.questions-table {
+  /* Now a card itself */
+}
+
+.question-row {
+  border: 1px solid #e9e9e9;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+  background-color: #fff; /* Ensure it stands out if questions-table gets a background */
+}
+
+.question-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px dashed #f0f0f0;
+}
+
+.question-id {
+  font-size: 0.85em;
+  color: #888;
+  background-color: #f0f0f0;
+  padding: 3px 7px;
+  border-radius: 4px;
+}
+
+.question-category {
+  font-size: 0.9em;
+  font-style: italic;
+  color: #555;
+}
+
+.edit-button {
+  padding: 6px 12px;
+  font-size: 0.85em;
+  background-color: #ffc107; /* Yellow for edit */
+  color: #212529;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.edit-button:hover {
+  background-color: #e0a800;
+}
+
+.edit-form {
+  margin-top: 15px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  font-size: 0.9em;
+  color: #444;
+}
+.form-input, .edit-form textarea {
+  width: calc(100% - 20px); /* Full width minus padding */
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.95em;
+}
+.edit-form textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.option-edit {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  background-color: #fbfbfb;
+  padding: 8px;
+  border-radius: 4px;
+}
+.option-edit .option-id {
+  font-weight: bold;
+  margin-right: 8px;
+  color: #333;
+}
+.option-edit .option-input {
+  flex-grow: 1;
+  margin-right: 8px;
+}
+.option-edit input[type="radio"] {
+  margin-right: 5px;
+}
+.option-edit label { /* Label for "Correct" radio */
+  margin-bottom: 0;
+  font-weight: normal;
+  font-size: 0.9em;
+}
+
+.form-actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+.save-button {
+  /* Uses .button styles */
+  background-color: #28a745; /* Green for save */
+}
+.save-button:hover {
+  background-color: #1e7e34;
+}
+.cancel-button {
+  /* Uses .button styles */
+  background-color: #dc3545; /* Red for cancel */
+}
+.cancel-button:hover {
+  background-color: #b02a37;
+}
+
+.save-status {
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+.save-status.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+.save-status.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+.save-status.saving {
+  background-color: #e2e3e5;
+  color: #383d41;
+  border: 1px solid #d6d8db;
+}
+
+.question-content .question-text {
+  font-weight: bold;
+  margin-bottom: 10px;
+  font-size: 1.05em;
+  color: #333;
+}
+.question-options .option {
+  padding: 8px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  background-color: #f9f9f9;
+  border-left: 3px solid #eee;
+}
+.question-options .option .option-id {
+  font-weight: bold;
+  margin-right: 5px;
+}
+.question-options .option.correct-option {
+  background-color: #d4edda; /* Light green for correct answer */
+  border-left-color: #28a745;
+}
+.question-options .option .correct-indicator {
+  margin-left: 10px;
+  font-size: 0.85em;
+  color: #155724;
+  font-weight: bold;
+}
+
+/* Loading and Error states for question tab */
+.admin-content .loading, .admin-content .error {
+  padding: 20px;
+  text-align: center;
+  font-size: 1.1em;
+}
+.admin-content .error {
+  color: #721c24;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+}
+
+/* Ensure LogViewer specific styles don't get overly broad selectors that conflict */
+/* For example, if LogViewer.css had `.button`, it would be fine */
+/* If AdminQuestions.css had generic `.button` it might conflict, so prefix or make specific */
+
+.admin-container .button { /* Basic button style if not already global */
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95em;
+  background-color: #007bff;
+  color: white;
+  transition: background-color 0.2s ease;
+}
+.admin-container .button:hover {
+  background-color: #0056b3;
+}
+.admin-container .button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+.admin-container .secondary-button {
+  background-color: #6c757d;
+}
+.admin-container .secondary-button:hover {
+  background-color: #545b62;
+}
+
+/* Ensure LogViewer styles are scoped if they were very generic */
+/* .log-viewer-container is good scoping from LogViewer.css */
+/* Styles within .admin-content will apply to the active tab's content */
+.admin-content {
+    /* Styles for the content area that switches between tabs */
+}
