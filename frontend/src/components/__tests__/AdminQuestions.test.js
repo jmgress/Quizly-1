@@ -67,14 +67,18 @@ describe('AdminQuestions Component', () => {
     expect(axios.get).toHaveBeenCalledWith('http://localhost:8000/api/questions?limit=1000');
 
     // Check admin header after loading
-    expect(screen.getByText('🛠️ Admin: Question Management')).toBeInTheDocument();
-    expect(screen.getByText('View and edit all quiz questions')).toBeInTheDocument();
+    expect(screen.getByText('🛠️ Admin Panel')).toBeInTheDocument();
+    expect(screen.getByText('Manage questions and monitor application logs')).toBeInTheDocument();
     expect(screen.getByText('Back to Home')).toBeInTheDocument();
 
     // Check question details - look for "Total Questions:" and "1" separately
     expect(screen.getByText('Total Questions:')).toBeInTheDocument();
     expect(screen.getByText('Categories:')).toBeInTheDocument();
     expect(screen.getByText('✓ Correct')).toBeInTheDocument();
+    
+    // Check that the questions tab is active by default
+    expect(screen.getByText('📝 Question Management')).toBeInTheDocument();
+    expect(screen.getByText('📋 View Logs')).toBeInTheDocument();
   });
 
   it('calls onGoHome when back button is clicked', async () => {

@@ -15,6 +15,10 @@ An interactive web-based quiz application that allows users to test their knowle
 - 🤖 **AI-Powered Questions**: Generate fresh questions using Ollama LLM integration
 - 📚 **Dual Question Sources**: Select between curated database questions or AI-generated content
 - 🚀 **Fast API**: RESTful API with automatic documentation
+- 🛠️ **Admin Panel**: Comprehensive admin interface with dual tabs for question management and system monitoring
+- 📋 **Real-time Logging**: Comprehensive logging system with real-time log viewer in admin interface
+- 🔍 **Log Filtering**: Filter logs by level, module, timestamp, with pagination support
+- ⚙️ **Dynamic Log Configuration**: Change log levels on-the-fly through the admin interface
 
 ## Tech Stack
 
@@ -138,14 +142,16 @@ Press `Ctrl+C` to stop both servers when done.
 
 ### Admin Interface
 
-The admin interface allows you to view and edit all quiz questions stored in the database.
+The admin interface provides comprehensive tools for question management and system monitoring through a tabbed interface.
 
 **Access the Admin Panel:**
 1. Navigate to the Quizly homepage
 2. Click the "Admin Panel" button, or
 3. Go directly to `http://localhost:3000/#admin`
 
-**Admin Features:**
+**Admin Panel Tabs:**
+
+#### 📝 Question Management Tab
 - **View All Questions**: See all questions with their options, correct answers, and categories
 - **Edit Questions**: Click "Edit" on any question to modify:
   - Question text
@@ -155,11 +161,24 @@ The admin interface allows you to view and edit all quiz questions stored in the
 - **Save Changes**: Click "Save" to update questions or "Cancel" to discard changes
 - **Error Handling**: Validation ensures all required fields are filled and correct answers are valid
 
-**Admin Interface Usage:**
+#### 📋 View Logs Tab
+- **Real-time Log Viewer**: Monitor application logs with automatic refresh capabilities
+- **Log Filtering**: Filter logs by:
+  - Log level (DEBUG, INFO, WARNING, ERROR)
+  - Module (API, Database, Quiz, Admin, AI, etc.)
+  - Number of entries displayed (25, 50, 100, 200)
+- **Auto-refresh**: Toggle 15-second auto-refresh for real-time monitoring
+- **Log Level Configuration**: Dynamically change the application's log verbosity
+- **Pagination**: Navigate through large sets of log entries
+- **Message Expansion**: Expand long log messages for detailed viewing
+- **Color-coded Levels**: Visual differentiation of log levels with color coding
+
+**Admin Interface Features:**
 - No authentication required (access via direct URL)
 - Real-time feedback on save operations
 - Mobile-responsive design for editing on any device
 - Automatic validation of question format and correct answers
+- Persistent log level preferences stored in browser localStorage
 
 ## API Endpoints
 
@@ -172,6 +191,18 @@ The admin interface allows you to view and edit all quiz questions stored in the
 ### Quiz Management
 - **POST** `/api/quiz/submit` - Submit quiz answers and get results
 - **GET** `/api/quiz/{quiz_id}` - Get quiz results by ID
+
+### Logging System
+- **GET** `/api/logs` - Get application logs with filtering and pagination
+  - Query parameters:
+    - `limit` (optional): Number of entries to return (default: 100)
+    - `offset` (optional): Starting position for pagination (default: 0)
+    - `level` (optional): Filter by log level (DEBUG, INFO, WARNING, ERROR)
+    - `module` (optional): Filter by module name (api, database, quiz, admin, ai, etc.)
+    - `start_time` (optional): Filter logs after this timestamp (ISO format)
+    - `end_time` (optional): Filter logs before this timestamp (ISO format)
+- **POST** `/api/logs/config` - Configure logging level dynamically
+  - Body: `{"level": "DEBUG|INFO|WARNING|ERROR"}`
 
 ### Example API Usage
 
@@ -197,12 +228,123 @@ curl -X POST http://localhost:8000/api/quiz/submit \
   -d '{"answers": [{"question_id": 1, "selected_answer": "c"}]}'
 ```
 
+**Get Application Logs:**
+```bash
+curl "http://localhost:8000/api/logs?limit=50&level=ERROR"
+```
+
+**Get Logs with Filtering:**
+```bash
+curl "http://localhost:8000/api/logs?module=api&level=INFO&limit=20&offset=0"
+```
+
+**Change Log Level:**
+```bash
+curl -X POST http://localhost:8000/api/logs/config \
+  -H "Content-Type: application/json" \
+  -d '{"level": "DEBUG"}'
+```
+
 **Update Question (Admin):**
 ```bash
 curl -X PUT http://localhost:8000/api/questions/1 \
   -H "Content-Type: application/json" \
   -d '{"text": "Updated question text?", "category": "updated_category"}'
 ```
+
+## Logging System
+
+Quizly includes a comprehensive logging system that provides visibility into application behavior and assists with debugging.
+
+### Logging Configuration
+
+**Log Levels:**
+- `DEBUG`: Detailed information for diagnosing problems
+- `INFO`: General information about application events (default)
+- `WARNING`: Warning messages for unexpected but non-critical events
+- `ERROR`: Error messages for serious problems
+
+**Log Output:**
+- **Console**: Real-time logs displayed in the terminal
+- **File**: Rotating log files stored in `backend/quizly.log`
+  - Maximum file size: 10MB
+  - Backup files: 5 files retained
+  - Automatic rotation when size limit is reached
+
+**Database Storage:**
+- All logs are stored in the SQLite database for query and filtering
+- Structured format with timestamp, level, module, and message
+- Accessible via the admin interface and API endpoints
+
+### Log Format
+
+Each log entry includes:
+```
+YYYY-MM-DD HH:MM:SS - quizly - <module> - <LEVEL> - <message>
+```
+
+**Modules tracked:**
+- `startup`: Application initialization
+- `database`: Database operations
+- `api`: API request/response handling
+- `quiz`: Quiz submission and scoring
+- `admin`: Admin interface operations
+- `ai`: AI question generation
+- `logs`: Logging system operations
+- `config`: Configuration changes
+
+### Using the Log Viewer
+
+The admin interface provides a powerful log viewer with:
+
+1. **Real-time Monitoring**: Auto-refresh every 15 seconds
+2. **Filtering Options**: Filter by log level, module, and time range
+3. **Pagination**: Navigate through large log sets
+4. **Message Expansion**: View full details of long log messages
+5. **Dynamic Configuration**: Change log levels without restarting
+
+**Access the Log Viewer:**
+1. Navigate to the admin panel
+2. Click the "📋 View Logs" tab
+3. Use filters to find specific logs
+4. Enable auto-refresh for real-time monitoring
+
+### Log Level Configuration
+
+You can change the log level dynamically through:
+
+**Admin Interface:**
+- Use the log level dropdown in the admin panel
+- Changes take effect immediately
+- Setting is remembered in browser localStorage
+
+**API Endpoint:**
+```bash
+curl -X POST http://localhost:8000/api/logs/config \
+  -H "Content-Type: application/json" \
+  -d '{"level": "DEBUG"}'
+```
+
+**Environment Variable** (set before starting):
+```bash
+export QUIZLY_LOG_LEVEL=DEBUG
+```
+
+### Troubleshooting with Logs
+
+**Common Log Patterns:**
+
+- **API Errors**: Look for ERROR level logs in the `api` module
+- **Database Issues**: Check `database` module logs
+- **AI Generation Problems**: Monitor `ai` module for connection issues
+- **Performance Issues**: Enable DEBUG level for detailed timing information
+
+**Example Log Queries:**
+
+- View only errors: Filter by level = ERROR
+- Monitor API activity: Filter by module = api
+- Debug AI issues: Filter by module = ai, level = DEBUG
+- Recent activity: Set limit to 50, sort by newest first
 
 ## Database Schema
 
@@ -222,6 +364,14 @@ The application uses SQLite with the following tables:
 - `score_percentage` (REAL)
 - `created_at` (TEXT) - ISO timestamp
 - `answers` (TEXT) - JSON array of answer details
+
+**Logs Table:**
+- `id` (INTEGER PRIMARY KEY)
+- `timestamp` (TEXT) - ISO timestamp of log entry
+- `level` (TEXT) - Log level (DEBUG, INFO, WARNING, ERROR)
+- `module` (TEXT) - Source module that generated the log
+- `message` (TEXT) - Log message content
+- `created_at` (DATETIME) - Database insertion timestamp
 
 ## Sample Questions
 
@@ -313,9 +463,11 @@ app.add_middleware(
 Quizly-1/
 ├── backend/
 │   ├── main.py              # FastAPI application
+│   ├── logger.py            # Comprehensive logging system
 │   ├── requirements.txt     # Python dependencies
 │   ├── test_backend.py      # Backend tests
-│   └── quiz.db             # SQLite database (auto-generated)
+│   ├── quiz.db             # SQLite database (auto-generated)
+│   └── quizly.log          # Application log file (auto-generated)
 ├── frontend/
 │   ├── package.json        # React dependencies
 │   ├── public/             # Public assets
@@ -327,7 +479,9 @@ Quizly-1/
 │       └── components/
 │           ├── Quiz.js     # Quiz logic component
 │           ├── Question.js # Question display component
-│           └── ScoreDisplay.js # Score display component
+│           ├── ScoreDisplay.js # Score display component
+│           ├── AdminQuestions.js # Admin panel with tabs
+│           └── LogViewer.js # Real-time log viewer
 ├── start.sh                # Application launcher
 ├── README.md
 └── LICENSE
@@ -354,4 +508,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - 🎮 Multiplayer quiz mode
 - 📱 Progressive Web App (PWA) support
 - 🌐 Internationalization
-- 📊 Admin dashboard for question management
+- 🔔 WebSocket-based real-time log streaming
+- 📊 Advanced analytics and monitoring dashboards
+- 🚨 Log-based alerting and notifications

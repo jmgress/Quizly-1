@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import LogViewer from './LogViewer';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
@@ -10,10 +11,13 @@ const AdminQuestions = ({ onGoHome }) => {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [saveStatus, setSaveStatus] = useState({});
+  const [activeTab, setActiveTab] = useState('questions'); // 'questions' or 'logs'
 
   useEffect(() => {
-    fetchAllQuestions();
-  }, []);
+    if (activeTab === 'questions') {
+      fetchAllQuestions();
+    }
+  }, [activeTab]);
 
   const fetchAllQuestions = async () => {
     try {
@@ -138,131 +142,171 @@ const AdminQuestions = ({ onGoHome }) => {
   return (
     <div className="admin-container">
       <div className="admin-header">
-        <h1>🛠️ Admin: Question Management</h1>
-        <p>View and edit all quiz questions</p>
+        <h1>🛠️ Admin Panel</h1>
+        <p>Manage questions and monitor application logs</p>
         <button className="button" onClick={onGoHome}>
           Back to Home
         </button>
       </div>
 
-      <div className="admin-stats">
-        <p><strong>Total Questions:</strong> {questions.length}</p>
-        <p><strong>Categories:</strong> {[...new Set(questions.map(q => q.category))].join(', ')}</p>
+      <div className="admin-tabs">
+        <button 
+          className={`tab-button ${activeTab === 'questions' ? 'active' : ''}`}
+          onClick={() => setActiveTab('questions')}
+        >
+          📝 Question Management
+        </button>
+        <button 
+          className={`tab-button ${activeTab === 'logs' ? 'active' : ''}`}
+          onClick={() => setActiveTab('logs')}
+        >
+          📋 View Logs
+        </button>
       </div>
 
-      <div className="questions-table">
-        {questions.map(question => (
-          <div key={question.id} className="question-row">
-            <div className="question-header">
-              <span className="question-id">ID: {question.id}</span>
-              <span className="question-category">Category: {question.category}</span>
-              {editingId !== question.id && (
-                <button 
-                  className="edit-button"
-                  onClick={() => handleEditClick(question)}
-                >
-                  Edit
-                </button>
-              )}
+      {activeTab === 'questions' && (
+        <div className="questions-tab">
+          {loading ? (
+            <div className="card">
+              <div className="loading">Loading all questions...</div>
             </div>
-
-            {editingId === question.id ? (
-              // Edit mode
-              <div className="edit-form">
-                <div className="form-group">
-                  <label>Question Text:</label>
-                  <textarea
-                    value={editForm.text}
-                    onChange={(e) => handleFormChange('text', e.target.value)}
-                    rows="3"
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Category:</label>
-                  <input
-                    type="text"
-                    value={editForm.category}
-                    onChange={(e) => handleFormChange('category', e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Options:</label>
-                  {editForm.options?.map((option, index) => (
-                    <div key={option.id} className="option-edit">
-                      <span className="option-id">{option.id.toUpperCase()})</span>
-                      <input
-                        type="text"
-                        value={option.text}
-                        onChange={(e) => handleOptionChange(index, e.target.value)}
-                        className="form-input option-input"
-                      />
-                      <input
-                        type="radio"
-                        name={`correct-${question.id}`}
-                        checked={editForm.correct_answer === option.id}
-                        onChange={() => handleFormChange('correct_answer', option.id)}
-                      />
-                      <label>Correct</label>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="form-actions">
-                  <button 
-                    className="button save-button"
-                    onClick={() => handleSaveEdit(question.id)}
-                  >
-                    Save
-                  </button>
-                  <button 
-                    className="button cancel-button"
-                    onClick={handleCancelEdit}
-                  >
-                    Cancel
-                  </button>
-                </div>
-
-                {saveStatus[question.id] && (
-                  <div className={`save-status ${saveStatus[question.id].type}`}>
-                    {saveStatus[question.id].message}
-                  </div>
-                )}
+          ) : error ? (
+            <div className="card">
+              <div className="error">{error}</div>
+              <button className="button" onClick={fetchAllQuestions}>
+                Try Again
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="admin-stats">
+                <p><strong>Total Questions:</strong> {questions.length}</p>
+                <p><strong>Categories:</strong> {[...new Set(questions.map(q => q.category))].join(', ')}</p>
               </div>
-            ) : (
-              // View mode
-              <div className="question-content">
-                <div className="question-text">
-                  <strong>Q:</strong> {question.text}
-                </div>
-                <div className="question-options">
-                  {question.options.map(option => (
-                    <div 
-                      key={option.id} 
-                      className={`option ${option.id === question.correct_answer ? 'correct-option' : ''}`}
-                    >
-                      <span className="option-id">{option.id.toUpperCase()})</span>
-                      <span className="option-text">{option.text}</span>
-                      {option.id === question.correct_answer && (
-                        <span className="correct-indicator">✓ Correct</span>
+
+              <div className="questions-table">
+                {questions.map(question => (
+                  <div key={question.id} className="question-row">
+                    <div className="question-header">
+                      <span className="question-id">ID: {question.id}</span>
+                      <span className="question-category">Category: {question.category}</span>
+                      {editingId !== question.id && (
+                        <button 
+                          className="edit-button"
+                          onClick={() => handleEditClick(question)}
+                        >
+                          Edit
+                        </button>
                       )}
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
-            {saveStatus[question.id] && editingId !== question.id && (
-              <div className={`save-status ${saveStatus[question.id].type}`}>
-                {saveStatus[question.id].message}
+                    {editingId === question.id ? (
+                      // Edit mode
+                      <div className="edit-form">
+                        <div className="form-group">
+                          <label>Question Text:</label>
+                          <textarea
+                            value={editForm.text}
+                            onChange={(e) => handleFormChange('text', e.target.value)}
+                            rows="3"
+                            className="form-input"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Category:</label>
+                          <input
+                            type="text"
+                            value={editForm.category}
+                            onChange={(e) => handleFormChange('category', e.target.value)}
+                            className="form-input"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>Options:</label>
+                          {editForm.options?.map((option, index) => (
+                            <div key={option.id} className="option-edit">
+                              <span className="option-id">{option.id.toUpperCase()})</span>
+                              <input
+                                type="text"
+                                value={option.text}
+                                onChange={(e) => handleOptionChange(index, e.target.value)}
+                                className="form-input option-input"
+                              />
+                              <input
+                                type="radio"
+                                name={`correct-${question.id}`}
+                                checked={editForm.correct_answer === option.id}
+                                onChange={() => handleFormChange('correct_answer', option.id)}
+                              />
+                              <label>Correct</label>
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="form-actions">
+                          <button 
+                            className="button save-button"
+                            onClick={() => handleSaveEdit(question.id)}
+                          >
+                            Save
+                          </button>
+                          <button 
+                            className="button cancel-button"
+                            onClick={handleCancelEdit}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+
+                        {saveStatus[question.id] && (
+                          <div className={`save-status ${saveStatus[question.id].type}`}>
+                            {saveStatus[question.id].message}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      // View mode
+                      <div className="question-content">
+                        <div className="question-text">
+                          <strong>Q:</strong> {question.text}
+                        </div>
+                        <div className="question-options">
+                          {question.options.map(option => (
+                            <div 
+                              key={option.id} 
+                              className={`option ${option.id === question.correct_answer ? 'correct-option' : ''}`}
+                            >
+                              <span className="option-id">{option.id.toUpperCase()})</span>
+                              <span className="option-text">{option.text}</span>
+                              {option.id === question.correct_answer && (
+                                <span className="correct-indicator">✓ Correct</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {saveStatus[question.id] && editingId !== question.id && (
+                      <div className={`save-status ${saveStatus[question.id].type}`}>
+                        {saveStatus[question.id].message}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
-        ))}
-      </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'logs' && (
+        <div className="logs-tab">
+          <LogViewer />
+        </div>
+      )}
     </div>
   );
 };
