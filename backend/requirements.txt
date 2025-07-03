@@ -3,3 +3,5 @@ uvicorn==0.24.0
 pydantic==2.5.0
 python-multipart==0.0.6
 ollama==0.5.1
+python-dotenv==0.21.1 # Or latest compatible version
+pytest==7.4.3 # Or latest compatible version, for running tests

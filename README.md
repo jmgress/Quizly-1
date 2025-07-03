@@ -126,6 +126,74 @@ The startup script will also display the URLs where the application is running.
 
 Press `Ctrl+C` to stop both servers when done.
 
+## Advanced Configuration: LLM Providers
+
+Quizly now supports multiple Large Language Model (LLM) providers for AI question generation, allowing you to switch between Ollama and OpenAI, or configure them more granularly. This is managed through environment variables, typically set in a `.env` file at the root of the repository.
+
+### Setting up the `.env` file
+
+1.  **Create a `.env` file:** In the root directory of the project, create a file named `.env`.
+2.  **Copy from example:** You can copy the contents of `.env.example` into your new `.env` file as a starting point.
+    ```bash
+    cp .env.example .env
+    ```
+3.  **Customize variables:** Edit the `.env` file with your desired settings.
+
+### Environment Variables
+
+The following environment variables control the LLM provider integration:
+
+-   `LLM_PROVIDER`: Specifies the LLM provider to use.
+    -   Values: `"ollama"` (default) or `"openai"`.
+    -   Example: `LLM_PROVIDER="openai"`
+
+-   `OLLAMA_API_HOST`: The host URL for your Ollama instance (if using Ollama).
+    -   Default: `"http://localhost:11434"`
+    -   Example: `OLLAMA_API_HOST="http://192.168.1.100:11434"`
+
+-   `OLLAMA_MODEL`: The Ollama model to use for question generation.
+    -   Default: `"mistral"` (ensure you have this model pulled via `ollama pull mistral`)
+    -   Example: `OLLAMA_MODEL="llama3.2"`
+
+-   `OPENAI_API_KEY`: Your API key for OpenAI (required if `LLM_PROVIDER="openai"`).
+    -   Example: `OPENAI_API_KEY="sk-yourActualOpenAIkeyHere"`
+
+-   `OPENAI_MODEL`: The OpenAI model to use.
+    -   Default: `"gpt-3.5-turbo"`
+    -   Example: `OPENAI_MODEL="gpt-4"`
+
+-   `PROMPT_TEMPLATE`: The template string used to generate prompts for the LLM. This allows customization of how questions are requested.
+    -   Available placeholders: `{subject}`, `{limit}`, `{subject_lowercase}`.
+    -   The default template is designed to produce JSON-formatted questions and is defined in `backend/llm_providers.py`. You can override it in your `.env` file if needed, but ensure the output format remains compatible with the application's parser.
+    -   Example (if you need to change it, ensure proper JSON escaping if putting this in `.env` directly for complex strings):
+        ```
+        PROMPT_TEMPLATE="Generate {limit} tricky multiple-choice questions about {subject}. Each question must have 4 options (a,b,c,d) and indicate the correct one. Output as a JSON list: [{\"text\":\"...\", \"options\":[{\"id\":\"a\",...},...], \"correct_answer\":\"a\", \"category\":\"{subject_lowercase}\"}]"
+        ```
+
+### Examples
+
+**Using Ollama (default or explicit):**
+
+If you have Ollama running locally and want to use the `llama3.2` model:
+```env
+# .env file content
+LLM_PROVIDER="ollama"
+OLLAMA_MODEL="llama3.2"
+# OLLAMA_API_HOST defaults to http://localhost:11434 if not set
+```
+
+**Using OpenAI:**
+
+If you want to use OpenAI with the `gpt-4` model:
+```env
+# .env file content
+LLM_PROVIDER="openai"
+OPENAI_API_KEY="your_openai_api_key_here"
+OPENAI_MODEL="gpt-4"
+```
+
+**Note:** The backend server (`main.py`) needs to be restarted for changes in the `.env` file to take effect. The `python-dotenv` library loads these variables at application startup.
+
 ## How to Use
 
 1. **Start Quiz**: Click "Start Quiz" on the home screen

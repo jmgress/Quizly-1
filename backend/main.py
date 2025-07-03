@@ -6,7 +6,28 @@ import sqlite3
 import json
 import uuid
 from datetime import datetime
-import ollama
+import logging
+from dotenv import load_dotenv
+import os
+# Remove direct ollama import if no longer used directly in main.py
+# import ollama
+
+# Import provider factory and custom exceptions
+from backend.llm_providers import get_llm_provider, LLMProviderError, LLMConnectionError, LLMAPIError
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Setup basic logging
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# logger = logging.getLogger(__name__)
+# BasicConfig can be called only once. If llm_providers also calls it, it might be an issue.
+# Let's ensure logging is configured once, or rely on FastAPI's default logging/uvicorn.
+# For now, assume llm_providers' logger will work. If main needs its own, configure carefully.
+# Re-evaluating: llm_providers uses getLogger, doesn't configure basicConfig. So this is fine.
+logging.basicConfig(level=os.getenv("LOG_LEVEL", "INFO").upper(), format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 
 app = FastAPI(title="Quizly API", description="Knowledge Testing Application API")
 
@@ -344,91 +365,68 @@ def get_categories():
 
 @app.get("/api/questions/ai", response_model=List[Question])
 def generate_ai_questions(subject: str, limit: Optional[int] = 5):
-    """Generate AI-powered questions for a specific subject using Ollama"""
+    """Generate AI-powered questions for a specific subject using the configured LLM provider."""
     try:
-        # Create a prompt for generating quiz questions
-        prompt = f"""Generate {limit} multiple-choice quiz questions about {subject}. 
-        Each question should have exactly 4 answer options labeled a, b, c, d.
-        Format your response as a JSON array where each question has this structure:
-        {{
-            "text": "question text here?",
-            "options": [
-                {{"id": "a", "text": "option A text"}},
-                {{"id": "b", "text": "option B text"}},
-                {{"id": "c", "text": "option C text"}},
-                {{"id": "d", "text": "option D text"}}
-            ],
-            "correct_answer": "a",
-            "category": "{subject.lower()}"
-        }}
+        logger.info(f"Received request to generate {limit} AI questions for subject: {subject}")
+        provider = get_llm_provider()
         
-        Return only the JSON array, no additional text."""
+        # The prompt template is now handled by the provider, using PROMPT_TEMPLATE env var.
+        # The provider's generate_questions method is expected to return a list of dicts
+        # matching the structure needed, but without the 'id' field yet.
+        generated_questions_data = provider.generate_questions(subject=subject, limit=limit)
 
-        # Call Ollama to generate questions
-        response = ollama.chat(
-            model='llama3.2',  # Using a common model, can be configurable
-            messages=[{
-                'role': 'user', 
-                'content': prompt
-            }]
-        )
+        if not generated_questions_data:
+            logger.warning(f"AI provider returned no questions for subject '{subject}'.")
+            # Return empty list or raise error? For now, empty list to match previous behavior of returning [] if parsing failed.
+            # This could also be an HTTPException 500 or 503 if it's unexpected.
+            # Let's make it an error if nothing comes back, as it implies an issue.
+            raise HTTPException(
+                status_code=503,
+                detail=f"AI provider returned no valid questions for subject '{subject}'. Check provider logs."
+            )
+
+        questions_with_ids = []
+        for i, q_data in enumerate(generated_questions_data):
+            # Basic validation, though provider should do most of this.
+            if not all(key in q_data for key in ['text', 'options', 'correct_answer', 'category']):
+                logger.warning(f"Provider returned incomplete question data: {q_data}. Skipping.")
+                continue
+            
+            questions_with_ids.append({
+                "id": 1000 + i,  # Use high IDs to avoid conflicts with DB questions, same as before
+                "text": q_data["text"],
+                "options": q_data["options"],
+                "correct_answer": q_data["correct_answer"],
+                "category": q_data["category"] # Category should now be set by the provider
+            })
         
-        # Parse the response
-        try:
-            questions_data = json.loads(response['message']['content'])
-            
-            # Ensure we have a list
-            if not isinstance(questions_data, list):
-                questions_data = [questions_data]
-            
-            # Convert to our format and add IDs
-            questions = []
-            for i, q_data in enumerate(questions_data[:limit]):
-                # Validate the structure
-                if not all(key in q_data for key in ['text', 'options', 'correct_answer']):
-                    continue
-                    
-                questions.append({
-                    "id": 1000 + i,  # Use high IDs to avoid conflicts with DB questions
-                    "text": q_data["text"],
-                    "options": q_data["options"],
-                    "correct_answer": q_data["correct_answer"],
-                    "category": subject.lower()
-                })
-            
-            if not questions:
-                raise ValueError("No valid questions generated")
-                
-            return questions
-            
-        except json.JSONDecodeError:
-            # If JSON parsing fails, try to extract JSON from the response
-            content = response['message']['content']
-            # Look for JSON array in the response
-            start = content.find('[')
-            end = content.rfind(']') + 1
-            if start >= 0 and end > start:
-                questions_data = json.loads(content[start:end])
-                questions = []
-                for i, q_data in enumerate(questions_data[:limit]):
-                    if not all(key in q_data for key in ['text', 'options', 'correct_answer']):
-                        continue
-                    questions.append({
-                        "id": 1000 + i,
-                        "text": q_data["text"],
-                        "options": q_data["options"],
-                        "correct_answer": q_data["correct_answer"],
-                        "category": subject.lower()
-                    })
-                return questions
-            else:
-                raise ValueError("Could not parse AI response")
-        
+        if not questions_with_ids:
+             logger.error(f"No questions could be formatted after generation for subject '{subject}'. Provider might have returned malformed data.")
+             raise HTTPException(
+                status_code=500,
+                detail="Failed to format questions from AI provider. Check server logs."
+            )
+
+        logger.info(f"Successfully generated {len(questions_with_ids)} AI questions for subject: {subject}")
+        return questions_with_ids
+
+    except LLMConnectionError as e:
+        logger.error(f"LLM Connection Error: {e}")
+        raise HTTPException(status_code=503, detail=f"AI service connection error: {str(e)}")
+    except LLMAPIError as e:
+        logger.error(f"LLM API Error: {e}")
+        raise HTTPException(status_code=502, detail=f"AI service API error: {str(e)}")
+    except LLMProviderError as e: # Catchall for other provider errors
+        logger.error(f"LLM Provider Error: {e}")
+        raise HTTPException(status_code=500, detail=f"AI service provider error: {str(e)}")
+    except ValueError as e: # Catch ValueErrors from factory (e.g. missing API key)
+        logger.error(f"Configuration error for AI provider: {e}")
+        raise HTTPException(status_code=400, detail=f"Configuration error: {str(e)}")
     except Exception as e:
-        # If Ollama fails, return a fallback error
+        logger.exception(f"Unexpected error during AI question generation for subject '{subject}': {e}") #.exception includes stack trace
         raise HTTPException(
-            status_code=503, 
-            detail=f"AI question generation failed: {str(e)}. Please ensure Ollama is running and the llama3.2 model is available."
+            status_code=500,
+            detail=f"An unexpected error occurred during AI question generation: {str(e)}"
         )
 
 if __name__ == "__main__":
