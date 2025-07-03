@@ -12,7 +12,7 @@ An interactive web-based quiz application that allows users to test their knowle
 - 🎨 **Modern UI**: Clean, gradient-based design with smooth animations
 - 🔄 **Multiple Categories**: Questions across geography, science, math, and literature
 - 🎯 **Subject Selection**: Choose your preferred quiz category before starting
-- 🤖 **AI-Powered Questions**: Generate fresh questions using Ollama LLM integration
+- 🤖 **AI-Powered Questions**: Generate fresh questions using configurable LLM providers (Ollama or OpenAI)
 - 📚 **Dual Question Sources**: Select between curated database questions or AI-generated content
 - 🚀 **Fast API**: RESTful API with automatic documentation
 
@@ -46,7 +46,10 @@ An interactive web-based quiz application that allows users to test their knowle
    cd backend
    ```
 
-2. **Install Python dependencies:**
+2. **Configure environment variables:**
+   Copy `.env.example` to `.env` and adjust settings for your desired LLM provider.
+
+3. **Install Python dependencies:**
    ```bash
    # Option 1: Using pip
    pip install fastapi uvicorn
@@ -55,7 +58,7 @@ An interactive web-based quiz application that allows users to test their knowle
    sudo apt install python3-fastapi python3-uvicorn
    ```
 
-3. **Run the backend server:**
+4. **Run the backend server:**
    ```bash
    python main.py
    ```
@@ -101,26 +104,30 @@ This script will:
 
 ### AI Question Generation Setup (Optional)
 
-To enable AI-powered question generation, you need to install and configure Ollama:
+Quizly uses a provider-based architecture for LLM integrations. Copy `.env.example` to `.env` and adjust the variables to select your preferred provider.
 
+#### Ollama
 1. **Install Ollama:**
    - Visit [ollama.ai](https://ollama.ai) and follow the installation instructions for your platform
    - Or use the command line:
      ```bash
      curl -fsSL https://ollama.ai/install.sh | sh
      ```
-
-2. **Pull the required model:**
+2. **Pull the required model** (configured via `OLLAMA_MODEL` in `.env`):
    ```bash
    ollama pull llama3.2
    ```
-
 3. **Start Ollama service:**
    ```bash
    ollama serve
    ```
 
-Once Ollama is running with the llama3.2 model, the AI question generation feature will work automatically. If Ollama is not available, users can still use curated database questions.
+#### OpenAI
+1. Set `LLM_PROVIDER=openai` in your `.env` file.
+2. Provide your API key via `OPENAI_API_KEY` and optional model name using `OPENAI_MODEL`.
+
+Once configured, the API will automatically use the selected provider.
+
 
 The startup script will also display the URLs where the application is running.
 
@@ -132,7 +139,7 @@ Press `Ctrl+C` to stop both servers when done.
 2. **Select Subject**: Choose your preferred quiz category (Geography, Science, Math, Literature)
 3. **Choose Question Source**:
    - **📚 Curated Questions**: High-quality pre-written questions from the database
-   - **🤖 AI-Generated Questions**: Fresh questions powered by Ollama (requires Ollama setup)
+   - **🤖 AI-Generated Questions**: Fresh questions powered by the configured LLM provider (Ollama or OpenAI)
 4. **Take Quiz**: Answer questions and see immediate feedback
 5. **View Results**: Review your score and answer details at the end
 
@@ -355,3 +362,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - 📱 Progressive Web App (PWA) support
 - 🌐 Internationalization
 - 📊 Admin dashboard for question management
+

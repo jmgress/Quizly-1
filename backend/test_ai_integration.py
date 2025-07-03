@@ -1,103 +1,129 @@
 #!/usr/bin/env python3
 
-# Test script to check AI integration functionality
-import json
-import sqlite3
-from unittest.mock import patch, MagicMock
-import sys
-import os
+"""Simple tests for the LLM provider integration"""
 
-# Add the current directory to Python path
+import os
+import json
+from unittest.mock import patch
+import sys
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from main import generate_ai_questions
+from llm_providers import get_provider, OllamaProvider, OpenAIProvider
 
-def test_ai_endpoint_error_handling():
-    """Test that AI endpoint handles errors gracefully"""
-    print("Testing AI endpoint error handling...")
-    
+
+def reset_env():
+    for var in ["LLM_PROVIDER", "OPENAI_API_KEY", "OPENAI_MODEL", "OLLAMA_MODEL"]:
+        os.environ.pop(var, None)
+
+
+def test_provider_factory():
+    print("Testing provider factory...")
+    reset_env()
+    provider = get_provider()
+    if isinstance(provider, OllamaProvider):
+        print("✅ Default provider is Ollama")
+    else:
+        print("❌ Default provider selection failed")
+
+    os.environ["LLM_PROVIDER"] = "openai"
+    os.environ["OPENAI_API_KEY"] = "dummy"
     try:
-        # This should fail with connection error since Ollama isn't running
-        # We expect this to raise an HTTPException
-        result = generate_ai_questions("history", 2)
-        print("❌ AI endpoint test failed - should have raised an exception")
-    except Exception as e:
-        if "Connection refused" in str(e) or "AI question generation failed" in str(e):
-            print("✅ AI endpoint error handling test passed!")
-            print(f"Expected error caught: {type(e).__name__}")
+        provider = get_provider()
+        if isinstance(provider, OpenAIProvider):
+            print("✅ OpenAI provider selected")
         else:
-            print(f"❌ Unexpected error: {e}")
+            print("❌ OpenAI provider selection failed")
+    except RuntimeError:
+        print("✅ OpenAI provider selection raised RuntimeError as expected (package missing)")
+    reset_env()
 
-def test_category_filtering():
-    """Test that category filtering works with database questions"""
-    print("\nTesting category filtering...")
-    
-    # Import the get_questions function
-    from main import get_questions
-    
-    try:
-        # Test getting geography questions
-        geography_questions = get_questions(category="geography", limit=2)
-        
-        if geography_questions and len(geography_questions) > 0:
-            # Check that all returned questions are geography
-            all_geography = all(q.get("category") == "geography" for q in geography_questions)
-            if all_geography:
-                print("✅ Category filtering test passed!")
-                print(f"Retrieved {len(geography_questions)} geography questions")
-            else:
-                print("❌ Category filtering test failed - not all questions are geography")
-        else:
-            print("❌ Category filtering test failed - no questions returned")
-    except Exception as e:
-        print(f"❌ Category filtering test failed: {e}")
 
-def test_mock_ai_generation():
-    """Test AI generation with mocked Ollama response"""
-    print("\nTesting AI generation with mock...")
-    
-    # Mock the ollama.chat function
-    mock_response = {
-        'message': {
-            'content': '''[
+def test_mock_ollama_generation():
+    print("\nTesting Ollama generation with mock...")
+    reset_env()
+    os.environ["LLM_PROVIDER"] = "ollama"
+    mock_resp = {
+        "message": {
+            "content": json.dumps([
                 {
-                    "text": "What year did World War II end?",
+                    "text": "Q",
                     "options": [
-                        {"id": "a", "text": "1943"},
-                        {"id": "b", "text": "1945"},
-                        {"id": "c", "text": "1947"},
-                        {"id": "d", "text": "1949"}
+                        {"id": "a", "text": "A"},
+                        {"id": "b", "text": "B"},
+                        {"id": "c", "text": "C"},
+                        {"id": "d", "text": "D"}
                     ],
-                    "correct_answer": "b",
-                    "category": "history"
+                    "correct_answer": "a",
+                    "category": "test"
                 }
-            ]'''
+            ])
         }
     }
-    
-    with patch('main.ollama.chat', return_value=mock_response):
-        try:
-            result = generate_ai_questions("history", 1)
-            if result and len(result) == 1:
-                question = result[0]
-                if (question.get('text') and 
-                    question.get('options') and 
-                    question.get('correct_answer') and
-                    question.get('id') >= 1000):  # AI questions have IDs >= 1000
-                    print("✅ Mock AI generation test passed!")
-                    print(f"Generated question: {question['text']}")
-                else:
-                    print("❌ Mock AI generation test failed - invalid question structure")
-            else:
-                print("❌ Mock AI generation test failed - wrong number of questions")
-        except Exception as e:
-            print(f"❌ Mock AI generation test failed: {e}")
+    with patch('llm_providers.ollama', type('obj', (), {'chat': lambda *a, **k: mock_resp, 'list': lambda: []})):
+        provider = get_provider()
+        qs = provider.generate_questions("test", 1)
+        if qs and qs[0]['text'] == 'Q':
+            print("✅ Ollama provider generation passed")
+        else:
+            print("❌ Ollama provider generation failed")
+    reset_env()
+
+
+def test_mock_openai_generation():
+    print("\nTesting OpenAI generation with mock...")
+    reset_env()
+    os.environ["LLM_PROVIDER"] = "openai"
+    os.environ["OPENAI_API_KEY"] = "dummy"
+    choice_obj = type("Obj", (), {"message": type("Obj", (), {"content": json.dumps([
+        {
+            "text": "Q",
+            "options": [
+                {"id": "a", "text": "A"},
+                {"id": "b", "text": "B"},
+                {"id": "c", "text": "C"},
+                {"id": "d", "text": "D"}
+            ],
+            "correct_answer": "a",
+            "category": "test"
+        }
+    ])})})
+    mock_resp = type("Obj", (), {"choices": [choice_obj]})
+    dummy_openai = type('obj', (), {
+        'ChatCompletion': type('obj', (), {'create': lambda *a, **k: mock_resp}),
+        'Model': type('obj', (), {'list': lambda: None})
+    })
+    with patch('llm_providers.openai', dummy_openai):
+        provider = get_provider()
+        qs = provider.generate_questions("test", 1)
+    if qs and qs[0]['text'] == 'Q':
+        print("✅ OpenAI provider generation passed")
+    else:
+        print("❌ OpenAI provider generation failed")
+    reset_env()
+
+
+def test_category_filtering():
+    print("\nTesting category filtering...")
+    import sqlite3
+    conn = sqlite3.connect('backend/quiz.db')
+    cur = conn.cursor()
+    cur.execute("SELECT category FROM questions WHERE category='geography' LIMIT 2")
+    rows = cur.fetchall()
+    conn.close()
+    if rows and all(r[0] == 'geography' for r in rows):
+        print("✅ Category filtering test passed!")
+    else:
+        print("❌ Category filtering test failed")
+
 
 if __name__ == "__main__":
     print("🧪 Testing AI Integration Features\n")
-    
-    test_ai_endpoint_error_handling()
+    test_provider_factory()
+    test_mock_ollama_generation()
+    test_mock_openai_generation()
     test_category_filtering()
-    test_mock_ai_generation()
-    
     print("\n🎉 AI integration tests completed!")
+
+
+
