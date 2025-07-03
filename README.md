@@ -12,8 +12,11 @@ An interactive web-based quiz application that allows users to test their knowle
 - 🎨 **Modern UI**: Clean, gradient-based design with smooth animations
 - 🔄 **Multiple Categories**: Questions across geography, science, math, and literature
 - 🎯 **Subject Selection**: Choose your preferred quiz category before starting
-- 🤖 **AI-Powered Questions**: Generate fresh questions using Ollama LLM integration
+- 🤖 **AI-Powered Questions**: Generate fresh questions using multiple LLM providers
 - 📚 **Dual Question Sources**: Select between curated database questions or AI-generated content
+- 🔌 **Provider-Based Architecture**: Easy switching between Ollama and OpenAI providers
+- ⚙️ **Environment Configuration**: Configure providers via environment variables
+- 🏥 **Health Checks**: Monitor LLM provider availability and status
 - 🚀 **Fast API**: RESTful API with automatic documentation
 
 ## Tech Stack
@@ -21,9 +24,10 @@ An interactive web-based quiz application that allows users to test their knowle
 ### Backend
 - **FastAPI**: Modern, fast web framework for Python
 - **SQLite**: Lightweight database for question storage
-- **Ollama**: AI integration for question generation
+- **LLM Providers**: Configurable AI integration supporting Ollama and OpenAI
 - **Pydantic**: Data validation and serialization
 - **Uvicorn**: ASGI server for running FastAPI
+- **Python-dotenv**: Environment variable management
 
 ### Frontend
 - **React**: Modern JavaScript library for building user interfaces
@@ -99,9 +103,88 @@ This script will:
 - Install npm packages if needed
 - Start both backend and frontend servers
 
+### LLM Provider Configuration
+
+Quizly supports multiple LLM providers for AI question generation. You can easily switch between providers using environment variables.
+
+#### 1. Environment Setup
+
+Create a `.env` file in the project root directory (copy from `.env.example`):
+
+```bash
+cp .env.example .env
+```
+
+#### 2. Configure Your Preferred Provider
+
+Edit the `.env` file to configure your preferred LLM provider:
+
+**For Ollama (Default):**
+```env
+LLM_PROVIDER=ollama
+OLLAMA_MODEL=llama3.2
+OLLAMA_HOST=http://localhost:11434
+```
+
+**For OpenAI:**
+```env
+LLM_PROVIDER=openai
+OPENAI_API_KEY=your-openai-api-key-here
+OPENAI_MODEL=gpt-3.5-turbo
+```
+
+#### 3. Provider-Specific Setup
+
+**Ollama Setup:**
+1. Install Ollama from [ollama.ai](https://ollama.ai)
+2. Pull the required model:
+   ```bash
+   ollama pull llama3.2
+   ```
+3. Start Ollama service:
+   ```bash
+   ollama serve
+   ```
+
+**OpenAI Setup:**
+1. Get your API key from [OpenAI](https://platform.openai.com/api-keys)
+2. Set the `OPENAI_API_KEY` environment variable
+3. Choose your preferred model (default: gpt-3.5-turbo)
+
+#### 4. Health Check
+
+You can check the health of your configured LLM provider:
+
+```bash
+curl http://localhost:8000/api/llm/health
+```
+
+This will return:
+```json
+{
+  "provider": "ollama",
+  "healthy": true,
+  "available_providers": ["ollama"]
+}
+```
+
+#### 5. Supported Configuration Options
+
+| Environment Variable | Description | Default |
+|---------------------|-------------|---------|
+| `LLM_PROVIDER` | Provider type: "ollama" or "openai" | ollama |
+| `OLLAMA_MODEL` | Ollama model name | llama3.2 |
+| `OLLAMA_HOST` | Ollama server URL | http://localhost:11434 |
+| `OPENAI_API_KEY` | OpenAI API key | - |
+| `OPENAI_MODEL` | OpenAI model name | gpt-3.5-turbo |
+| `DEFAULT_QUESTION_LIMIT` | Default number of questions | 5 |
+| `LOG_LEVEL` | Logging level | INFO |
+
 ### AI Question Generation Setup (Optional)
 
-To enable AI-powered question generation, you need to install and configure Ollama:
+To enable AI-powered question generation, you need to set up at least one LLM provider:
+
+#### Option A: Ollama (Local/Free)
 
 1. **Install Ollama:**
    - Visit [ollama.ai](https://ollama.ai) and follow the installation instructions for your platform
@@ -120,7 +203,19 @@ To enable AI-powered question generation, you need to install and configure Olla
    ollama serve
    ```
 
-Once Ollama is running with the llama3.2 model, the AI question generation feature will work automatically. If Ollama is not available, users can still use curated database questions.
+#### Option B: OpenAI (Cloud/Paid)
+
+1. **Get an OpenAI API key:**
+   - Visit [OpenAI Platform](https://platform.openai.com/api-keys)
+   - Create a new API key
+
+2. **Configure the environment:**
+   ```bash
+   echo "LLM_PROVIDER=openai" >> .env
+   echo "OPENAI_API_KEY=your-actual-api-key" >> .env
+   ```
+
+Once configured, the AI question generation feature will work automatically. If no provider is available, users can still use curated database questions.
 
 The startup script will also display the URLs where the application is running.
 
@@ -132,9 +227,20 @@ Press `Ctrl+C` to stop both servers when done.
 2. **Select Subject**: Choose your preferred quiz category (Geography, Science, Math, Literature)
 3. **Choose Question Source**:
    - **📚 Curated Questions**: High-quality pre-written questions from the database
-   - **🤖 AI-Generated Questions**: Fresh questions powered by Ollama (requires Ollama setup)
+   - **🤖 AI-Generated Questions**: Fresh questions powered by your configured LLM provider (Ollama or OpenAI)
 4. **Take Quiz**: Answer questions and see immediate feedback
 5. **View Results**: Review your score and answer details at the end
+
+### AI Question Generation
+
+The AI question generation feature uses your configured LLM provider to create fresh, unique questions on any topic. The system will:
+
+- Generate questions based on the selected subject
+- Format them consistently with the existing question structure
+- Provide appropriate difficulty levels
+- Include proper multiple-choice options with correct answers
+
+If AI generation fails (provider offline, API quota exceeded, etc.), the system will gracefully fall back to curated database questions.
 
 ### Admin Interface
 
@@ -169,6 +275,9 @@ The admin interface allows you to view and edit all quiz questions stored in the
 - **GET** `/api/questions/ai` - Generate AI-powered questions (supports `?subject=<subject>&limit=<limit>`)
 - **GET** `/api/categories` - Get available question categories
 
+### LLM Provider Management
+- **GET** `/api/llm/health` - Check LLM provider health and availability
+
 ### Quiz Management
 - **POST** `/api/quiz/submit` - Submit quiz answers and get results
 - **GET** `/api/quiz/{quiz_id}` - Get quiz results by ID
@@ -183,6 +292,11 @@ curl http://localhost:8000/api/questions
 **Get Questions by Category:**
 ```bash
 curl "http://localhost:8000/api/questions?category=geography&limit=5"
+```
+
+**Check LLM Provider Health:**
+```bash
+curl http://localhost:8000/api/llm/health
 ```
 
 **Generate AI Questions:**

@@ -6,7 +6,18 @@ import sqlite3
 import json
 import uuid
 from datetime import datetime
-import ollama
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+# Import LLM providers
+from llm_providers import create_llm_provider, get_available_providers
+
+import logging
+logging.basicConfig(level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")))
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Quizly API", description="Knowledge Testing Application API")
 
@@ -342,95 +353,73 @@ def get_categories():
     conn.close()
     return {"categories": categories}
 
+@app.get("/api/llm/health")
+def check_llm_health():
+    """Check the health of the configured LLM provider"""
+    try:
+        provider = create_llm_provider()
+        is_healthy = provider.health_check()
+        provider_type = os.getenv("LLM_PROVIDER", "ollama").lower()
+        
+        return {
+            "provider": provider_type,
+            "healthy": is_healthy,
+            "available_providers": get_available_providers()
+        }
+    except Exception as e:
+        logger.error(f"LLM health check failed: {str(e)}")
+        return {
+            "provider": os.getenv("LLM_PROVIDER", "ollama").lower(),
+            "healthy": False,
+            "error": str(e),
+            "available_providers": []
+        }
+
+
 @app.get("/api/questions/ai", response_model=List[Question])
 def generate_ai_questions(subject: str, limit: Optional[int] = 5):
-    """Generate AI-powered questions for a specific subject using Ollama"""
+    """Generate AI-powered questions for a specific subject using configured LLM provider"""
     try:
-        # Create a prompt for generating quiz questions
-        prompt = f"""Generate {limit} multiple-choice quiz questions about {subject}. 
-        Each question should have exactly 4 answer options labeled a, b, c, d.
-        Format your response as a JSON array where each question has this structure:
-        {{
-            "text": "question text here?",
-            "options": [
-                {{"id": "a", "text": "option A text"}},
-                {{"id": "b", "text": "option B text"}},
-                {{"id": "c", "text": "option C text"}},
-                {{"id": "d", "text": "option D text"}}
-            ],
-            "correct_answer": "a",
-            "category": "{subject.lower()}"
-        }}
+        # Get default limit from environment if not provided
+        if limit is None:
+            limit = int(os.getenv("DEFAULT_QUESTION_LIMIT", "5"))
         
-        Return only the JSON array, no additional text."""
-
-        # Call Ollama to generate questions
-        response = ollama.chat(
-            model='llama3.2',  # Using a common model, can be configurable
-            messages=[{
-                'role': 'user', 
-                'content': prompt
-            }]
-        )
+        # Create LLM provider instance
+        provider = create_llm_provider()
         
-        # Parse the response
-        try:
-            questions_data = json.loads(response['message']['content'])
-            
-            # Ensure we have a list
-            if not isinstance(questions_data, list):
-                questions_data = [questions_data]
-            
-            # Convert to our format and add IDs
-            questions = []
-            for i, q_data in enumerate(questions_data[:limit]):
-                # Validate the structure
-                if not all(key in q_data for key in ['text', 'options', 'correct_answer']):
-                    continue
-                    
-                questions.append({
-                    "id": 1000 + i,  # Use high IDs to avoid conflicts with DB questions
-                    "text": q_data["text"],
-                    "options": q_data["options"],
-                    "correct_answer": q_data["correct_answer"],
-                    "category": subject.lower()
-                })
-            
-            if not questions:
-                raise ValueError("No valid questions generated")
-                
-            return questions
-            
-        except json.JSONDecodeError:
-            # If JSON parsing fails, try to extract JSON from the response
-            content = response['message']['content']
-            # Look for JSON array in the response
-            start = content.find('[')
-            end = content.rfind(']') + 1
-            if start >= 0 and end > start:
-                questions_data = json.loads(content[start:end])
-                questions = []
-                for i, q_data in enumerate(questions_data[:limit]):
-                    if not all(key in q_data for key in ['text', 'options', 'correct_answer']):
-                        continue
-                    questions.append({
-                        "id": 1000 + i,
-                        "text": q_data["text"],
-                        "options": q_data["options"],
-                        "correct_answer": q_data["correct_answer"],
-                        "category": subject.lower()
-                    })
-                return questions
-            else:
-                raise ValueError("Could not parse AI response")
+        # Generate questions using the provider
+        questions = provider.generate_questions(subject, limit)
+        
+        logger.info(f"Generated {len(questions)} AI questions for subject: {subject}")
+        return questions
         
     except Exception as e:
-        # If Ollama fails, return a fallback error
-        raise HTTPException(
-            status_code=503, 
-            detail=f"AI question generation failed: {str(e)}. Please ensure Ollama is running and the llama3.2 model is available."
-        )
+        logger.error(f"AI question generation failed: {str(e)}")
+        # Return provider-specific error message
+        error_msg = f"AI question generation failed: {str(e)}"
+        
+        # Add provider-specific guidance
+        provider_type = os.getenv("LLM_PROVIDER", "ollama").lower()
+        if provider_type == "ollama":
+            error_msg += " Please ensure Ollama is running and the required model is available."
+        elif provider_type == "openai":
+            error_msg += " Please check your OpenAI API key and quota."
+        
+        raise HTTPException(status_code=503, detail=error_msg)
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    
+    # Initialize database
+    init_db()
+    
+    # Get host and port from environment
+    host = os.getenv("APP_HOST", "0.0.0.0")
+    port = int(os.getenv("APP_PORT", "8000"))
+    
+    # Log provider configuration
+    provider_type = os.getenv("LLM_PROVIDER", "ollama")
+    logger.info(f"Starting Quizly API server with LLM provider: {provider_type}")
+    
+    # Start server
+    uvicorn.run(app, host=host, port=port)
