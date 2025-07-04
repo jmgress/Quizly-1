@@ -76,6 +76,8 @@ function App() {
           onRestart={restartQuiz} 
           category={quizConfig.category}
           source={quizConfig.source}
+          provider={quizConfig.provider}
+          model={quizConfig.model}
         />
       )}
 

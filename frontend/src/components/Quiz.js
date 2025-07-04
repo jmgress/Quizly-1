@@ -5,7 +5,7 @@ import ScoreDisplay from './ScoreDisplay';
 
 const API_BASE_URL = 'http://localhost:8000';
 
-const Quiz = ({ onRestart, category, source }) => {
+const Quiz = ({ onRestart, category, source, provider, model }) => {
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState([]);
@@ -18,7 +18,7 @@ const Quiz = ({ onRestart, category, source }) => {
 
   useEffect(() => {
     fetchQuestions();
-  }, [category, source]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [category, source, provider, model]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchQuestions = async () => {
     try {
@@ -26,8 +26,14 @@ const Quiz = ({ onRestart, category, source }) => {
       let url;
       
       if (source === 'ai') {
-        // Fetch AI-generated questions
+        // Fetch AI-generated questions with provider and model
         url = `${API_BASE_URL}/api/questions/ai?subject=${encodeURIComponent(category)}&limit=5`;
+        if (provider) {
+          url += `&provider_type=${encodeURIComponent(provider)}`;
+        }
+        if (model) {
+          url += `&model=${encodeURIComponent(model)}`;
+        }
       } else {
         // Fetch database questions with category filter
         url = `${API_BASE_URL}/api/questions?category=${encodeURIComponent(category)}&limit=10`;
@@ -98,7 +104,7 @@ const Quiz = ({ onRestart, category, source }) => {
 
   if (loading) {
     const loadingMessage = source === 'ai' 
-      ? `Generating AI questions about ${category}...`
+      ? `Generating AI questions about ${category}${model ? ` using ${model}` : ''}...`
       : `Loading ${category} questions...`;
     
     return (

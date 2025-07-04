@@ -377,8 +377,13 @@ def check_llm_health():
 
 
 @app.get("/api/questions/ai", response_model=List[Question])
-def generate_ai_questions(subject: str, limit: Optional[int] = 5, provider_type: Optional[str] = None):
-    """Generate AI-powered questions for a specific subject using configured LLM provider"""
+def generate_ai_questions(
+    subject: str, 
+    limit: Optional[int] = 5, 
+    provider_type: Optional[str] = None,
+    model: Optional[str] = None
+):
+    """Generate AI-powered questions for a specific subject using selected LLM provider and model"""
     try:
         # Get default limit from environment if not provided
         if limit is None:
@@ -386,18 +391,25 @@ def generate_ai_questions(subject: str, limit: Optional[int] = 5, provider_type:
         
         # Use provider from environment or query parameter
         provider_type = provider_type or os.getenv("LLM_PROVIDER", "ollama").lower()
-        provider = create_llm_provider(provider_type)
+        
+        # Create provider with specific model if provided
+        provider_kwargs = {}
+        if model:
+            provider_kwargs["model"] = model
+            
+        provider = create_llm_provider(provider_type, **provider_kwargs)
         
         # Log the provider and model being used
-        if provider_type == "openai":
-            logger.info(f"Using OpenAI model: {os.getenv('OPENAI_MODEL', 'gpt-4o-mini')}")
-        else:
-            logger.info(f"Using provider: {provider_type}")
+        model_name = model or (
+            os.getenv("OPENAI_MODEL", "gpt-4o-mini") if provider_type == "openai" 
+            else os.getenv("OLLAMA_MODEL", "llama3.2")
+        )
+        logger.info(f"Using {provider_type} provider with model: {model_name}")
         
         # Generate questions using the provider
         questions = provider.generate_questions(subject, limit)
         
-        logger.info(f"Generated {len(questions)} AI questions for subject: {subject} using {provider_type} provider")
+        logger.info(f"Generated {len(questions)} AI questions for subject: {subject} using {provider_type}/{model_name}")
         return questions
         
     except Exception as e:
@@ -421,6 +433,115 @@ def get_llm_providers():
     return {
         "current": current_provider,
         "available": providers
+    }
+
+@app.get("/api/models")
+def get_available_models():
+    """Get list of available AI models for each provider"""
+    models = {}
+    
+    # Define available models for each provider
+    openai_models = [
+        {
+            "id": "gpt-4",
+            "name": "GPT-4",
+            "description": "Most capable model, best for complex tasks",
+            "speed": "Slow",
+            "cost": "High",
+            "quality": "Highest"
+        },
+        {
+            "id": "gpt-4-turbo",
+            "name": "GPT-4 Turbo",
+            "description": "Faster GPT-4 with improved efficiency",
+            "speed": "Medium",
+            "cost": "High",
+            "quality": "Highest"
+        },
+        {
+            "id": "gpt-4o",
+            "name": "GPT-4o",
+            "description": "Latest GPT-4 optimized model",
+            "speed": "Fast",
+            "cost": "Medium",
+            "quality": "Highest"
+        },
+        {
+            "id": "gpt-4o-mini",
+            "name": "GPT-4o Mini",
+            "description": "Balanced performance and cost",
+            "speed": "Fast",
+            "cost": "Low",
+            "quality": "High"
+        },
+        {
+            "id": "gpt-3.5-turbo",
+            "name": "GPT-3.5 Turbo", 
+            "description": "Fast and economical for simple tasks",
+            "speed": "Fastest",
+            "cost": "Lowest",
+            "quality": "Good"
+        }
+    ]
+    
+    ollama_models = [
+        {
+            "id": "llama3.2",
+            "name": "Llama 3.2",
+            "description": "Latest Llama model, runs locally",
+            "speed": "Medium",
+            "cost": "Free",
+            "quality": "High"
+        },
+        {
+            "id": "llama3.1",
+            "name": "Llama 3.1",
+            "description": "Previous Llama version, reliable",
+            "speed": "Medium",
+            "cost": "Free",
+            "quality": "High"
+        },
+        {
+            "id": "llama3",
+            "name": "Llama 3",
+            "description": "Stable Llama version",
+            "speed": "Medium",
+            "cost": "Free",
+            "quality": "Good"
+        },
+        {
+            "id": "codellama",
+            "name": "Code Llama",
+            "description": "Specialized for programming topics",
+            "speed": "Medium",
+            "cost": "Free",
+            "quality": "High"
+        },
+        {
+            "id": "mistral",
+            "name": "Mistral",
+            "description": "Efficient open-source model",
+            "speed": "Fast",
+            "cost": "Free",
+            "quality": "Good"
+        }
+    ]
+    
+    # Check which providers are available and include their models
+    available_providers = get_available_providers()
+    
+    if "openai" in available_providers:
+        models["openai"] = openai_models
+    
+    if "ollama" in available_providers:
+        models["ollama"] = ollama_models
+    
+    return {
+        "models": models,
+        "default": {
+            "openai": "gpt-4o-mini",
+            "ollama": "llama3.2"
+        }
     }
 
 if __name__ == "__main__":

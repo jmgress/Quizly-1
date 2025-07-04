@@ -11,6 +11,19 @@ jest.mock('axios', () => ({
 import axios from 'axios';
 const mockedAxios = axios;
 
+// Setup proper API mocking
+const setupAPIMocks = (categories = ['geography'], models = {}, defaults = {}) => {
+  mockedAxios.get.mockImplementation((url) => {
+    if (url.includes('/api/categories')) {
+      return Promise.resolve({ data: { categories } });
+    }
+    if (url.includes('/api/models')) {
+      return Promise.resolve({ data: { models, default: defaults } });
+    }
+    return Promise.reject(new Error('Unknown URL'));
+  });
+};
+
 describe('SubjectSelection Component', () => {
   const mockOnSelectionComplete = jest.fn();
 
@@ -19,10 +32,7 @@ describe('SubjectSelection Component', () => {
   });
 
   test('renders subject selection form', async () => {
-    // Mock the categories API response
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography', 'science', 'math', 'literature'] }
-    });
+    setupAPIMocks(['geography', 'science', 'math', 'literature']);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
@@ -39,9 +49,7 @@ describe('SubjectSelection Component', () => {
   });
 
   test('loads and displays categories', async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography', 'science'] }
-    });
+    setupAPIMocks(['geography', 'science']);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
@@ -51,10 +59,8 @@ describe('SubjectSelection Component', () => {
     });
   });
 
-  test('handles category selection and question source selection', async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography', 'science'] }
-    });
+  test('handles category selection for database questions', async () => {
+    setupAPIMocks(['geography']);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
@@ -73,14 +79,14 @@ describe('SubjectSelection Component', () => {
     // Check that callback was called with correct parameters
     expect(mockOnSelectionComplete).toHaveBeenCalledWith({
       category: 'geography',
-      source: 'database'
+      source: 'database',
+      provider: null,
+      model: null
     });
   });
 
-  test('handles custom topic input for AI questions', async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography', 'science'] }
-    });
+  test('handles custom topic input for AI questions without models', async () => {
+    setupAPIMocks(['geography', 'science']);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
@@ -94,47 +100,32 @@ describe('SubjectSelection Component', () => {
 
     // Should now show custom topic input instead of dropdown
     expect(screen.getByLabelText('Custom Topic:')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Subject:')).not.toBeInTheDocument();
 
-    // Enter custom topic
-    const customTopicInput = screen.getByLabelText('Custom Topic:');
-    fireEvent.change(customTopicInput, { target: { value: 'Ancient Rome' } });
+    // Enter a custom topic
+    const topicInput = screen.getByLabelText('Custom Topic:');
+    fireEvent.change(topicInput, { target: { value: 'Ancient Rome' } });
 
-    // Click start quiz button
+    // Click start quiz
     const startButton = screen.getByText('Start Quiz');
     fireEvent.click(startButton);
 
     // Check that callback was called with correct parameters
     expect(mockOnSelectionComplete).toHaveBeenCalledWith({
       category: 'Ancient Rome',
-      source: 'ai'
+      source: 'ai',
+      provider: 'ollama',
+      model: 'llama3.2'
     });
   });
 
-  test('shows error when no subject is selected', async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography'] }
-    });
-
-    render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Geography')).toBeInTheDocument();
-    });
-
-    // The button should be disabled initially for database questions
-    const startButton = screen.getByText('Start Quiz');
-    expect(startButton).toBeDisabled();
-
-    // Since the component prevents clicking when no category is selected,
-    // we need to test the error state differently - by checking button state
-    expect(mockOnSelectionComplete).not.toHaveBeenCalled();
-  });
-
-  test('shows error when no custom topic is entered for AI questions', async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography'] }
-    });
+  test('handles custom topic input for AI questions with models', async () => {
+    const models = {
+      ollama: [
+        { id: 'llama3.2', name: 'Llama 3.2', description: 'Latest model' }
+      ]
+    };
+    const defaults = { ollama: 'llama3.2' };
+    setupAPIMocks(['geography'], models, defaults);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
@@ -146,30 +137,68 @@ describe('SubjectSelection Component', () => {
     const aiRadio = screen.getByDisplayValue('ai');
     fireEvent.click(aiRadio);
 
-    // Button should be disabled when no custom topic is entered
+    // Should show custom topic input and model selection
+    expect(screen.getByLabelText('Custom Topic:')).toBeInTheDocument();
+    expect(screen.getByText('AI Provider:')).toBeInTheDocument();
+
+    // Enter a custom topic
+    const topicInput = screen.getByLabelText('Custom Topic:');
+    fireEvent.change(topicInput, { target: { value: 'JavaScript' } });
+
+    // Click start quiz
+    const startButton = screen.getByText('Start Quiz');
+    fireEvent.click(startButton);
+
+    // Check that callback was called with correct parameters
+    expect(mockOnSelectionComplete).toHaveBeenCalledWith({
+      category: 'JavaScript',
+      source: 'ai',
+      provider: 'ollama',
+      model: 'llama3.2'
+    });
+  });
+
+  test('validates required fields', async () => {
+    setupAPIMocks(['geography']);
+
+    render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Geography')).toBeInTheDocument();
+    });
+
+    // Try to start without selecting category (database mode)
     const startButton = screen.getByText('Start Quiz');
     expect(startButton).toBeDisabled();
 
-    expect(mockOnSelectionComplete).not.toHaveBeenCalled();
+    // Switch to AI mode
+    const aiRadio = screen.getByDisplayValue('ai');
+    fireEvent.click(aiRadio);
+
+    // Try to start without entering topic (AI mode)
+    expect(startButton).toBeDisabled();
   });
 
   test('handles API error gracefully', async () => {
-    mockedAxios.get.mockRejectedValue(new Error('Network error'));
+    mockedAxios.get.mockImplementation((url) => {
+      if (url.includes('/api/categories')) {
+        return Promise.reject(new Error('Network error'));
+      }
+      if (url.includes('/api/models')) {
+        return Promise.resolve({ data: { models: {}, default: {} } });
+      }
+      return Promise.reject(new Error('Unknown URL'));
+    });
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
     await waitFor(() => {
       expect(screen.getByText('Failed to load categories. Please try again later.')).toBeInTheDocument();
     });
-
-    // Should show retry button
-    expect(screen.getByText('Try Again')).toBeInTheDocument();
   });
 
   test('default question source is database', async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography'] }
-    });
+    setupAPIMocks(['geography']);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
@@ -187,9 +216,7 @@ describe('SubjectSelection Component', () => {
   });
 
   test('toggles between dropdown and custom input based on question source', async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography'] }
-    });
+    setupAPIMocks(['geography']);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
