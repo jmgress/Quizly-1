@@ -377,7 +377,7 @@ def check_llm_health():
 
 
 @app.get("/api/questions/ai", response_model=List[Question])
-def generate_ai_questions(subject: str, limit: Optional[int] = 5, provider_type: Optional[str] = None):
+def generate_ai_questions(subject: str, limit: Optional[int] = 5, provider_type: Optional[str] = None, model: Optional[str] = None):
     """Generate AI-powered questions for a specific subject using configured LLM provider"""
     try:
         # Get default limit from environment if not provided
@@ -386,13 +386,20 @@ def generate_ai_questions(subject: str, limit: Optional[int] = 5, provider_type:
         
         # Use provider from environment or query parameter
         provider_type = provider_type or os.getenv("LLM_PROVIDER", "ollama").lower()
-        provider = create_llm_provider(provider_type)
+        
+        # Ensure model is properly set based on provider type
+        if provider_type == "openai":
+            used_model = model or os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
+        else:
+            used_model = model or os.getenv('OLLAMA_MODEL', 'llama3.2')
+        
+        provider = create_llm_provider(provider_type, model=used_model)
         
         # Log the provider and model being used
         if provider_type == "openai":
-            logger.info(f"Using OpenAI model: {os.getenv('OPENAI_MODEL', 'gpt-4o-mini')}")
+            logger.info(f"Using OpenAI model: {used_model}")
         else:
-            logger.info(f"Using provider: {provider_type}")
+            logger.info(f"Using provider: {provider_type} model: {used_model}")
         
         # Generate questions using the provider
         questions = provider.generate_questions(subject, limit)
@@ -422,6 +429,16 @@ def get_llm_providers():
         "current": current_provider,
         "available": providers
     }
+
+
+@app.get("/api/models")
+def get_models(provider: Optional[str] = None):
+    """Get list of available models for a provider"""
+    provider_type = provider or os.getenv("LLM_PROVIDER", "ollama").lower()
+    from llm_providers import get_available_models
+
+    models = get_available_models(provider_type)
+    return {"provider": provider_type, "models": models}
 
 if __name__ == "__main__":
     import uvicorn

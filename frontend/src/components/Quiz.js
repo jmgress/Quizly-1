@@ -3,9 +3,9 @@ import axios from 'axios';
 import Question from './Question';
 import ScoreDisplay from './ScoreDisplay';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
-const Quiz = ({ onRestart, category, source }) => {
+const Quiz = ({ onRestart, category, source, model }) => {
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState([]);
@@ -18,7 +18,7 @@ const Quiz = ({ onRestart, category, source }) => {
 
   useEffect(() => {
     fetchQuestions();
-  }, [category, source]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [category, source, model]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchQuestions = async () => {
     try {
@@ -28,6 +28,9 @@ const Quiz = ({ onRestart, category, source }) => {
       if (source === 'ai') {
         // Fetch AI-generated questions
         url = `${API_BASE_URL}/api/questions/ai?subject=${encodeURIComponent(category)}&limit=5`;
+        if (model) {
+          url += `&model=${encodeURIComponent(model)}`;
+        }
       } else {
         // Fetch database questions with category filter
         url = `${API_BASE_URL}/api/questions?category=${encodeURIComponent(category)}&limit=10`;
