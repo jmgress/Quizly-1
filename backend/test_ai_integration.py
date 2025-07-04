@@ -7,8 +7,8 @@ from unittest.mock import patch, MagicMock
 import sys
 import os
 
-# Add the current directory to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add the project root directory to Python path to allow imports like backend.llm
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def test_ai_endpoint_error_handling():
     """Test that AI endpoint handles errors gracefully with provider architecture"""
@@ -17,20 +17,28 @@ def test_ai_endpoint_error_handling():
     try:
         # Import here to avoid module loading issues
         from main import generate_ai_questions
+        from fastapi import HTTPException # Ensure HTTPException is imported
         
         # This should fail with connection error since providers aren't running
-        # We expect this to raise an HTTPException
+        # We expect this to raise an HTTPException from the endpoint logic
         result = generate_ai_questions("history", 2)
-        print("❌ AI endpoint test failed - should have raised an exception")
-    except Exception as e:
-        error_msg = str(e)
-        if ("Connection refused" in error_msg or 
-            "AI question generation failed" in error_msg or 
-            "package not available" in error_msg):
+        print("❌ AI endpoint test failed - should have raised an HTTPException")
+    except HTTPException as http_exc:
+        error_detail = http_exc.detail
+        # Check for conditions that indicate the provider failed as expected
+        if (http_exc.status_code == 503 and
+            ("Connection refused" in error_detail or
+             "AI question generation failed" in error_detail or
+             "package not available" in error_detail or
+             "Ollama is running locally" in error_detail or # Part of the formatted error message
+             "Ollama. Please check that Ollama is downloaded" in error_detail
+            )):
             print("✅ AI endpoint error handling test passed!")
-            print(f"Expected error caught: {type(e).__name__}")
+            print(f"Expected HTTPException caught with detail: {error_detail}")
         else:
-            print(f"❌ Unexpected error: {e}")
+            print(f"❌ Unexpected HTTPException detail or status code: {http_exc}")
+    except Exception as e: # Catch other unexpected errors
+        print(f"❌ Unexpected non-HTTPException error: {type(e).__name__} - {e}")
 
 def test_category_filtering():
     """Test that category filtering works with database questions"""

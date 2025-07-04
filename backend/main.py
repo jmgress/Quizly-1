@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import LLM providers
-from llm_providers import create_llm_provider, get_available_providers
+from backend.llm_providers import create_llm_provider, get_available_providers
 
 import logging
 logging.basicConfig(level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")))
