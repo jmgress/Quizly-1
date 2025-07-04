@@ -386,14 +386,19 @@ def generate_ai_questions(subject: str, limit: Optional[int] = 5, provider_type:
         
         # Use provider from environment or query parameter
         provider_type = provider_type or os.getenv("LLM_PROVIDER", "ollama").lower()
-        provider = create_llm_provider(provider_type, model=model)
+        
+        # Ensure model is properly set based on provider type
+        if provider_type == "openai":
+            used_model = model or os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
+        else:
+            used_model = model or os.getenv('OLLAMA_MODEL', 'llama3.2')
+        
+        provider = create_llm_provider(provider_type, model=used_model)
         
         # Log the provider and model being used
         if provider_type == "openai":
-            used_model = model or os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
             logger.info(f"Using OpenAI model: {used_model}")
         else:
-            used_model = model or os.getenv('OLLAMA_MODEL', 'llama3.2')
             logger.info(f"Using provider: {provider_type} model: {used_model}")
         
         # Generate questions using the provider
