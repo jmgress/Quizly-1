@@ -9,7 +9,7 @@ import os
 import logging
 from typing import List, Any
 
-from backend.llm import LLMProvider, OllamaProvider, OpenAIProvider
+from llm import LLMProvider, OllamaProvider, OpenAIProvider
 
 # Configure logging
 logging.basicConfig(level=logging.INFO) # TODO: This might be redundant if main.py or another entry point configures logging.
