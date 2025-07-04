@@ -173,10 +173,10 @@ This will return:
 | Environment Variable | Description | Default |
 |---------------------|-------------|---------|
 | `LLM_PROVIDER` | Provider type: "ollama" or "openai" | ollama |
-| `OLLAMA_MODEL` | Ollama model name | llama3.2 |
+| `OLLAMA_MODEL` | Ollama model name. Acts as a default if no model is selected in the UI or API for the Ollama provider. | llama3.2 |
 | `OLLAMA_HOST` | Ollama server URL | http://localhost:11434 |
 | `OPENAI_API_KEY` | OpenAI API key | - |
-| `OPENAI_MODEL` | OpenAI model name | gpt-3.5-turbo |
+| `OPENAI_MODEL` | OpenAI model name. Acts as a default if no model is selected in the UI or API for the OpenAI provider. | gpt-4o-mini |
 | `DEFAULT_QUESTION_LIMIT` | Default number of questions | 5 |
 | `LOG_LEVEL` | Logging level | INFO |
 
@@ -227,7 +227,8 @@ Press `Ctrl+C` to stop both servers when done.
 2. **Select Subject**: Choose your preferred quiz category (Geography, Science, Math, Literature)
 3. **Choose Question Source**:
    - **📚 Curated Questions**: High-quality pre-written questions from the database
-   - **🤖 AI-Generated Questions**: Fresh questions powered by your configured LLM provider (Ollama or OpenAI)
+   - **🤖 AI-Generated Questions**: Fresh questions powered by your configured LLM provider (Ollama or OpenAI).
+     - **Model Selection**: If using AI-generated questions, you can now choose a specific AI model from the available options for your configured provider (e.g., select GPT-4o-mini, GPT-4, or Llama 3.2). Your last selection for each provider is remembered.
 4. **Take Quiz**: Answer questions and see immediate feedback
 5. **View Results**: Review your score and answer details at the end
 
@@ -272,11 +273,13 @@ The admin interface allows you to view and edit all quiz questions stored in the
 ### Questions
 - **GET** `/api/questions` - Get quiz questions (supports `?category=<category>&limit=<limit>`)
 - **PUT** `/api/questions/{id}` - Update a question's content (admin endpoint)
-- **GET** `/api/questions/ai` - Generate AI-powered questions (supports `?subject=<subject>&limit=<limit>`)
+- **GET** `/api/questions/ai` - Generate AI-powered questions (supports `?subject=<subject>&limit=<limit>&model=<model_id>`)
 - **GET** `/api/categories` - Get available question categories
+- **GET** `/api/models` - Get list of available AI models, grouped by provider
 
 ### LLM Provider Management
 - **GET** `/api/llm/health` - Check LLM provider health and availability
+- **GET** `/api/llm/providers` - Get list of available LLM providers and the current default
 
 ### Quiz Management
 - **POST** `/api/quiz/submit` - Submit quiz answers and get results

@@ -16,18 +16,27 @@ const Quiz = ({ onRestart, category, source }) => {
   const [showFeedback, setShowFeedback] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
 
+  // Destructure props
+  const { category, source, model, onRestart } = props;
+
+
   useEffect(() => {
     fetchQuestions();
-  }, [category, source]); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [category, source, model]);
 
   const fetchQuestions = async () => {
     try {
       setLoading(true);
+      setError(null); // Clear previous errors
       let url;
       
       if (source === 'ai') {
         // Fetch AI-generated questions
         url = `${API_BASE_URL}/api/questions/ai?subject=${encodeURIComponent(category)}&limit=5`;
+        if (model) {
+          url += `&model=${encodeURIComponent(model)}`;
+        }
       } else {
         // Fetch database questions with category filter
         url = `${API_BASE_URL}/api/questions?category=${encodeURIComponent(category)}&limit=10`;

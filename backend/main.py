@@ -377,22 +377,41 @@ def check_llm_health():
 
 
 @app.get("/api/questions/ai", response_model=List[Question])
-def generate_ai_questions(subject: str, limit: Optional[int] = 5, provider_type: Optional[str] = None):
-    """Generate AI-powered questions for a specific subject using configured LLM provider"""
+def generate_ai_questions(subject: str, limit: Optional[int] = 5, provider_type: Optional[str] = None, model: Optional[str] = None):
+    """
+    Generate AI-powered questions for a specific subject.
+
+    Allows specifying the LLM provider and a specific model for generation.
+    If `provider_type` is not specified, the backend's default provider is used.
+    If `model` is not specified, the default model for the selected provider is used
+    (which can be configured via environment variables like OPENAI_MODEL or OLLAMA_MODEL,
+    or a hardcoded default in the provider itself).
+
+    - **subject**: The topic for the quiz questions.
+    - **limit**: The number of questions to generate.
+    - **provider_type**: Optional. The LLM provider to use (e.g., "openai", "ollama").
+    - **model**: Optional. The specific model ID to use for generation (e.g., "gpt-4o-mini", "llama3.2").
+    """
     try:
         # Get default limit from environment if not provided
         if limit is None:
             limit = int(os.getenv("DEFAULT_QUESTION_LIMIT", "5"))
         
-        # Use provider from environment or query parameter
-        provider_type = provider_type or os.getenv("LLM_PROVIDER", "ollama").lower()
-        provider = create_llm_provider(provider_type)
+        # Determine provider type
+        effective_provider_type = provider_type or os.getenv("LLM_PROVIDER", "ollama").lower()
+
+        # Prepare arguments for create_llm_provider
+        provider_kwargs = {"provider_type": effective_provider_type}
+        if model:
+            provider_kwargs["model"] = model
+
+        provider = create_llm_provider(**provider_kwargs)
         
         # Log the provider and model being used
-        if provider_type == "openai":
-            logger.info(f"Using OpenAI model: {os.getenv('OPENAI_MODEL', 'gpt-4o-mini')}")
-        else:
-            logger.info(f"Using provider: {provider_type}")
+        # The actual model used is now determined by the provider instance
+        logger.info(f"Using provider: {effective_provider_type}, Attempting to use model: {model or 'provider default'}")
+        if hasattr(provider, 'model'):
+            logger.info(f"Provider initialized with model: {provider.model}")
         
         # Generate questions using the provider
         questions = provider.generate_questions(subject, limit)
@@ -422,6 +441,35 @@ def get_llm_providers():
         "current": current_provider,
         "available": providers
     }
+
+@app.get("/api/models")
+def get_models():
+    """
+    Get a list of available AI models, categorized by provider.
+
+    Returns a dictionary where keys are provider IDs (e.g., "openai", "ollama")
+    and values are lists of model objects, each containing:
+    - **id**: The model identifier (used in API requests).
+    - **name**: A user-friendly display name for the model.
+    - **description**: A brief description of the model's characteristics.
+
+    This list is currently hardcoded but could be made dynamic in the future.
+    """
+    # This can be expanded or moved to a configuration file later
+    models = {
+        "openai": [
+            {"id": "gpt-4o-mini", "name": "GPT-4o mini (Balanced)", "description": "Good balance of speed, quality, and cost."},
+            {"id": "gpt-4", "name": "GPT-4 (High Quality)", "description": "Highest quality generation, slower and more expensive."},
+            {"id": "gpt-3.5-turbo", "name": "GPT-3.5 Turbo (Fastest)", "description": "Fastest generation, most economical."}
+        ],
+        "ollama": [
+            {"id": "llama3.2", "name": "Llama 3.2 (Local)", "description": "Latest Llama model, good general capabilities."},
+            {"id": "codellama", "name": "CodeLlama (Local - Coding)", "description": "Specialized for code-related tasks."},
+            {"id": "mistral", "name": "Mistral (Local)", "description": "Popular open-source model."}
+        ]
+        # Add other providers and their models here if needed
+    }
+    return models
 
 if __name__ == "__main__":
     import uvicorn

@@ -76,6 +76,7 @@ function App() {
           onRestart={restartQuiz} 
           category={quizConfig.category}
           source={quizConfig.source}
+          model={quizConfig.model} // Pass the model to the Quiz component
         />
       )}
 
