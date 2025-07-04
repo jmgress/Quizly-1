@@ -104,6 +104,21 @@ def test_mock_ai_generation():
     except Exception as e:
         print(f"❌ Mock AI generation test failed: {e}")
 
+def test_model_listing():
+    """Test listing available models"""
+    print("\nTesting model listing...")
+
+    try:
+        from llm_providers import get_available_models
+        models = get_available_models("openai")
+
+        if "gpt-3.5-turbo" in models:
+            print("✅ Model listing test passed!")
+        else:
+            print("❌ Model listing test failed - expected model not found")
+    except Exception as e:
+        print(f"❌ Model listing test failed: {e}")
+
 def test_provider_configuration():
     """Test provider configuration system"""
     print("\nTesting provider configuration system...")
@@ -134,6 +149,7 @@ if __name__ == "__main__":
     test_ai_endpoint_error_handling()
     test_category_filtering()
     test_mock_ai_generation()
+    test_model_listing()
     test_provider_configuration()
     
     print("\n🎉 AI integration tests completed!")

@@ -272,11 +272,12 @@ The admin interface allows you to view and edit all quiz questions stored in the
 ### Questions
 - **GET** `/api/questions` - Get quiz questions (supports `?category=<category>&limit=<limit>`)
 - **PUT** `/api/questions/{id}` - Update a question's content (admin endpoint)
-- **GET** `/api/questions/ai` - Generate AI-powered questions (supports `?subject=<subject>&limit=<limit>`)
+- **GET** `/api/questions/ai` - Generate AI-powered questions (supports `?subject=<subject>&limit=<limit>&model=<model>`)
 - **GET** `/api/categories` - Get available question categories
 
 ### LLM Provider Management
 - **GET** `/api/llm/health` - Check LLM provider health and availability
+- **GET** `/api/models` - List available models for the current provider
 
 ### Quiz Management
 - **POST** `/api/quiz/submit` - Submit quiz answers and get results
@@ -301,7 +302,7 @@ curl http://localhost:8000/api/llm/health
 
 **Generate AI Questions:**
 ```bash
-curl "http://localhost:8000/api/questions/ai?subject=history&limit=3"
+curl "http://localhost:8000/api/questions/ai?subject=history&limit=3&model=gpt-4"
 ```
 
 **Submit Quiz:**

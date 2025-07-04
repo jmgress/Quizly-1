@@ -12,6 +12,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
+# Predefined models for each provider. This keeps the logic simple and avoids
+# hitting external APIs during tests.
+AVAILABLE_MODELS = {
+    "openai": ["gpt-4", "gpt-4o-mini", "gpt-3.5-turbo"],
+    "ollama": ["llama3.2", "codellama", "mistral"],
+}
+
+
 def create_llm_provider(provider_type: str = None, **kwargs) -> LLMProvider:
     """Factory function to create LLM provider instances."""
     if provider_type is None:
@@ -53,3 +61,11 @@ def get_available_providers() -> List[str]:
         pass
 
     return providers
+
+
+def get_available_models(provider_type: str = None) -> List[str]:
+    """Return a list of models available for a provider."""
+    if provider_type is None:
+        provider_type = os.getenv("LLM_PROVIDER", "ollama").lower()
+
+    return AVAILABLE_MODELS.get(provider_type, [])

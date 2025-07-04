@@ -72,10 +72,11 @@ function App() {
       )}
       
       {currentScreen === 'quiz' && quizConfig && (
-        <Quiz 
-          onRestart={restartQuiz} 
+        <Quiz
+          onRestart={restartQuiz}
           category={quizConfig.category}
           source={quizConfig.source}
+          model={quizConfig.model}
         />
       )}
 

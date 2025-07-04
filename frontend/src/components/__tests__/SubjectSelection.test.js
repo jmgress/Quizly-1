@@ -5,11 +5,23 @@ import SubjectSelection from '../SubjectSelection';
 
 // Mock axios
 jest.mock('axios', () => ({
-  get: jest.fn(() => Promise.resolve({ data: {} }))
+  get: jest.fn()
 }));
 
 import axios from 'axios';
 const mockedAxios = axios;
+
+const setupMocks = (categories = [], models = ['gpt-4o-mini']) => {
+  mockedAxios.get.mockImplementation((url) => {
+    if (url.includes('/api/categories')) {
+      return Promise.resolve({ data: { categories } });
+    }
+    if (url.includes('/api/models')) {
+      return Promise.resolve({ data: { models } });
+    }
+    return Promise.resolve({ data: {} });
+  });
+};
 
 describe('SubjectSelection Component', () => {
   const mockOnSelectionComplete = jest.fn();
@@ -19,10 +31,7 @@ describe('SubjectSelection Component', () => {
   });
 
   test('renders subject selection form', async () => {
-    // Mock the categories API response
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography', 'science', 'math', 'literature'] }
-    });
+    setupMocks(['geography', 'science', 'math', 'literature']);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
@@ -39,9 +48,7 @@ describe('SubjectSelection Component', () => {
   });
 
   test('loads and displays categories', async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography', 'science'] }
-    });
+    setupMocks(['geography', 'science']);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
@@ -52,9 +59,7 @@ describe('SubjectSelection Component', () => {
   });
 
   test('handles category selection and question source selection', async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography', 'science'] }
-    });
+    setupMocks(['geography', 'science']);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
@@ -78,9 +83,7 @@ describe('SubjectSelection Component', () => {
   });
 
   test('handles custom topic input for AI questions', async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography', 'science'] }
-    });
+    setupMocks(['geography', 'science']);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
@@ -107,14 +110,29 @@ describe('SubjectSelection Component', () => {
     // Check that callback was called with correct parameters
     expect(mockOnSelectionComplete).toHaveBeenCalledWith({
       category: 'Ancient Rome',
-      source: 'ai'
+      source: 'ai',
+      model: 'gpt-4o-mini'
     });
   });
 
-  test('shows error when no subject is selected', async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography'] }
+  test('displays model dropdown for AI questions', async () => {
+    setupMocks(['geography'], ['gpt-4', 'gpt-3.5-turbo']);
+
+    render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Geography')).toBeInTheDocument();
     });
+
+    const aiRadio = screen.getByDisplayValue('ai');
+    fireEvent.click(aiRadio);
+
+    expect(screen.getByLabelText('Model:')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('gpt-4')).toBeInTheDocument();
+  });
+
+  test('shows error when no subject is selected', async () => {
+    setupMocks(['geography']);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
@@ -132,9 +150,7 @@ describe('SubjectSelection Component', () => {
   });
 
   test('shows error when no custom topic is entered for AI questions', async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography'] }
-    });
+    setupMocks(['geography']);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
@@ -154,7 +170,7 @@ describe('SubjectSelection Component', () => {
   });
 
   test('handles API error gracefully', async () => {
-    mockedAxios.get.mockRejectedValue(new Error('Network error'));
+    mockedAxios.get.mockImplementation(() => Promise.reject(new Error('Network error')));
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
@@ -167,9 +183,7 @@ describe('SubjectSelection Component', () => {
   });
 
   test('default question source is database', async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography'] }
-    });
+    setupMocks(['geography']);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
@@ -187,9 +201,7 @@ describe('SubjectSelection Component', () => {
   });
 
   test('toggles between dropdown and custom input based on question source', async () => {
-    mockedAxios.get.mockResolvedValue({
-      data: { categories: ['geography'] }
-    });
+    setupMocks(['geography']);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
