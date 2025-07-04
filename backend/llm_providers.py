@@ -156,9 +156,9 @@ class OllamaProvider(LLMProvider):
 class OpenAIProvider(LLMProvider):
     """OpenAI provider for question generation."""
     
-    def __init__(self, api_key: str = None, model: str = "gpt-3.5-turbo"):
+    def __init__(self, api_key: str = None, model: str = None):
         self.api_key = api_key or os.getenv("OPENAI_API_KEY")
-        self.model = model
+        self.model = model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
         self._client = None
         self._initialize_openai()
     
@@ -300,7 +300,7 @@ def create_llm_provider(provider_type: str = None, **kwargs) -> LLMProvider:
     
     elif provider_type == "openai":
         api_key = kwargs.get("api_key", os.getenv("OPENAI_API_KEY"))
-        model = kwargs.get("model", os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"))
+        model = kwargs.get("model", os.getenv("OPENAI_MODEL", "gpt-4o-mini"))
         return OpenAIProvider(api_key=api_key, model=model)
     
     else:

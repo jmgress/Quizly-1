@@ -377,35 +377,51 @@ def check_llm_health():
 
 
 @app.get("/api/questions/ai", response_model=List[Question])
-def generate_ai_questions(subject: str, limit: Optional[int] = 5):
+def generate_ai_questions(subject: str, limit: Optional[int] = 5, provider_type: Optional[str] = None):
     """Generate AI-powered questions for a specific subject using configured LLM provider"""
     try:
         # Get default limit from environment if not provided
         if limit is None:
             limit = int(os.getenv("DEFAULT_QUESTION_LIMIT", "5"))
         
-        # Create LLM provider instance
-        provider = create_llm_provider()
+        # Use provider from environment or query parameter
+        provider_type = provider_type or os.getenv("LLM_PROVIDER", "ollama").lower()
+        provider = create_llm_provider(provider_type)
+        
+        # Log the provider and model being used
+        if provider_type == "openai":
+            logger.info(f"Using OpenAI model: {os.getenv('OPENAI_MODEL', 'gpt-4o-mini')}")
+        else:
+            logger.info(f"Using provider: {provider_type}")
         
         # Generate questions using the provider
         questions = provider.generate_questions(subject, limit)
         
-        logger.info(f"Generated {len(questions)} AI questions for subject: {subject}")
+        logger.info(f"Generated {len(questions)} AI questions for subject: {subject} using {provider_type} provider")
         return questions
         
     except Exception as e:
         logger.error(f"AI question generation failed: {str(e)}")
         # Return provider-specific error message
-        error_msg = f"AI question generation failed: {str(e)}"
+        error_msg = f"{provider_type.capitalize() if provider_type else 'LLM'} question generation failed: {str(e)}."
         
-        # Add provider-specific guidance
-        provider_type = os.getenv("LLM_PROVIDER", "ollama").lower()
-        if provider_type == "ollama":
-            error_msg += " Please ensure Ollama is running and the required model is available."
-        elif provider_type == "openai":
+        if provider_type == "openai":
             error_msg += " Please check your OpenAI API key and quota."
+        elif provider_type == "ollama":
+            error_msg += " Please check if Ollama is running locally."
         
         raise HTTPException(status_code=503, detail=error_msg)
+
+@app.get("/api/llm/providers")
+def get_llm_providers():
+    """Get list of available LLM providers"""
+    providers = get_available_providers()
+    current_provider = os.getenv("LLM_PROVIDER", "ollama").lower()
+    
+    return {
+        "current": current_provider,
+        "available": providers
+    }
 
 if __name__ == "__main__":
     import uvicorn
@@ -418,8 +434,14 @@ if __name__ == "__main__":
     port = int(os.getenv("APP_PORT", "8000"))
     
     # Log provider configuration
-    provider_type = os.getenv("LLM_PROVIDER", "ollama")
+    provider_type = os.getenv("LLM_PROVIDER", "ollama").lower()
     logger.info(f"Starting Quizly API server with LLM provider: {provider_type}")
+    
+    if provider_type == "openai":
+        logger.info(f"OpenAI model: {os.getenv('OPENAI_MODEL', 'gpt-4o-mini')}")
+    elif provider_type == "ollama":
+        logger.info(f"Ollama model: {os.getenv('OLLAMA_MODEL', 'llama3.2')}")
+        logger.info(f"Ollama host: {os.getenv('OLLAMA_HOST', 'http://localhost:11434')}")
     
     # Start server
     uvicorn.run(app, host=host, port=port)

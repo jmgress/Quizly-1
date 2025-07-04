@@ -68,3 +68,5 @@ venv/
 *.tmp
 *.temp
 backend/quiz.db
+.env.backup
+backend_log.txt
