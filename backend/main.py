@@ -20,9 +20,10 @@ from database import init_db
 
 # Import configuration manager
 from config_manager import config_manager
+from logging_config_manager import logging_config_manager
 
 import logging
-logging.basicConfig(level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")))
+logging.basicConfig(format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Quizly API", description="Knowledge Testing Application API")
@@ -476,6 +477,36 @@ def get_providers_health():
         }
     
     return providers_health
+
+# Logging configuration endpoints
+@app.get("/api/logging/config")
+def get_logging_config():
+    """Return current logging configuration."""
+    return logging_config_manager.get_config()
+
+
+@app.put("/api/logging/config")
+def update_logging_config(config_update: dict):
+    """Update logging configuration and apply it."""
+    try:
+        config = logging_config_manager.update_config(config_update)
+        return {"config": config, "message": "Logging configuration updated"}
+    except Exception as e:
+        logger.error(f"Error updating logging config: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@app.get("/api/logging/logs")
+def get_recent_logs(lines: int = 100):
+    """Get recent log entries from backend log file."""
+    return {"logs": logging_config_manager.get_recent_logs(lines)}
+
+
+@app.post("/api/logging/clear")
+def clear_logs():
+    """Clear backend log file."""
+    logging_config_manager.clear_logs()
+    return {"message": "Logs cleared"}
 
 if __name__ == "__main__":
     import uvicorn
