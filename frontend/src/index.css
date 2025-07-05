@@ -921,3 +921,290 @@ body {
     flex-direction: column;
   }
 }
+
+/* Logging Settings Styles */
+.logging-settings {
+  max-width: 100%;
+}
+
+.settings-header {
+  margin-bottom: 30px;
+}
+
+.settings-header h3 {
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.settings-header p {
+  color: #666;
+  font-size: 14px;
+}
+
+.logging-tabs {
+  display: flex;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #e0e0e0;
+  gap: 0;
+}
+
+.logging-tabs .tab-button {
+  background: transparent;
+  color: #666;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 12px 20px;
+  margin: 0;
+  border-radius: 0;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.logging-tabs .tab-button:hover {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.logging-tabs .tab-button.active {
+  color: #667eea;
+  border-bottom-color: #667eea;
+  background: transparent;
+}
+
+.log-levels-section {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.component-group {
+  margin-bottom: 25px;
+}
+
+.component-group h5 {
+  color: #333;
+  margin-bottom: 15px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.log-level-control {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 15px;
+}
+
+.log-level-control label {
+  min-width: 120px;
+  font-weight: 500;
+  color: #555;
+}
+
+.log-level-control .form-select {
+  width: 120px;
+}
+
+.log-files-section {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.file-list {
+  margin-bottom: 20px;
+}
+
+.log-file-item {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.file-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.file-size, .file-component, .file-modified {
+  font-size: 12px;
+  color: #666;
+}
+
+.file-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.button.small {
+  padding: 6px 12px;
+  font-size: 12px;
+  margin: 0;
+}
+
+.button.danger {
+  background: #dc3545;
+}
+
+.button.danger:hover {
+  background: #c82333;
+}
+
+.log-monitor-section {
+  background: #f9f9f9;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.monitor-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.filter-group label {
+  font-weight: 500;
+  color: #555;
+}
+
+.log-entries {
+  background: #1e1e1e;
+  color: #f0f0f0;
+  border-radius: 6px;
+  padding: 15px;
+  max-height: 400px;
+  overflow-y: auto;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.log-entry {
+  display: flex;
+  margin-bottom: 8px;
+  gap: 10px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.log-timestamp {
+  color: #888;
+  min-width: 140px;
+  flex-shrink: 0;
+}
+
+.log-level {
+  font-weight: bold;
+  min-width: 60px;
+  flex-shrink: 0;
+}
+
+.log-level.error {
+  color: #ff6b6b;
+}
+
+.log-level.warn {
+  color: #feca57;
+}
+
+.log-level.info {
+  color: #48cae4;
+}
+
+.log-level.debug {
+  color: #ff9ff3;
+}
+
+.log-level.trace {
+  color: #a8e6cf;
+}
+
+.log-component {
+  color: #74b9ff;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.log-message {
+  flex: 1;
+  word-break: break-all;
+}
+
+.log-entry.error {
+  border-left: 3px solid #ff6b6b;
+  padding-left: 10px;
+}
+
+.log-entry.warn {
+  border-left: 3px solid #feca57;
+  padding-left: 10px;
+}
+
+.log-entry.info {
+  border-left: 3px solid #48cae4;
+  padding-left: 10px;
+}
+
+.log-entry.debug {
+  border-left: 3px solid #ff9ff3;
+  padding-left: 10px;
+}
+
+.log-entry.trace {
+  border-left: 3px solid #a8e6cf;
+  padding-left: 10px;
+}
+
+/* Mobile responsiveness for logging */
+@media (max-width: 768px) {
+  .logging-tabs {
+    flex-direction: column;
+  }
+  
+  .log-file-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .file-actions {
+    align-self: stretch;
+    justify-content: space-between;
+  }
+  
+  .monitor-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .log-entry {
+    flex-direction: column;
+    gap: 5px;
+  }
+  
+  .log-timestamp, .log-level, .log-component {
+    min-width: auto;
+  }
+}
