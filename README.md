@@ -15,8 +15,9 @@ An interactive web-based quiz application that allows users to test their knowle
 - 🤖 **AI-Powered Questions**: Generate fresh questions using multiple LLM providers
 - 📚 **Dual Question Sources**: Select between curated database questions or AI-generated content
 - 🔌 **Provider-Based Architecture**: Easy switching between Ollama and OpenAI providers
-- ⚙️ **Environment Configuration**: Configure providers via environment variables
-- 🏥 **Health Checks**: Monitor LLM provider availability and status
+- ⚙️ **LLM Configuration via Admin Panel**: Configure LLM providers and models directly from the admin interface.
+- ⚙️ **Environment Configuration**: Initial LLM setup via environment variables, overridable by admin panel settings.
+- 🏥 **Health Checks**: Monitor LLM provider availability and status, visible in the admin panel.
 - 🚀 **Fast API**: RESTful API with automatic documentation
 
 ## Tech Stack
@@ -105,70 +106,65 @@ This script will:
 
 ### LLM Provider Configuration
 
-Quizly supports multiple LLM providers for AI question generation. You can easily switch between providers using environment variables.
+Quizly supports multiple LLM providers for AI question generation. Initial configuration can be set using environment variables, but these settings can be managed and overridden through the Admin Panel.
 
-#### 1. Environment Setup
+#### 1. Initial Environment Setup (Optional Fallback)
 
-Create a `.env` file in the project root directory (copy from `.env.example`):
+If `backend/llm_config.json` is not present, the application will fall back to using environment variables. Create a `.env` file in the project root directory (copy from `.env.example`):
 
 ```bash
 cp .env.example .env
 ```
 
-#### 2. Configure Your Preferred Provider
+#### 2. Configure Your Preferred Provider (via Admin Panel)
 
-Edit the `.env` file to configure your preferred LLM provider:
+The primary way to configure LLM providers and models is through the **Admin Panel**:
+1. Navigate to `http://localhost:3000/#admin`.
+2. Select the "LLM Settings" tab.
+3. **Current Provider Display**: Shows the currently active provider and model.
+4. **Provider Selection**: Choose between Ollama, OpenAI, or other configured providers.
+5. **Model Selection**: Select a specific model, filtered by the chosen provider. Available models are dynamically listed.
+6. **Health Check**: View the health status of each provider. You can refresh the health status.
+7. **Save/Apply**: Click "Save Configuration" to apply your changes. The system will validate the provider's availability before saving.
 
-**For Ollama (Default):**
-```env
-LLM_PROVIDER=ollama
-OLLAMA_MODEL=llama3.2
-OLLAMA_HOST=http://localhost:11434
-```
+The configuration is stored in `backend/llm_config.json` and will persist across application restarts.
 
-**For OpenAI:**
-```env
-LLM_PROVIDER=openai
-OPENAI_API_KEY=your-openai-api-key-here
-OPENAI_MODEL=gpt-3.5-turbo
-```
+#### 3. Provider-Specific Setup (Required for functionality)
 
-#### 3. Provider-Specific Setup
+Ensure the chosen LLM provider is correctly set up in your environment:
 
 **Ollama Setup:**
-1. Install Ollama from [ollama.ai](https://ollama.ai)
-2. Pull the required model:
+1. Install Ollama from [ollama.ai](https://ollama.ai).
+2. Pull desired models, e.g.:
    ```bash
    ollama pull llama3.2
+   ollama pull codellama
    ```
-3. Start Ollama service:
-   ```bash
-   ollama serve
-   ```
+3. Ensure the Ollama service is running (usually `ollama serve` or it runs as a background service).
 
 **OpenAI Setup:**
-1. Get your API key from [OpenAI](https://platform.openai.com/api-keys)
-2. Set the `OPENAI_API_KEY` environment variable
-3. Choose your preferred model (default: gpt-3.5-turbo)
+1. Get your API key from [OpenAI](https://platform.openai.com/api-keys).
+2. Ensure the `OPENAI_API_KEY` environment variable is set in your backend environment (e.g., in your `.env` file or system environment). The Admin Panel does not directly manage API keys.
 
-#### 4. Health Check
+#### 4. Health Check (via API or Admin Panel)
 
-You can check the health of your configured LLM provider:
-
+You can check the health of any provider via the API:
 ```bash
-curl http://localhost:8000/api/llm/health
+curl http://localhost:8000/api/llm/health?provider_name=ollama
+curl http://localhost:8000/api/llm/health?provider_name=openai
 ```
-
-This will return:
+If `provider_name` is omitted, it checks the currently configured provider.
+The response includes provider status and available models:
 ```json
 {
   "provider": "ollama",
   "healthy": true,
-  "available_providers": ["ollama"]
+  "models": ["llama3.2:latest", "codellama:latest"]
 }
 ```
+Health status is also visible and refreshable in the Admin Panel's "LLM Settings" tab.
 
-#### 5. Supported Configuration Options
+#### 5. Supported Environment Variables (for fallback and API keys)
 
 | Environment Variable | Description | Default |
 |---------------------|-------------|---------|
@@ -252,32 +248,41 @@ The admin interface allows you to view and edit all quiz questions stored in the
 3. Go directly to `http://localhost:3000/#admin`
 
 **Admin Features:**
-- **View All Questions**: See all questions with their options, correct answers, and categories
-- **Edit Questions**: Click "Edit" on any question to modify:
-  - Question text
-  - Answer options (A, B, C, D)
-  - Correct answer selection
-  - Category assignment
-- **Save Changes**: Click "Save" to update questions or "Cancel" to discard changes
-- **Error Handling**: Validation ensures all required fields are filled and correct answers are valid
+- **View All Questions**: (In "Manage Questions" tab) See all questions with their options, correct answers, and categories.
+- **Edit Questions**: (In "Manage Questions" tab) Click "Edit" on any question to modify its text, options, correct answer, and category.
+- **Save Changes**: (In "Manage Questions" tab) Click "Save" to update questions or "Cancel" to discard changes.
+- **LLM Settings Management**: (In "LLM Settings" tab)
+    - View current LLM provider and model.
+    - Select and save a new LLM provider (e.g., Ollama, OpenAI).
+    - Select and save a specific model for the chosen provider.
+    - View health status of available LLM providers.
+- **Error Handling**: Validation for question editing and LLM configuration.
 
 **Admin Interface Usage:**
-- No authentication required (access via direct URL)
-- Real-time feedback on save operations
-- Mobile-responsive design for editing on any device
-- Automatic validation of question format and correct answers
+- No authentication required (access via direct URL).
+- Real-time feedback on save operations for both questions and LLM settings.
+- Mobile-responsive design.
 
 ## API Endpoints
 
 ### Questions
 - **GET** `/api/questions` - Get quiz questions (supports `?category=<category>&limit=<limit>`)
 - **PUT** `/api/questions/{id}` - Update a question's content (admin endpoint)
-- **GET** `/api/questions/ai` - Generate AI-powered questions (supports `?subject=<subject>&limit=<limit>&model=<model>`)
+- **GET** `/api/questions/ai` - Generate AI-powered questions using the globally configured LLM provider and model (supports `?subject=<subject>&limit=<limit>`)
 - **GET** `/api/categories` - Get available question categories
 
 ### LLM Provider Management
-- **GET** `/api/llm/health` - Check LLM provider health and availability
-- **GET** `/api/models` - List available models for the current provider
+- **GET** `/api/llm/config` - Get the current LLM provider and model configuration.
+- **POST** `/api/llm/config` - Set the LLM provider and model configuration.
+  ```json
+  {
+    "provider": "ollama",
+    "model": "llama3.2"
+  }
+  ```
+- **GET** `/api/llm/health` - Check health of a specific or currently configured LLM provider (supports `?provider_name=<provider>`). Returns health status and available models for that provider.
+- **GET** `/api/llm/providers` - Get a list of available providers, their health status, and their models.
+- **GET** `/api/models` - List available models for a specific provider (supports `?provider=<provider>`).
 
 ### Quiz Management
 - **POST** `/api/quiz/submit` - Submit quiz answers and get results
@@ -295,14 +300,26 @@ curl http://localhost:8000/api/questions
 curl "http://localhost:8000/api/questions?category=geography&limit=5"
 ```
 
-**Check LLM Provider Health:**
+**Check LLM Provider Health (specific provider):**
 ```bash
-curl http://localhost:8000/api/llm/health
+curl http://localhost:8000/api/llm/health?provider_name=ollama
 ```
 
-**Generate AI Questions:**
+**Get Current LLM Configuration:**
 ```bash
-curl "http://localhost:8000/api/questions/ai?subject=history&limit=3&model=gpt-4"
+curl http://localhost:8000/api/llm/config
+```
+
+**Set LLM Configuration:**
+```bash
+curl -X POST http://localhost:8000/api/llm/config \
+  -H "Content-Type: application/json" \
+  -d '{"provider": "openai", "model": "gpt-4o-mini"}'
+```
+
+**Generate AI Questions (uses configured LLM settings):**
+```bash
+curl "http://localhost:8000/api/questions/ai?subject=history&limit=3"
 ```
 
 **Submit Quiz:**

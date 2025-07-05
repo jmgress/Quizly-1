@@ -61,6 +61,18 @@ class OllamaProvider(LLMProvider):
             logger.warning(f"Ollama health check failed: {str(e)}")
             return False
 
+    def list_models(self) -> List[str]:
+        """List available models from Ollama."""
+        if not self._ollama:
+            logger.warning("Ollama client not initialized, cannot list models.")
+            return []
+        try:
+            models_info = self._ollama.list()
+            return [model['name'] for model in models_info['models']]
+        except Exception as e:
+            logger.error(f"Failed to list Ollama models: {str(e)}")
+            return []
+
     def _create_prompt(self, subject: str, limit: int) -> str:
         return f"""Generate {limit} multiple-choice quiz questions about {subject}.\n        Each question should have exactly 4 answer options labeled a, b, c, d.\n        Format your response as a JSON array where each question has this structure:\n        {{\n            \"text\": \"question text here?\",\n            \"options\": [\n                {{\"id\": \"a\", \"text\": \"option A text\"}},\n                {{\"id\": \"b\", \"text\": \"option B text\"}},\n                {{\"id\": \"c\", \"text\": \"option C text\"}},\n                {{\"id\": \"d\", \"text\": \"option D text\"}}\n            ],\n            \"correct_answer\": \"a\",\n            \"category\": \"{subject.lower()}\"\n        }}\n\n        Return only the JSON array, no additional text."""
 

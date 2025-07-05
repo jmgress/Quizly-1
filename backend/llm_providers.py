@@ -47,26 +47,21 @@ def create_llm_provider(provider_type: str = None, **kwargs) -> LLMProvider:
     else:
         raise ValueError(f"Unknown provider type: {provider_type}. Supported types: 'ollama', 'openai'")
 
-
+# This function is simplified as the main.py endpoint now does more detailed provider checking.
+# It can be used for basic listing if needed elsewhere, or removed if redundant.
 def get_available_providers() -> List[str]:
-    """Get list of available providers based on configuration."""
-    providers = []
-    
-    # Check Ollama
-    try:
-        provider = create_llm_provider("ollama")
-        if provider.health_check():
-            providers.append("ollama")
-    except Exception:
-        pass
-    
-    # Check OpenAI
-    try:
-        if os.getenv("OPENAI_API_KEY"):
-            provider = create_llm_provider("openai")
-            if provider.health_check():
-                providers.append("openai")
-    except Exception:
-        pass
-    
+    """
+    Get a basic list of potentially available provider names.
+    Actual availability and health are checked by specific endpoints.
+    """
+    # Basic check: is the config present that would allow them to be used?
+    # This doesn't guarantee they are working, just that they are configured.
+    providers = ["ollama"] # Ollama is generally available if installed
+    if os.getenv("OPENAI_API_KEY"):
+        providers.append("openai")
     return providers
+
+
+# Note: get_available_models function that was previously in main.py (implicitly)
+# is now effectively handled by each provider's list_models method
+# and the /api/models endpoint.

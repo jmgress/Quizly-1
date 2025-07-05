@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import Quiz from './components/Quiz';
 import SubjectSelection from './components/SubjectSelection';
-import AdminQuestions from './components/AdminQuestions';
+import AdminPanel from './components/AdminPanel'; // Updated import
 import './index.css';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState('home'); // 'home', 'selection', 'quiz', 'admin'
   const [quizConfig, setQuizConfig] = useState(null);
+  const [llmConfig, setLlmConfig] = useState({ provider: 'N/A', model: 'N/A' });
 
   useEffect(() => {
+    fetchLlmConfig();
     // Check URL hash on load and hash change
     const checkHash = () => {
       const hash = window.location.hash.slice(1); // Remove the '#'
@@ -24,6 +26,20 @@ function App() {
       window.removeEventListener('hashchange', checkHash);
     };
   }, []);
+
+  const fetchLlmConfig = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/api/llm/config`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch LLM config');
+      }
+      const data = await response.json();
+      setLlmConfig(data);
+    } catch (error) {
+      console.error("Error fetching LLM config:", error);
+      setLlmConfig({ provider: 'Error', model: 'Error fetching config' });
+    }
+  };
 
   const startQuizSetup = () => {
     setCurrentScreen('selection');
@@ -64,6 +80,9 @@ function App() {
           <button className="button" onClick={goToAdmin} style={{ marginTop: '10px', background: '#6c757d' }}>
             Admin Panel
           </button>
+          <p style={{ marginTop: '20px', fontSize: '0.9em', color: '#666' }}>
+            AI Questions powered by {llmConfig.provider} ({llmConfig.model})
+          </p>
         </div>
       )}
       
@@ -76,12 +95,12 @@ function App() {
           onRestart={restartQuiz}
           category={quizConfig.category}
           source={quizConfig.source}
-          model={quizConfig.model}
+          // model prop is no longer needed here as backend uses global config
         />
       )}
 
       {currentScreen === 'admin' && (
-        <AdminQuestions onGoHome={goHome} />
+        <AdminPanel onGoHome={goHome} onConfigUpdate={fetchLlmConfig} />
       )}
     </div>
   );

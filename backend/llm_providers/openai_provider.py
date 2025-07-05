@@ -70,6 +70,30 @@ class OpenAIProvider(LLMProvider):
             logger.warning(f"OpenAI health check failed: {str(e)}")
             return False
 
+    def list_models(self) -> List[str]:
+        """
+        List available models from OpenAI.
+        Returns a predefined list, can be expanded or fetched from API if needed.
+        """
+        # OpenAI's API for listing models can be extensive.
+        # For simplicity, we list commonly used chat completion models.
+        # This list can be updated as needed.
+        # A more dynamic approach would involve calling self._client.models.list()
+        # and filtering, but that adds complexity and potential cost/rate limits.
+        common_models = [
+            "gpt-4o",
+            "gpt-4o-mini",
+            "gpt-4-turbo",
+            "gpt-4",
+            "gpt-3.5-turbo",
+        ]
+        # Check if the currently configured model is in this list, if not, add it.
+        # This ensures the configured model is always shown as an option.
+        if self.model not in common_models:
+            common_models.append(self.model)
+        return sorted(list(set(common_models)))
+
+
     def _create_prompt(self, subject: str, limit: int) -> str:
         return f"""Generate {limit} multiple-choice quiz questions about {subject}.\n        Each question should have exactly 4 answer options labeled a, b, c, d.\n        Format your response as a JSON array where each question has this structure:\n        {{\n            \"text\": \"question text here?\",\n            \"options\": [\n                {{\"id\": \"a\", \"text\": \"option A text\"}},\n                {{\"id\": \"b\", \"text\": \"option B text\"}},\n                {{\"id\": \"c\", \"text\": \"option C text\"}},\n                {{\"id\": \"d\", \"text\": \"option D text\"}}\n            ],\n            \"correct_answer\": \"a\",\n            \"category\": \"{subject.lower()}\"\n        }}\n\n        Return only the JSON array, no additional text."""
 
