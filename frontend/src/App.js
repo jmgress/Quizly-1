@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Quiz from './components/Quiz';
 import SubjectSelection from './components/SubjectSelection';
-import AdminQuestions from './components/AdminQuestions';
+import AdminPanel from './components/AdminPanel';
 import './index.css';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState('home'); // 'home', 'selection', 'quiz', 'admin'
   const [quizConfig, setQuizConfig] = useState(null);
+  const [llmConfig, setLlmConfig] = useState({ provider: '', model: '' });
 
   useEffect(() => {
     // Check URL hash on load and hash change
@@ -23,6 +24,17 @@ function App() {
     return () => {
       window.removeEventListener('hashchange', checkHash);
     };
+    const fetchConfig = async () => {
+      try {
+        const res = await fetch('http://localhost:8000/api/llm/config');
+        const data = await res.json();
+        setLlmConfig(data);
+      } catch (e) {
+        console.error('Failed to load LLM config');
+      }
+    };
+
+    fetchConfig();
   }, []);
 
   const startQuizSetup = () => {
@@ -58,6 +70,11 @@ function App() {
         <div className="home">
           <h1>🧠 Quizly</h1>
           <p>Test your knowledge with our interactive quiz!</p>
+          {llmConfig.provider && (
+            <p style={{color: 'white'}}>
+              AI Questions powered by {llmConfig.provider} ({llmConfig.model})
+            </p>
+          )}
           <button className="button" onClick={startQuizSetup}>
             Start Quiz
           </button>
@@ -81,7 +98,7 @@ function App() {
       )}
 
       {currentScreen === 'admin' && (
-        <AdminQuestions onGoHome={goHome} />
+        <AdminPanel onGoHome={goHome} />
       )}
     </div>
   );

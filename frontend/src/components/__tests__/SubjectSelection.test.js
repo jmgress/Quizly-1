@@ -11,13 +11,10 @@ jest.mock('axios', () => ({
 import axios from 'axios';
 const mockedAxios = axios;
 
-const setupMocks = (categories = [], models = ['gpt-4o-mini']) => {
+const setupMocks = (categories = []) => {
   mockedAxios.get.mockImplementation((url) => {
     if (url.includes('/api/categories')) {
       return Promise.resolve({ data: { categories } });
-    }
-    if (url.includes('/api/models')) {
-      return Promise.resolve({ data: { models } });
     }
     return Promise.resolve({ data: {} });
   });
@@ -110,26 +107,10 @@ describe('SubjectSelection Component', () => {
     // Check that callback was called with correct parameters
     expect(mockOnSelectionComplete).toHaveBeenCalledWith({
       category: 'Ancient Rome',
-      source: 'ai',
-      model: 'gpt-4o-mini'
+      source: 'ai'
     });
   });
 
-  test('displays model dropdown for AI questions', async () => {
-    setupMocks(['geography'], ['gpt-4', 'gpt-3.5-turbo']);
-
-    render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Geography')).toBeInTheDocument();
-    });
-
-    const aiRadio = screen.getByDisplayValue('ai');
-    fireEvent.click(aiRadio);
-
-    expect(screen.getByLabelText('Model:')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('gpt-4')).toBeInTheDocument();
-  });
 
   test('shows error when no subject is selected', async () => {
     setupMocks(['geography']);

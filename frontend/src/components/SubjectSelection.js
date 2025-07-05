@@ -5,17 +5,14 @@ const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:800
 
 const SubjectSelection = ({ onSelectionComplete }) => {
   const [categories, setCategories] = useState([]);
-  const [models, setModels] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [customTopic, setCustomTopic] = useState('');
-  const [selectedModel, setSelectedModel] = useState('');
   const [questionSource, setQuestionSource] = useState('database'); // 'database' or 'ai'
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     fetchCategories();
-    fetchModels();
   }, []);
 
   const fetchCategories = async () => {
@@ -30,16 +27,6 @@ const SubjectSelection = ({ onSelectionComplete }) => {
     }
   };
 
-  const fetchModels = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/api/models`);
-      setModels(response.data.models);
-      setSelectedModel(response.data.models[0] || '');
-    } catch (err) {
-      // Models are optional; ignore errors but log to console
-      console.error('Failed to load models', err);
-    }
-  };
 
   const handleStartQuiz = () => {
     const selectedTopic = questionSource === 'ai' ? customTopic : selectedCategory;
@@ -56,9 +43,6 @@ const SubjectSelection = ({ onSelectionComplete }) => {
       category: selectedTopic,
       source: questionSource,
     };
-    if (questionSource === 'ai') {
-      config.model = selectedModel;
-    }
 
     onSelectionComplete(config);
   };
@@ -151,21 +135,6 @@ const SubjectSelection = ({ onSelectionComplete }) => {
             <small className="input-help">
               Examples: "Ancient Rome", "JavaScript Programming", "Marine Biology", "Medieval History"
             </small>
-            {models.length > 0 && (
-              <div className="model-select">
-                <label htmlFor="model-select">Model:</label>
-                <select
-                  id="model-select"
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="category-select"
-                >
-                  {models.map((m) => (
-                    <option key={m} value={m}>{m}</option>
-                  ))}
-                </select>
-              </div>
-            )}
           </div>
         )}
 

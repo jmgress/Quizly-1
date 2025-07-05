@@ -14,6 +14,7 @@ load_dotenv()
 
 # Import LLM providers
 from llm_providers import create_llm_provider, get_available_providers
+from llm_config import load_config, save_config
 
 # Import database module
 from database import init_db
@@ -66,8 +67,13 @@ class QuizResult(BaseModel):
     score_percentage: float
     answers: List[dict]
 
+class LLMConfig(BaseModel):
+    provider: str
+    model: str
+
 # Initialize database on startup
 init_db()
+load_config()
 
 @app.get("/")
 def read_root():
@@ -259,25 +265,22 @@ def get_categories():
     return {"categories": categories}
 
 @app.get("/api/llm/health")
-def check_llm_health():
-    """Check the health of the configured LLM provider"""
+def check_llm_health(provider: Optional[str] = None):
+    """Check the health of an LLM provider"""
+    provider_type = provider or os.getenv("LLM_PROVIDER", "ollama").lower()
     try:
-        provider = create_llm_provider()
-        is_healthy = provider.health_check()
-        provider_type = os.getenv("LLM_PROVIDER", "ollama").lower()
-        
+        instance = create_llm_provider(provider_type)
+        is_healthy = instance.health_check()
         return {
             "provider": provider_type,
-            "healthy": is_healthy,
-            "available_providers": get_available_providers()
+            "healthy": is_healthy
         }
     except Exception as e:
         logger.error(f"LLM health check failed: {str(e)}")
         return {
-            "provider": os.getenv("LLM_PROVIDER", "ollama").lower(),
+            "provider": provider_type,
             "healthy": False,
-            "error": str(e),
-            "available_providers": []
+            "error": str(e)
         }
 
 
@@ -344,6 +347,26 @@ def get_models(provider: Optional[str] = None):
 
     models = get_available_models(provider_type)
     return {"provider": provider_type, "models": models}
+
+
+@app.get("/api/llm/config", response_model=LLMConfig)
+def get_llm_config():
+    """Return the current LLM configuration."""
+    return load_config()
+
+
+@app.put("/api/llm/config", response_model=LLMConfig)
+def set_llm_config(config: LLMConfig):
+    """Update LLM provider configuration after validating health."""
+    try:
+        instance = create_llm_provider(config.provider, model=config.model)
+        if not instance.health_check():
+            raise HTTPException(status_code=400, detail="Provider health check failed")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    save_config(config.provider, config.model)
+    return load_config()
 
 if __name__ == "__main__":
     import uvicorn

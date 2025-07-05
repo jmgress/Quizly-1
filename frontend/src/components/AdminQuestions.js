@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
-const AdminQuestions = ({ onGoHome }) => {
+const AdminQuestions = ({ onGoHome, hideHeader = false }) => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -137,13 +137,15 @@ const AdminQuestions = ({ onGoHome }) => {
 
   return (
     <div className="admin-container">
-      <div className="admin-header">
-        <h1>🛠️ Admin: Question Management</h1>
-        <p>View and edit all quiz questions</p>
-        <button className="button" onClick={onGoHome}>
-          Back to Home
-        </button>
-      </div>
+      {!hideHeader && (
+        <div className="admin-header">
+          <h1>🛠️ Admin: Question Management</h1>
+          <p>View and edit all quiz questions</p>
+          <button className="button" onClick={onGoHome}>
+            Back to Home
+          </button>
+        </div>
+      )}
 
       <div className="admin-stats">
         <p><strong>Total Questions:</strong> {questions.length}</p>
