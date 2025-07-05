@@ -340,11 +340,12 @@ The application uses SQLite with the following tables:
 
 ## Sample Questions
 
-The application comes with 5 sample questions covering:
-- 🌍 **Geography**: Capitals and geography facts
-- 🔬 **Science**: Planets and scientific knowledge
-- 🔢 **Math**: Basic arithmetic
-- 📚 **Literature**: Classic authors and works
+The application includes 25 sample questions covering five categories:
+- 🌍 **Geography**: Capitals, landmarks, and physical geography
+- 🔬 **Science**: Basic physics, chemistry, and biology
+- 🔢 **Math**: Arithmetic and simple algebra
+- 📚 **Literature**: Classic authors and famous works
+- 🧩 **General**: Mixed knowledge and trivia
 
 ## Development
 

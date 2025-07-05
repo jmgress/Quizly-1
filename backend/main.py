@@ -2,7 +2,6 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
-import sqlite3
 import json
 import uuid
 from datetime import datetime
@@ -14,6 +13,7 @@ load_dotenv()
 
 # Import LLM providers
 from llm_providers import create_llm_provider, get_available_providers
+from database import init_db, get_connection
 
 import logging
 logging.basicConfig(level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")))
@@ -63,106 +63,9 @@ class QuizResult(BaseModel):
     score_percentage: float
     answers: List[dict]
 
-# Database initialization
-def init_db():
-    conn = sqlite3.connect('quiz.db')
-    cursor = conn.cursor()
-    
-    # Create questions table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS questions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            text TEXT NOT NULL,
-            options TEXT NOT NULL,
-            correct_answer TEXT NOT NULL,
-            category TEXT DEFAULT 'general'
-        )
-    ''')
-    
-    # Create quiz_sessions table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS quiz_sessions (
-            id TEXT PRIMARY KEY,
-            total_questions INTEGER,
-            correct_answers INTEGER,
-            score_percentage REAL,
-            created_at TEXT,
-            answers TEXT
-        )
-    ''')
-    
-    # Insert sample questions if table is empty
-    cursor.execute("SELECT COUNT(*) FROM questions")
-    if cursor.fetchone()[0] == 0:
-        sample_questions = [
-            {
-                "text": "What is the capital of France?",
-                "options": [
-                    {"id": "a", "text": "London"},
-                    {"id": "b", "text": "Berlin"}, 
-                    {"id": "c", "text": "Paris"},
-                    {"id": "d", "text": "Madrid"}
-                ],
-                "correct_answer": "c",
-                "category": "geography"
-            },
-            {
-                "text": "Which planet is known as the Red Planet?",
-                "options": [
-                    {"id": "a", "text": "Venus"},
-                    {"id": "b", "text": "Mars"},
-                    {"id": "c", "text": "Jupiter"},
-                    {"id": "d", "text": "Saturn"}
-                ],
-                "correct_answer": "b",
-                "category": "science"
-            },
-            {
-                "text": "What is 2 + 2?",
-                "options": [
-                    {"id": "a", "text": "3"},
-                    {"id": "b", "text": "4"},
-                    {"id": "c", "text": "5"},
-                    {"id": "d", "text": "6"}
-                ],
-                "correct_answer": "b",
-                "category": "math"
-            },
-            {
-                "text": "Who wrote 'Romeo and Juliet'?",
-                "options": [
-                    {"id": "a", "text": "Charles Dickens"},
-                    {"id": "b", "text": "William Shakespeare"},
-                    {"id": "c", "text": "Jane Austen"},
-                    {"id": "d", "text": "Mark Twain"}
-                ],
-                "correct_answer": "b",
-                "category": "literature"
-            },
-            {
-                "text": "What is the largest ocean on Earth?",
-                "options": [
-                    {"id": "a", "text": "Atlantic Ocean"},
-                    {"id": "b", "text": "Indian Ocean"},
-                    {"id": "c", "text": "Arctic Ocean"},
-                    {"id": "d", "text": "Pacific Ocean"}
-                ],
-                "correct_answer": "d",
-                "category": "geography"
-            }
-        ]
-        
-        for q in sample_questions:
-            cursor.execute(
-                "INSERT INTO questions (text, options, correct_answer, category) VALUES (?, ?, ?, ?)",
-                (q["text"], json.dumps(q["options"]), q["correct_answer"], q["category"])
-            )
-    
-    conn.commit()
-    conn.close()
-
-# Initialize database on startup
+# Initialize database when the module is imported
 init_db()
+
 
 @app.get("/")
 def read_root():
@@ -171,7 +74,7 @@ def read_root():
 @app.get("/api/questions", response_model=List[Question])
 def get_questions(category: Optional[str] = None, limit: Optional[int] = 10):
     """Get quiz questions, optionally filtered by category"""
-    conn = sqlite3.connect('quiz.db')
+    conn = get_connection()
     cursor = conn.cursor()
     
     if category:
@@ -199,7 +102,7 @@ def get_questions(category: Optional[str] = None, limit: Optional[int] = 10):
 @app.post("/api/quiz/submit", response_model=QuizResult)
 def submit_quiz(submission: QuizSubmission):
     """Submit quiz answers and get results"""
-    conn = sqlite3.connect('quiz.db')
+    conn = get_connection()
     cursor = conn.cursor()
     
     # Get correct answers for submitted questions
@@ -254,7 +157,7 @@ def submit_quiz(submission: QuizSubmission):
 @app.get("/api/quiz/{quiz_id}", response_model=QuizResult)
 def get_quiz_result(quiz_id: str):
     """Get quiz results by ID"""
-    conn = sqlite3.connect('quiz.db')
+    conn = get_connection()
     cursor = conn.cursor()
     
     cursor.execute("SELECT * FROM quiz_sessions WHERE id = ?", (quiz_id,))
@@ -276,7 +179,7 @@ def get_quiz_result(quiz_id: str):
 @app.put("/api/questions/{question_id}", response_model=Question)
 def update_question(question_id: int, question_update: QuestionUpdate):
     """Update a question's fields"""
-    conn = sqlite3.connect('quiz.db')
+    conn = get_connection()
     cursor = conn.cursor()
     
     # First, check if the question exists
@@ -344,7 +247,7 @@ def update_question(question_id: int, question_update: QuestionUpdate):
 @app.get("/api/categories")
 def get_categories():
     """Get available quiz categories"""
-    conn = sqlite3.connect('quiz.db')
+    conn = get_connection()
     cursor = conn.cursor()
     
     cursor.execute("SELECT DISTINCT category FROM questions")
