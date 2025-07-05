@@ -20,10 +20,149 @@ from database import init_db
 
 # Import configuration manager
 from config_manager import config_manager
+from logging_config_manager import LoggingConfigManager # New import
 
 import logging
-logging.basicConfig(level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")))
-logger = logging.getLogger(__name__)
+import logging.config # New import
+import logging.handlers # New import for RotatingFileHandler
+
+# Initialize logging configuration manager
+# It will load from ../logging_config.json relative to this main.py file
+logging_config_mgr = LoggingConfigManager(config_file=os.path.join(os.path.dirname(__file__), "..", "logging_config.json"))
+
+# Global logger for main application scope, will be configured by setup_logging
+logger = logging.getLogger("api_server") # Changed from __name__ to be component specific
+
+# --- Logging Setup Function ---
+def setup_logging():
+    """Configures logging based on logging_config.json."""
+    config = logging_config_mgr.get_config()
+    log_dir_base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "logs"))
+
+    if not os.path.exists(log_dir_base):
+        os.makedirs(log_dir_base, exist_ok=True)
+
+    log_level_map = {
+        "CRITICAL": logging.CRITICAL,
+        "ERROR": logging.ERROR,
+        "WARNING": logging.WARNING,
+        "INFO": logging.INFO,
+        "DEBUG": logging.DEBUG,
+        "TRACE": logging.DEBUG, # Python logging doesn't have TRACE, map to DEBUG
+        "NOTSET": logging.NOTSET,
+    }
+
+    # Basic stream handler for console output
+    handlers = {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+            "level": log_level_map.get(config.get("global_level", "INFO").upper(), logging.INFO),
+            "stream": "ext://sys.stdout",
+        }
+    }
+
+    # Configure file handlers if enabled
+    if config.get("enable_file_logging", False):
+        log_files = config.get("log_files", {})
+        rotation_max_bytes = config.get("log_rotation_max_bytes", 10*1024*1024)
+        rotation_backup_count = config.get("log_rotation_backup_count", 5)
+
+        for key, relative_path in log_files.items():
+            # Ensure paths are absolute, relative to project root's "logs" directory
+            log_file_path = os.path.join(log_dir_base, os.path.relpath(relative_path, "logs"))
+            log_file_dir = os.path.dirname(log_file_path)
+            os.makedirs(log_file_dir, exist_ok=True)
+
+            handler_name = f"file_{key}"
+            handlers[handler_name] = {
+                "class": "logging.handlers.RotatingFileHandler",
+                "formatter": "verbose",
+                "filename": log_file_path,
+                "maxBytes": rotation_max_bytes,
+                "backupCount": rotation_backup_count,
+                "level": logging.DEBUG, # Handlers should capture all, loggers control level
+            }
+
+    # Define logger configurations
+    # The root logger will use the global_level and console output by default
+    # Specific loggers will inherit from root but can have their own levels.
+    configured_loggers = {
+        "root": {
+            "handlers": ["console"] + ([f"file_{key}" for key in config.get("log_files", {}).keys() if config.get("enable_file_logging")] if "combined" in config.get("log_files", {}) else []),
+            "level": log_level_map.get(config.get("global_level", "INFO").upper(), logging.INFO),
+        },
+        "api_server": { # Corresponds to logger = logging.getLogger("api_server")
+            "handlers": ["console"] + ([f"file_backend_api", f"file_combined", f"file_backend_error"] if config.get("enable_file_logging") else []),
+            "level": log_level_map.get(config.get("backend_levels", {}).get("api_server", "INFO").upper(), logging.INFO),
+            "propagate": False, # Avoid duplicating to root if specific handlers are set
+        },
+        "llm_providers": {
+            "handlers": ["console"] + ([f"file_backend_llm", f"file_combined", f"file_backend_error"] if config.get("enable_file_logging") else []),
+            "level": log_level_map.get(config.get("backend_levels", {}).get("llm_providers", "INFO").upper(), logging.INFO),
+            "propagate": False,
+        },
+        "database": {
+            "handlers": ["console"] + ([f"file_backend_database", f"file_combined", f"file_backend_error"] if config.get("enable_file_logging") else []),
+            "level": log_level_map.get(config.get("backend_levels", {}).get("database", "WARNING").upper(), logging.WARNING),
+            "propagate": False,
+        },
+        # Add other specific loggers as needed, e.g., for third-party libraries
+        "uvicorn.error": { # To capture uvicorn errors if needed
+            "handlers": ["console"] + ([f"file_backend_error", f"file_combined"] if config.get("enable_file_logging") else []),
+            "level": "INFO",
+            "propagate": False,
+        },
+        "uvicorn.access": {
+             "handlers": ["console"] + ([f"file_backend_api", f"file_combined"] if config.get("enable_file_logging") else []),
+             "level": "INFO",
+             "propagate": False,
+        }
+    }
+
+    # Filter configuration for loggers: only include loggers that will write to specific files
+    # if file logging is enabled. This ensures error.log gets only ERROR+ from relevant loggers.
+    if config.get("enable_file_logging"):
+        # Special handling for error log: ensure it gets only ERROR or CRITICAL
+        if "file_backend_error" in handlers:
+             handlers["file_backend_error"]["level"] = logging.ERROR # Override level for error file
+
+        # Assign specific file handlers to loggers
+        # Example: api_server logs go to backend_api.log, combined.log, and errors to backend_error.log
+        # This logic is now embedded in the 'handlers' list for each logger above.
+        # The 'combined.log' should get logs from all backend components.
+        # We can achieve this by adding 'file_combined' to handlers of all backend loggers,
+        # or by making the root logger write to 'file_combined' and ensuring backend loggers propagate to root.
+        # For now, explicit handler assignment in each logger is clearer.
+
+        # Ensure 'file_combined' handler is added to root if not explicitly handled by all sub-loggers
+        if "file_combined" in handlers and "file_combined" not in configured_loggers["root"]["handlers"]:
+            configured_loggers["root"]["handlers"].append("file_combined")
+
+    # Apply the logging configuration
+    logging_config_dict = {
+        "version": 1,
+        "disable_existing_loggers": False, # Important to not disable uvicorn/fastapi loggers
+        "formatters": {
+            "verbose": {
+                "format": "%(asctime)s - %(name)s - %(levelname)s - %(module)s:%(lineno)d - %(message)s"
+            },
+            "simple": {
+                "format": "%(levelname)s - %(message)s"
+            },
+        },
+        "handlers": handlers,
+        "loggers": configured_loggers,
+        # "root" logger config is implicitly handled by configuring "root" in "loggers"
+    }
+
+    logging.config.dictConfig(logging_config_dict)
+    logger.info("Logging setup complete using dictConfig.")
+
+# --- End Logging Setup ---
+
+# Call setup_logging on application startup
+setup_logging()
 
 app = FastAPI(title="Quizly API", description="Knowledge Testing Application API")
 
@@ -476,6 +615,215 @@ def get_providers_health():
         }
     
     return providers_health
+
+
+# --- Logging API Endpoints ---
+
+@app.get("/api/logging/config")
+def get_logging_config():
+    """Get current logging configuration."""
+    try:
+        return logging_config_mgr.get_config()
+    except Exception as e:
+        logger.error(f"Error getting logging config: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get logging configuration: {str(e)}")
+
+@app.put("/api/logging/config")
+def update_logging_config(config_update: dict):
+    """Update logging configuration and re-apply."""
+    try:
+        # Basic validation for top-level keys
+        valid_top_keys = [
+            "global_level", "frontend_level", "backend_levels",
+            "log_files", "log_rotation_max_bytes",
+            "log_rotation_backup_count", "enable_file_logging"
+        ]
+        # Further validation can be added here, e.g., for log levels, path formats
+        for key in config_update.keys():
+            if key not in valid_top_keys:
+                raise HTTPException(status_code=400, detail=f"Invalid logging configuration key: {key}")
+
+        updated_config = logging_config_mgr.update_config(config_update)
+        setup_logging() # Re-initialize logging with new config
+        logger.info("Logging configuration updated and re-applied.")
+        return {"message": "Logging configuration updated successfully", "config": updated_config}
+    except HTTPException: # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        logger.error(f"Error updating logging config: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update logging configuration: {str(e)}")
+
+@app.get("/api/logging/logs")
+def get_log_entries(
+    component: Optional[str] = None,
+    level: Optional[str] = None,
+    lines: Optional[int] = 100
+):
+    """Fetch log entries, optionally filtered by component and level."""
+    config = logging_config_mgr.get_config()
+    if not config.get("enable_file_logging"):
+        return {"message": "File logging is not enabled.", "logs": []}
+
+    log_files_map = config.get("log_files", {})
+    target_log_file_key = None
+
+    if component:
+        # Map component to log file key in config (e.g., "backend_api" -> "backend_api")
+        # This assumes component name matches the key in log_files or a predefined mapping
+        if component == "frontend": target_log_file_key = "frontend_app"
+        elif component == "api": target_log_file_key = "backend_api"
+        elif component == "llm": target_log_file_key = "backend_llm"
+        elif component == "database": target_log_file_key = "backend_database"
+        elif component == "error": target_log_file_key = "backend_error"
+        elif component == "combined": target_log_file_key = "combined"
+        else: # Allow direct key if component name matches a log_files key
+            if component in log_files_map:
+                target_log_file_key = component
+            else:
+                raise HTTPException(status_code=400, detail=f"Invalid log component: {component}")
+    else: # Default to combined log if no component specified
+        target_log_file_key = "combined"
+
+    if not target_log_file_key or target_log_file_key not in log_files_map:
+        raise HTTPException(status_code=404, detail=f"Log file for component '{component}' not found in configuration.")
+
+    log_file_relative_path = log_files_map[target_log_file_key]
+    # Ensure path is relative to project root's "logs" directory for reading
+    log_dir_base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "logs"))
+    log_file_path = os.path.join(log_dir_base, os.path.relpath(log_file_relative_path, "logs"))
+
+
+    if not os.path.exists(log_file_path):
+        return {"message": f"Log file {log_file_path} not found.", "logs": []}
+
+    try:
+        entries = []
+        with open(log_file_path, 'r') as f:
+            # Read last N lines (more efficient ways exist for large files, but this is simplest)
+            all_lines = f.readlines()
+            selected_lines = all_lines[-lines:] if lines > 0 else all_lines
+
+        for line in selected_lines:
+            if level:
+                # Simple string matching for level; more robust parsing could be added
+                if f" - {level.upper()} - " in line:
+                    entries.append(line.strip())
+            else:
+                entries.append(line.strip())
+        return {"logs": entries, "file": log_file_path, "count": len(entries)}
+    except Exception as e:
+        logger.error(f"Error reading log file {log_file_path}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to read log file: {str(e)}")
+
+
+from fastapi.responses import FileResponse
+
+@app.get("/api/logging/actions/download/{log_key}")
+async def download_log_file(log_key: str):
+    """Download a specific log file."""
+    config = logging_config_mgr.get_config()
+    if not config.get("enable_file_logging"):
+        raise HTTPException(status_code=400, detail="File logging is not enabled.")
+
+    log_files_map = config.get("log_files", {})
+    if log_key not in log_files_map:
+        raise HTTPException(status_code=404, detail=f"Log key '{log_key}' not found in configuration.")
+
+    log_file_relative_path = log_files_map[log_key]
+    log_dir_base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "logs"))
+    log_file_path = os.path.join(log_dir_base, os.path.relpath(log_file_relative_path, "logs"))
+
+    if not os.path.exists(log_file_path):
+        raise HTTPException(status_code=404, detail=f"Log file {log_file_path} not found.")
+
+    return FileResponse(log_file_path, media_type='text/plain', filename=os.path.basename(log_file_path))
+
+@app.post("/api/logging/actions/clear/{log_key}")
+async def clear_log_file(log_key: str):
+    """Clear a specific log file."""
+    config = logging_config_mgr.get_config()
+    if not config.get("enable_file_logging"):
+        raise HTTPException(status_code=400, detail="File logging is not enabled.")
+
+    log_files_map = config.get("log_files", {})
+    if log_key not in log_files_map:
+        raise HTTPException(status_code=404, detail=f"Log key '{log_key}' not found in configuration.")
+
+    log_file_relative_path = log_files_map[log_key]
+    log_dir_base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "logs"))
+    log_file_path = os.path.join(log_dir_base, os.path.relpath(log_file_relative_path, "logs"))
+
+    if not os.path.exists(log_file_path):
+        raise HTTPException(status_code=404, detail=f"Log file {log_file_path} not found.")
+
+    try:
+        with open(log_file_path, 'w') as f: # Open in write mode to truncate
+            f.write("")
+        logger.info(f"Log file {log_file_path} cleared by user.")
+        return {"message": f"Log file {log_key} ({os.path.basename(log_file_path)}) cleared successfully."}
+    except Exception as e:
+        logger.error(f"Error clearing log file {log_file_path}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to clear log file: {str(e)}")
+
+
+@app.post("/api/logging/actions/rotate/{log_key}")
+async def rotate_log_file(log_key: str):
+    """Manually trigger log rotation for a specific log file."""
+    # This requires finding the specific handler and calling doRollover.
+    # This is more complex as it needs access to the configured handlers.
+    # For simplicity, we might need to re-think or simplify this.
+    # One approach: re-setup logging, which might trigger rotation if conditions are met,
+    # or find the handler in logging.getLogger().handlers.
+
+    # Find the handler associated with log_key
+    # This is a simplified conceptual implementation. A more robust one would inspect logging.config.
+
+    config = logging_config_mgr.get_config()
+    if not config.get("enable_file_logging", False):
+        raise HTTPException(status_code=400, detail="File logging is not enabled.")
+
+    log_files_map = config.get("log_files", {})
+    if log_key not in log_files_map:
+        raise HTTPException(status_code=404, detail=f"Log key '{log_key}' not found in configuration.")
+
+    # The actual file path
+    log_file_relative_path = log_files_map[log_key]
+    log_dir_base = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "logs"))
+    target_log_filename = os.path.join(log_dir_base, os.path.relpath(log_file_relative_path, "logs"))
+
+    # Iterate through all loggers and their handlers to find the one for the target file
+    found_handler = False
+    for logger_name in logging.Logger.manager.loggerDict:
+        current_logger = logging.getLogger(logger_name)
+        if hasattr(current_logger, 'handlers'):
+            for handler in current_logger.handlers:
+                if isinstance(handler, logging.handlers.RotatingFileHandler):
+                    if hasattr(handler, 'baseFilename') and handler.baseFilename == target_log_filename:
+                        handler.doRollover()
+                        found_handler = True
+                        logger.info(f"Manual log rotation triggered for {target_log_filename} via logger {logger_name}")
+                        break
+            if found_handler:
+                break
+
+    # Also check root handlers
+    if not found_handler:
+        for handler in logging.root.handlers:
+            if isinstance(handler, logging.handlers.RotatingFileHandler):
+                if hasattr(handler, 'baseFilename') and handler.baseFilename == target_log_filename:
+                    handler.doRollover()
+                    found_handler = True
+                    logger.info(f"Manual log rotation triggered for {target_log_filename} via root logger")
+                    break
+
+    if found_handler:
+        return {"message": f"Log rotation triggered for {log_key} ({os.path.basename(target_log_filename)})."}
+    else:
+        logger.warning(f"Could not find a RotatingFileHandler for log key {log_key} (file: {target_log_filename}) to manually rotate.")
+        raise HTTPException(status_code=404, detail=f"No active rotating file handler found for log key {log_key}. Rotation might happen automatically based on size.")
+
+# --- End Logging API Endpoints ---
+
 
 if __name__ == "__main__":
     import uvicorn

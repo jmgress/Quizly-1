@@ -7,7 +7,7 @@ import logging
 
 from .base import LLMProvider
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("llm_providers") # Use component-specific logger
 
 
 class OllamaProvider(LLMProvider):

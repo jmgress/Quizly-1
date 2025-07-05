@@ -14,8 +14,8 @@ from llm_providers import LLMProvider, OllamaProvider, OpenAIProvider
 from config_manager import config_manager
 
 # Configure logging
-logging.basicConfig(level=logging.INFO) # TODO: This might be redundant if main.py or another entry point configures logging.
-logger = logging.getLogger(__name__)
+# logging.basicConfig(level=logging.INFO) # Removed: Handled in main.py
+logger = logging.getLogger("llm_providers") # Use component-specific logger
 
 
 # Provider Factory

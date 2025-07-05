@@ -10,7 +10,7 @@ import os
 import logging
 
 # Set up logging
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("database") # Use component-specific logger
 
 def init_db():
     """

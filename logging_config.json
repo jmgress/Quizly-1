@@ -1,0 +1,20 @@
+{
+  "global_level": "INFO",
+  "frontend_level": "INFO",
+  "backend_levels": {
+    "api_server": "INFO",
+    "llm_providers": "INFO",
+    "database": "WARNING"
+  },
+  "log_files": {
+    "frontend_app": "logs/frontend/app.log",
+    "backend_api": "logs/backend/api.log",
+    "backend_llm": "logs/backend/llm.log",
+    "backend_database": "logs/backend/database.log",
+    "backend_error": "logs/backend/error.log",
+    "combined": "logs/combined.log"
+  },
+  "log_rotation_max_bytes": 10485760,
+  "log_rotation_backup_count": 5,
+  "enable_file_logging": true
+}

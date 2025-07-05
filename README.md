@@ -260,6 +260,11 @@ The admin interface allows you to view and edit all quiz questions stored in the
   - Category assignment
 - **Save Changes**: Click "Save" to update questions or "Cancel" to discard changes
 - **Error Handling**: Validation ensures all required fields are filled and correct answers are valid
+- **Logging Configuration (New Tab)**:
+    - **Dynamic Log Levels**: Configure log levels (ERROR, WARN, INFO, DEBUG, TRACE) for frontend (informational), backend global, API server, LLM providers, and database operations. Changes apply in real-time without restart.
+    - **File Management**: Manage log files stored in the `logs/` directory (e.g., `logs/backend/api.log`, `logs/frontend/app.log`, `logs/combined.log`). Includes download, clear, and manual rotation for each log file.
+    - **Live Log Viewer**: View the most recent log entries (e.g., last 100 lines) with filtering by component and log level. Includes auto-refresh capabilities (manual refresh button provided).
+    - **Configuration Persistence**: All logging settings are stored in `logging_config.json` at the project root and persist across application restarts.
 
 **Admin Interface Usage:**
 - No authentication required (access via direct URL)
@@ -282,6 +287,14 @@ The admin interface allows you to view and edit all quiz questions stored in the
 ### Quiz Management
 - **POST** `/api/quiz/submit` - Submit quiz answers and get results
 - **GET** `/api/quiz/{quiz_id}` - Get quiz results by ID
+
+### Logging Management (Admin)
+- **GET** `/api/logging/config` - Get current logging configuration
+- **PUT** `/api/logging/config` - Update logging configuration
+- **GET** `/api/logging/logs` - Fetch log entries (supports `?component=<component>&level=<level>&lines=<count>`)
+- **GET** `/api/logging/actions/download/{log_key}` - Download a specific log file
+- **POST** `/api/logging/actions/clear/{log_key}` - Clear a specific log file
+- **POST** `/api/logging/actions/rotate/{log_key}` - Manually trigger rotation for a log file
 
 ### Example API Usage
 

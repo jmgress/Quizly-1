@@ -5,7 +5,7 @@ import os
 from typing import Dict, Any, Optional
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("api_server.config") # Use a more specific logger name
 
 CONFIG_FILE = "llm_config.json"
 
