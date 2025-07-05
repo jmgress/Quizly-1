@@ -25,10 +25,68 @@ from config_manager import config_manager
 from logging_config import logging_config_manager
 
 import logging
-logging.basicConfig(level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")))
+import logging.handlers
+import sys
+
+# Initialize logging configuration manager
+logging_config = logging_config_manager.get_config()
+
+# Set up proper logging with file handlers
+def setup_logging():
+    """Set up logging with both console and file handlers"""
+    
+    # Create logs directory if it doesn't exist
+    log_dir = logging_config.get('file_settings', {}).get('log_directory', 'logs')
+    backend_log_dir = os.path.join(log_dir, 'backend')
+    os.makedirs(backend_log_dir, exist_ok=True)
+    
+    # Get log format from config
+    log_format = logging_config.get('file_settings', {}).get('log_format', 
+                                                             '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    
+    # Configure root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
+    
+    # Clear existing handlers
+    root_logger.handlers.clear()
+    
+    # Console handler
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.INFO)
+    console_formatter = logging.Formatter(log_format)
+    console_handler.setFormatter(console_formatter)
+    root_logger.addHandler(console_handler)
+    
+    # File handlers for different log types
+    handlers = [
+        ('api.log', logging.INFO),
+        ('error.log', logging.ERROR),
+        ('database.log', logging.DEBUG)
+    ]
+    
+    for filename, level in handlers:
+        filepath = os.path.join(backend_log_dir, filename)
+        file_handler = logging.handlers.RotatingFileHandler(
+            filepath, 
+            maxBytes=10*1024*1024,  # 10MB
+            backupCount=5
+        )
+        file_handler.setLevel(level)
+        file_formatter = logging.Formatter(log_format)
+        file_handler.setFormatter(file_formatter)
+        root_logger.addHandler(file_handler)
+    
+    return root_logger
+
+# Setup logging
+setup_logging()
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Quizly API", description="Knowledge Testing Application API")
+
+# Log application startup
+logger.info("Initializing Quizly FastAPI application")
 
 # CORS configuration
 app.add_middleware(
@@ -38,6 +96,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+logger.info("CORS middleware configured for localhost:3000")
+
+# Startup event handler
+@app.on_event("startup")
+async def startup_event():
+    logger.info("=== Quizly API Server Starting ===")
+    logger.info(f"FastAPI version: {app.version}")
+    logger.info("Server is ready to accept requests")
+
+# Shutdown event handler
+@app.on_event("shutdown")
+async def shutdown_event():
+    logger.info("=== Quizly API Server Shutting Down ===")
+    logger.info("Server shutdown complete")
 
 # Pydantic models
 class QuestionOption(BaseModel):
@@ -73,26 +146,51 @@ class QuizResult(BaseModel):
     answers: List[dict]
 
 # Initialize database on startup
+logger.info("Initializing database...")
 init_db()
+logger.info("Database initialization completed")
 
 @app.get("/")
 def read_root():
+    logger.info("Root endpoint accessed")
     return {"message": "Welcome to Quizly API"}
+
+@app.get("/api/health")
+def health_check():
+    """Health check endpoint with logging"""
+    logger.info("Health check endpoint accessed")
+    logger.debug("Performing health check...")
+    
+    # Test logging at different levels
+    logger.debug("Debug: Health check details")
+    logger.info("Info: Health check successful")
+    logger.warning("Warning: This is a test warning")
+    
+    return {
+        "status": "healthy",
+        "message": "Quizly API is running",
+        "timestamp": datetime.now().isoformat()
+    }
 
 @app.get("/api/questions", response_model=List[Question])
 def get_questions(category: Optional[str] = None, limit: Optional[int] = 10):
     """Get quiz questions, optionally filtered by category"""
+    logger.info(f"Getting questions - category: {category}, limit: {limit}")
+    
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
     if category:
         cursor.execute("SELECT * FROM questions WHERE category = ? ORDER BY RANDOM() LIMIT ?", (category, limit))
+        logger.info(f"Fetching {limit} questions from category: {category}")
     else:
         # For admin interface, allow fetching all questions by setting a high limit
         if limit and limit > 1000:
             cursor.execute("SELECT * FROM questions ORDER BY id")
+            logger.info("Fetching all questions for admin interface")
         else:
             cursor.execute("SELECT * FROM questions ORDER BY RANDOM() LIMIT ?", (limit,))
+            logger.info(f"Fetching {limit} random questions")
     
     questions = []
     for row in cursor.fetchall():
@@ -105,6 +203,7 @@ def get_questions(category: Optional[str] = None, limit: Optional[int] = 10):
         })
     
     conn.close()
+    logger.info(f"Returning {len(questions)} questions")
     return questions
 
 @app.post("/api/quiz/submit", response_model=QuizResult)
@@ -621,5 +720,13 @@ if __name__ == "__main__":
         logger.info(f"Ollama model: {config['ollama_model']}")
         logger.info(f"Ollama host: {config['ollama_host']}")
     
-    # Start server
-    uvicorn.run(app, host=host, port=port)
+    # Start server with proper logging
+    logger.info(f"Starting server on {host}:{port}")
+    uvicorn.run(
+        app, 
+        host=host, 
+        port=port,
+        log_level="info",
+        access_log=True,
+        loop="asyncio"
+    )
