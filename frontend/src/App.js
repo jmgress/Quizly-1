@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import Quiz from './components/Quiz';
 import SubjectSelection from './components/SubjectSelection';
-import AdminQuestions from './components/AdminQuestions';
+import AdminPanel from './components/AdminPanel';
 import './index.css';
 
 function App() {
   const [currentScreen, setCurrentScreen] = useState('home'); // 'home', 'selection', 'quiz', 'admin'
   const [quizConfig, setQuizConfig] = useState(null);
+  const [llmConfig, setLlmConfig] = useState(null);
 
   useEffect(() => {
     // Check URL hash on load and hash change
@@ -20,10 +21,25 @@ function App() {
     checkHash(); // Check on initial load
     window.addEventListener('hashchange', checkHash);
     
+    // Fetch LLM configuration for home screen display
+    fetchLLMConfig();
+    
     return () => {
       window.removeEventListener('hashchange', checkHash);
     };
   }, []);
+
+  const fetchLLMConfig = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000'}/api/llm/config`);
+      if (response.ok) {
+        const data = await response.json();
+        setLlmConfig(data.config);
+      }
+    } catch (error) {
+      console.error('Failed to fetch LLM config:', error);
+    }
+  };
 
   const startQuizSetup = () => {
     setCurrentScreen('selection');
@@ -58,6 +74,14 @@ function App() {
         <div className="home">
           <h1>🧠 Quizly</h1>
           <p>Test your knowledge with our interactive quiz!</p>
+          {llmConfig && (
+            <div className="llm-info">
+              <p className="llm-status">
+                🤖 AI Questions powered by <strong>{llmConfig.llm_provider}</strong> 
+                ({llmConfig.llm_provider === 'ollama' ? llmConfig.ollama_model : llmConfig.openai_model})
+              </p>
+            </div>
+          )}
           <button className="button" onClick={startQuizSetup}>
             Start Quiz
           </button>
@@ -76,12 +100,11 @@ function App() {
           onRestart={restartQuiz}
           category={quizConfig.category}
           source={quizConfig.source}
-          model={quizConfig.model}
         />
       )}
 
       {currentScreen === 'admin' && (
-        <AdminQuestions onGoHome={goHome} />
+        <AdminPanel onGoHome={goHome} />
       )}
     </div>
   );

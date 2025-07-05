@@ -11,6 +11,7 @@ from typing import List, Any
 
 # Import from the llm_providers package directory
 from llm_providers import LLMProvider, OllamaProvider, OpenAIProvider
+from config_manager import config_manager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO) # TODO: This might be redundant if main.py or another entry point configures logging.
@@ -30,18 +31,23 @@ def create_llm_provider(provider_type: str = None, **kwargs) -> LLMProvider:
         LLMProvider instance
     """
     if provider_type is None:
-        provider_type = os.getenv("LLM_PROVIDER", "ollama").lower()
+        # Get provider from config manager first, then environment
+        provider_type = config_manager.get_config()["llm_provider"]
     
     logger.info(f"Creating LLM provider: {provider_type}")
     
     if provider_type == "ollama":
-        model = kwargs.get("model", os.getenv("OLLAMA_MODEL", "llama3.2"))
-        host = kwargs.get("host", os.getenv("OLLAMA_HOST", "http://localhost:11434"))
+        # Use config manager values if no kwargs provided
+        config = config_manager.get_config()
+        model = kwargs.get("model", config["ollama_model"])
+        host = kwargs.get("host", config["ollama_host"])
         return OllamaProvider(model=model, host=host)
     
     elif provider_type == "openai":
-        api_key = kwargs.get("api_key", os.getenv("OPENAI_API_KEY"))
-        model = kwargs.get("model", os.getenv("OPENAI_MODEL", "gpt-4o-mini"))
+        # Use config manager values if no kwargs provided
+        config = config_manager.get_config()
+        api_key = kwargs.get("api_key", config["openai_api_key"])
+        model = kwargs.get("model", config["openai_model"])
         return OpenAIProvider(api_key=api_key, model=model)
     
     else:
@@ -54,6 +60,7 @@ def get_available_providers() -> List[str]:
     
     # Check Ollama
     try:
+        config = config_manager.get_config()
         provider = create_llm_provider("ollama")
         if provider.health_check():
             providers.append("ollama")
@@ -62,7 +69,8 @@ def get_available_providers() -> List[str]:
     
     # Check OpenAI
     try:
-        if os.getenv("OPENAI_API_KEY"):
+        config = config_manager.get_config()
+        if config["openai_api_key"]:
             provider = create_llm_provider("openai")
             if provider.health_check():
                 providers.append("openai")
@@ -70,3 +78,12 @@ def get_available_providers() -> List[str]:
         pass
     
     return providers
+
+def get_available_models(provider_type: str = None) -> List[str]:
+    """Get list of available models for a provider."""
+    if provider_type is None:
+        provider_type = config_manager.get_config()["llm_provider"]
+    
+    # Import here to avoid circular imports
+    from llm_providers import get_available_models as get_models
+    return get_models(provider_type)
