@@ -21,6 +21,9 @@ from database import init_db
 # Import configuration manager
 from config_manager import config_manager
 
+# Import logging configuration manager
+from logging_config import logging_config_manager
+
 import logging
 logging.basicConfig(level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")))
 logger = logging.getLogger(__name__)
@@ -476,6 +479,125 @@ def get_providers_health():
         }
     
     return providers_health
+
+
+# Logging Configuration Endpoints
+
+@app.get("/api/logging/config")
+def get_logging_config():
+    """Get current logging configuration"""
+    try:
+        config = logging_config_manager.get_config()
+        return {
+            "config": config,
+            "available_levels": ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"]
+        }
+    except Exception as e:
+        logger.error(f"Error getting logging config: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get logging configuration: {str(e)}")
+
+
+@app.put("/api/logging/config")
+def update_logging_config(config_update: dict):
+    """Update logging configuration"""
+    try:
+        # Validate log levels
+        valid_levels = ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"]
+        
+        if "log_levels" in config_update:
+            for component, levels in config_update["log_levels"].items():
+                if isinstance(levels, dict):
+                    for subcomponent, level in levels.items():
+                        if level not in valid_levels:
+                            raise HTTPException(status_code=400, detail=f"Invalid log level: {level}")
+                elif isinstance(levels, str):
+                    if levels not in valid_levels:
+                        raise HTTPException(status_code=400, detail=f"Invalid log level: {levels}")
+        
+        # Update configuration
+        updated_config = logging_config_manager.update_config(config_update)
+        
+        return {
+            "success": True,
+            "config": updated_config
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating logging config: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update logging configuration: {str(e)}")
+
+
+@app.get("/api/logging/files")
+def get_log_files():
+    """Get list of available log files"""
+    try:
+        files = logging_config_manager.get_log_files()
+        return {"files": files}
+    except Exception as e:
+        logger.error(f"Error getting log files: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get log files: {str(e)}")
+
+
+@app.get("/api/logging/recent")
+def get_recent_logs(max_entries: int = 100):
+    """Get recent log entries"""
+    try:
+        logs = logging_config_manager.get_recent_logs(max_entries)
+        return {"logs": logs}
+    except Exception as e:
+        logger.error(f"Error getting recent logs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get recent logs: {str(e)}")
+
+
+@app.post("/api/logging/files/{file_path:path}/clear")
+def clear_log_file(file_path: str):
+    """Clear a specific log file"""
+    try:
+        logging_config_manager.clear_log_file(file_path)
+        return {"success": True, "message": f"Log file {file_path} cleared successfully"}
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error clearing log file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to clear log file: {str(e)}")
+
+
+@app.post("/api/logging/files/{file_path:path}/rotate")
+def rotate_log_file(file_path: str):
+    """Rotate a specific log file"""
+    try:
+        logging_config_manager.rotate_log_file(file_path)
+        return {"success": True, "message": f"Log file {file_path} rotated successfully"}
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error rotating log file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to rotate log file: {str(e)}")
+
+
+@app.get("/api/logging/files/{file_path:path}/download")
+def download_log_file(file_path: str):
+    """Download a specific log file"""
+    try:
+        from fastapi.responses import FileResponse
+        import os
+        
+        full_path = os.path.join(logging_config_manager.logs_dir, file_path)
+        if not os.path.exists(full_path):
+            raise HTTPException(status_code=404, detail="Log file not found")
+        
+        return FileResponse(
+            path=full_path,
+            filename=os.path.basename(file_path),
+            media_type="text/plain"
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error downloading log file: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to download log file: {str(e)}")
+
 
 if __name__ == "__main__":
     import uvicorn

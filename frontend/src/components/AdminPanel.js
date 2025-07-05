@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import AdminQuestions from './AdminQuestions';
 import LLMSettings from './LLMSettings';
+import LoggingSettings from './LoggingSettings';
 
 const AdminPanel = ({ onGoHome }) => {
   const [activeTab, setActiveTab] = useState('questions');
@@ -9,7 +10,7 @@ const AdminPanel = ({ onGoHome }) => {
     <div className="admin-container">
       <div className="admin-header">
         <h1>🛠️ Admin Panel</h1>
-        <p>Manage quiz questions and LLM settings</p>
+        <p>Manage quiz questions, LLM settings, and logging configuration</p>
         <button className="button" onClick={onGoHome}>
           Back to Home
         </button>
@@ -28,6 +29,12 @@ const AdminPanel = ({ onGoHome }) => {
         >
           🤖 LLM Settings
         </button>
+        <button 
+          className={`tab-button ${activeTab === 'logging' ? 'active' : ''}`}
+          onClick={() => setActiveTab('logging')}
+        >
+          📊 Logging
+        </button>
       </div>
 
       <div className="admin-content">
@@ -36,6 +43,9 @@ const AdminPanel = ({ onGoHome }) => {
         )}
         {activeTab === 'llm' && (
           <LLMSettings />
+        )}
+        {activeTab === 'logging' && (
+          <LoggingSettings />
         )}
       </div>
     </div>
