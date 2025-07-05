@@ -15,6 +15,9 @@ load_dotenv()
 # Import LLM providers
 from llm_providers import create_llm_provider, get_available_providers
 
+# Import database module
+from database import init_db
+
 import logging
 logging.basicConfig(level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")))
 logger = logging.getLogger(__name__)
@@ -62,104 +65,6 @@ class QuizResult(BaseModel):
     correct_answers: int
     score_percentage: float
     answers: List[dict]
-
-# Database initialization
-def init_db():
-    conn = sqlite3.connect('quiz.db')
-    cursor = conn.cursor()
-    
-    # Create questions table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS questions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            text TEXT NOT NULL,
-            options TEXT NOT NULL,
-            correct_answer TEXT NOT NULL,
-            category TEXT DEFAULT 'general'
-        )
-    ''')
-    
-    # Create quiz_sessions table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS quiz_sessions (
-            id TEXT PRIMARY KEY,
-            total_questions INTEGER,
-            correct_answers INTEGER,
-            score_percentage REAL,
-            created_at TEXT,
-            answers TEXT
-        )
-    ''')
-    
-    # Insert sample questions if table is empty
-    cursor.execute("SELECT COUNT(*) FROM questions")
-    if cursor.fetchone()[0] == 0:
-        sample_questions = [
-            {
-                "text": "What is the capital of France?",
-                "options": [
-                    {"id": "a", "text": "London"},
-                    {"id": "b", "text": "Berlin"}, 
-                    {"id": "c", "text": "Paris"},
-                    {"id": "d", "text": "Madrid"}
-                ],
-                "correct_answer": "c",
-                "category": "geography"
-            },
-            {
-                "text": "Which planet is known as the Red Planet?",
-                "options": [
-                    {"id": "a", "text": "Venus"},
-                    {"id": "b", "text": "Mars"},
-                    {"id": "c", "text": "Jupiter"},
-                    {"id": "d", "text": "Saturn"}
-                ],
-                "correct_answer": "b",
-                "category": "science"
-            },
-            {
-                "text": "What is 2 + 2?",
-                "options": [
-                    {"id": "a", "text": "3"},
-                    {"id": "b", "text": "4"},
-                    {"id": "c", "text": "5"},
-                    {"id": "d", "text": "6"}
-                ],
-                "correct_answer": "b",
-                "category": "math"
-            },
-            {
-                "text": "Who wrote 'Romeo and Juliet'?",
-                "options": [
-                    {"id": "a", "text": "Charles Dickens"},
-                    {"id": "b", "text": "William Shakespeare"},
-                    {"id": "c", "text": "Jane Austen"},
-                    {"id": "d", "text": "Mark Twain"}
-                ],
-                "correct_answer": "b",
-                "category": "literature"
-            },
-            {
-                "text": "What is the largest ocean on Earth?",
-                "options": [
-                    {"id": "a", "text": "Atlantic Ocean"},
-                    {"id": "b", "text": "Indian Ocean"},
-                    {"id": "c", "text": "Arctic Ocean"},
-                    {"id": "d", "text": "Pacific Ocean"}
-                ],
-                "correct_answer": "d",
-                "category": "geography"
-            }
-        ]
-        
-        for q in sample_questions:
-            cursor.execute(
-                "INSERT INTO questions (text, options, correct_answer, category) VALUES (?, ?, ?, ?)",
-                (q["text"], json.dumps(q["options"]), q["correct_answer"], q["category"])
-            )
-    
-    conn.commit()
-    conn.close()
 
 # Initialize database on startup
 init_db()
