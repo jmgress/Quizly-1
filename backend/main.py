@@ -18,6 +18,9 @@ from llm_providers import create_llm_provider, get_available_providers
 # Import database module
 from database import init_db
 
+# Import configuration manager
+from config_manager import config_manager
+
 import logging
 logging.basicConfig(level=getattr(logging, os.getenv("LOG_LEVEL", "INFO")))
 logger = logging.getLogger(__name__)
@@ -262,9 +265,10 @@ def get_categories():
 def check_llm_health():
     """Check the health of the configured LLM provider"""
     try:
+        config = config_manager.get_config()
         provider = create_llm_provider()
         is_healthy = provider.health_check()
-        provider_type = os.getenv("LLM_PROVIDER", "ollama").lower()
+        provider_type = config["llm_provider"]
         
         return {
             "provider": provider_type,
@@ -273,8 +277,9 @@ def check_llm_health():
         }
     except Exception as e:
         logger.error(f"LLM health check failed: {str(e)}")
+        config = config_manager.get_config()
         return {
-            "provider": os.getenv("LLM_PROVIDER", "ollama").lower(),
+            "provider": config["llm_provider"],
             "healthy": False,
             "error": str(e),
             "available_providers": []
@@ -289,14 +294,15 @@ def generate_ai_questions(subject: str, limit: Optional[int] = 5, provider_type:
         if limit is None:
             limit = int(os.getenv("DEFAULT_QUESTION_LIMIT", "5"))
         
-        # Use provider from environment or query parameter
-        provider_type = provider_type or os.getenv("LLM_PROVIDER", "ollama").lower()
+        # Use provider from config manager or query parameter
+        config = config_manager.get_config()
+        provider_type = provider_type or config["llm_provider"]
         
         # Ensure model is properly set based on provider type
         if provider_type == "openai":
-            used_model = model or os.getenv('OPENAI_MODEL', 'gpt-4o-mini')
+            used_model = model or config["openai_model"]
         else:
-            used_model = model or os.getenv('OLLAMA_MODEL', 'llama3.2')
+            used_model = model or config["ollama_model"]
         
         provider = create_llm_provider(provider_type, model=used_model)
         
@@ -328,7 +334,8 @@ def generate_ai_questions(subject: str, limit: Optional[int] = 5, provider_type:
 def get_llm_providers():
     """Get list of available LLM providers"""
     providers = get_available_providers()
-    current_provider = os.getenv("LLM_PROVIDER", "ollama").lower()
+    config = config_manager.get_config()
+    current_provider = config["llm_provider"]
     
     return {
         "current": current_provider,
@@ -339,11 +346,136 @@ def get_llm_providers():
 @app.get("/api/models")
 def get_models(provider: Optional[str] = None):
     """Get list of available models for a provider"""
-    provider_type = provider or os.getenv("LLM_PROVIDER", "ollama").lower()
+    provider_type = provider or config_manager.get_config()["llm_provider"]
     from llm_providers import get_available_models
 
     models = get_available_models(provider_type)
     return {"provider": provider_type, "models": models}
+
+@app.get("/api/llm/config")
+def get_llm_config():
+    """Get current LLM configuration"""
+    try:
+        config = config_manager.get_config()
+        provider_config = config_manager.get_provider_config()
+        
+        # Don't expose API key in response
+        safe_config = config.copy()
+        if "openai_api_key" in safe_config:
+            safe_config["openai_api_key"] = "***" if safe_config["openai_api_key"] else ""
+        
+        return {
+            "config": safe_config,
+            "current_provider": provider_config
+        }
+    except Exception as e:
+        logger.error(f"Error getting LLM config: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get configuration: {str(e)}")
+
+@app.put("/api/llm/config")
+def update_llm_config(config_update: dict):
+    """Update LLM configuration"""
+    try:
+        # Validate the configuration
+        valid_keys = ["llm_provider", "ollama_model", "ollama_host", "openai_api_key", "openai_model"]
+        invalid_keys = [key for key in config_update.keys() if key not in valid_keys]
+        if invalid_keys:
+            raise HTTPException(status_code=400, detail=f"Invalid configuration keys: {invalid_keys}")
+        
+        # Validate provider
+        if "llm_provider" in config_update:
+            if config_update["llm_provider"] not in ["ollama", "openai"]:
+                raise HTTPException(status_code=400, detail="Provider must be 'ollama' or 'openai'")
+        
+        # Update configuration
+        updated_config = config_manager.update_config(config_update)
+        
+        # Test the new configuration
+        try:
+            provider_config = config_manager.get_provider_config()
+            if provider_config["provider"] == "ollama":
+                provider = create_llm_provider("ollama", 
+                                             model=provider_config["model"],
+                                             host=provider_config["host"])
+            else:
+                provider = create_llm_provider("openai",
+                                             model=provider_config["model"],
+                                             api_key=provider_config["api_key"])
+            
+            # Test health check
+            if not provider.health_check():
+                logger.warning("Provider health check failed for new configuration")
+                # Don't fail here, as the provider might be temporarily unavailable
+            
+        except Exception as e:
+            logger.error(f"Error testing new configuration: {str(e)}")
+            # Don't fail the update, just log the error
+        
+        # Return safe config (without API key)
+        safe_config = updated_config.copy()
+        if "openai_api_key" in safe_config:
+            safe_config["openai_api_key"] = "***" if safe_config["openai_api_key"] else ""
+        
+        return {"config": safe_config, "message": "Configuration updated successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating LLM config: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update configuration: {str(e)}")
+
+@app.get("/api/llm/providers/health")
+def get_providers_health():
+    """Get health status of all available providers"""
+    providers_health = {}
+    
+    # Check Ollama
+    try:
+        config = config_manager.get_config()
+        provider = create_llm_provider("ollama", 
+                                     model=config["ollama_model"],
+                                     host=config["ollama_host"])
+        providers_health["ollama"] = {
+            "healthy": provider.health_check(),
+            "model": config["ollama_model"],
+            "host": config["ollama_host"]
+        }
+    except Exception as e:
+        providers_health["ollama"] = {
+            "healthy": False,
+            "error": str(e),
+            "model": config_manager.get_config()["ollama_model"],
+            "host": config_manager.get_config()["ollama_host"]
+        }
+    
+    # Check OpenAI
+    try:
+        config = config_manager.get_config()
+        if config["openai_api_key"]:
+            provider = create_llm_provider("openai",
+                                         model=config["openai_model"],
+                                         api_key=config["openai_api_key"])
+            providers_health["openai"] = {
+                "healthy": provider.health_check(),
+                "model": config["openai_model"],
+                "api_key_set": bool(config["openai_api_key"])
+            }
+        else:
+            providers_health["openai"] = {
+                "healthy": False,
+                "error": "API key not configured",
+                "model": config["openai_model"],
+                "api_key_set": False
+            }
+    except Exception as e:
+        providers_health["openai"] = {
+            "healthy": False,
+            "error": str(e),
+            "model": config_manager.get_config()["openai_model"],
+            "api_key_set": bool(config_manager.get_config()["openai_api_key"])
+        }
+    
+    return providers_health
 
 if __name__ == "__main__":
     import uvicorn
@@ -356,14 +488,16 @@ if __name__ == "__main__":
     port = int(os.getenv("APP_PORT", "8000"))
     
     # Log provider configuration
-    provider_type = os.getenv("LLM_PROVIDER", "ollama").lower()
+    config = config_manager.get_config()
+    provider_type = config["llm_provider"]
     logger.info(f"Starting Quizly API server with LLM provider: {provider_type}")
     
     if provider_type == "openai":
-        logger.info(f"OpenAI model: {os.getenv('OPENAI_MODEL', 'gpt-4o-mini')}")
+        logger.info(f"OpenAI model: {config['openai_model']}")
+        logger.info(f"OpenAI API key configured: {bool(config['openai_api_key'])}")
     elif provider_type == "ollama":
-        logger.info(f"Ollama model: {os.getenv('OLLAMA_MODEL', 'llama3.2')}")
-        logger.info(f"Ollama host: {os.getenv('OLLAMA_HOST', 'http://localhost:11434')}")
+        logger.info(f"Ollama model: {config['ollama_model']}")
+        logger.info(f"Ollama host: {config['ollama_host']}")
     
     # Start server
     uvicorn.run(app, host=host, port=port)

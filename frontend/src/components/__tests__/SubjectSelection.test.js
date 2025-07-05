@@ -11,13 +11,10 @@ jest.mock('axios', () => ({
 import axios from 'axios';
 const mockedAxios = axios;
 
-const setupMocks = (categories = [], models = ['gpt-4o-mini']) => {
+const setupMocks = (categories = []) => {
   mockedAxios.get.mockImplementation((url) => {
     if (url.includes('/api/categories')) {
       return Promise.resolve({ data: { categories } });
-    }
-    if (url.includes('/api/models')) {
-      return Promise.resolve({ data: { models } });
     }
     return Promise.resolve({ data: {} });
   });
@@ -107,16 +104,15 @@ describe('SubjectSelection Component', () => {
     const startButton = screen.getByText('Start Quiz');
     fireEvent.click(startButton);
 
-    // Check that callback was called with correct parameters
+    // Check that callback was called with correct parameters (no model anymore)
     expect(mockOnSelectionComplete).toHaveBeenCalledWith({
       category: 'Ancient Rome',
-      source: 'ai',
-      model: 'gpt-4o-mini'
+      source: 'ai'
     });
   });
 
-  test('displays model dropdown for AI questions', async () => {
-    setupMocks(['geography'], ['gpt-4', 'gpt-3.5-turbo']);
+  test('shows no model dropdown for AI questions since model is now managed in admin panel', async () => {
+    setupMocks(['geography']);
 
     render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
 
@@ -127,8 +123,10 @@ describe('SubjectSelection Component', () => {
     const aiRadio = screen.getByDisplayValue('ai');
     fireEvent.click(aiRadio);
 
-    expect(screen.getByLabelText('Model:')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('gpt-4')).toBeInTheDocument();
+    // Model dropdown should no longer be present since it's managed in admin panel
+    expect(screen.queryByLabelText('Model:')).not.toBeInTheDocument();
+    // Should only show custom topic input
+    expect(screen.getByLabelText('Custom Topic:')).toBeInTheDocument();
   });
 
   test('shows error when no subject is selected', async () => {

@@ -60,6 +60,9 @@ Thumbs.db
 .env.test.local
 .env.production.local
 
+# LLM Configuration
+backend/llm_config.json
+
 # Virtual environment
 venv/
 
