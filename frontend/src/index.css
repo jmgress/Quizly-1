@@ -853,21 +853,24 @@ body {
 .log-level-slider-container {
   display: flex;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 30px;
   gap: 15px;
 }
 
 .log-level-label {
-  min-width: 120px;
+  min-width: 140px;
   font-weight: 500;
   color: #555;
   margin: 0;
+  flex-shrink: 0;
 }
 
 .slider-wrapper {
   position: relative;
   flex: 1;
-  max-width: 300px;
+  max-width: 400px;
+  padding-top: 30px;
+  padding-bottom: 5px;
 }
 
 .log-level-slider {
@@ -938,10 +941,11 @@ body {
 
 .slider-track {
   position: absolute;
-  top: -25px;
+  top: -30px;
   left: 0;
   right: 0;
   pointer-events: none;
+  height: 25px;
 }
 
 .slider-levels {
@@ -949,19 +953,21 @@ body {
   justify-content: space-between;
   align-items: center;
   position: relative;
+  height: 100%;
 }
 
 .slider-level {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: #888;
-  padding: 2px 4px;
+  padding: 3px 6px;
   border-radius: 3px;
   transition: all 0.3s ease;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid #e1e5e9;
-  min-width: 45px;
+  min-width: 48px;
   text-align: center;
+  white-space: nowrap;
 }
 
 .slider-level.active {
@@ -973,7 +979,7 @@ body {
 
 .slider-tooltip {
   position: absolute;
-  top: -45px;
+  top: -50px;
   left: 50%;
   transform: translateX(-50%);
   background: #333;
@@ -1125,12 +1131,12 @@ body {
 }
 
 .component-group {
-  margin-bottom: 25px;
+  margin-bottom: 40px;
 }
 
 .component-group h5 {
   color: #333;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   font-size: 16px;
   font-weight: 600;
 }
