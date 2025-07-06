@@ -1,6 +1,10 @@
 import openai
 import os
+import sys
 from dotenv import load_dotenv
+
+# Add backend directory to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'backend'))
 
 # Load environment variables from .env file
 load_dotenv()

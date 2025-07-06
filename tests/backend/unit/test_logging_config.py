@@ -3,8 +3,12 @@
 import pytest
 import json
 import os
+import sys
 import tempfile
 from fastapi.testclient import TestClient
+
+# Add backend directory to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'backend'))
 
 def test_logging_config_endpoints():
     """Test the logging configuration endpoints."""
