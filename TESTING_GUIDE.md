@@ -4,7 +4,7 @@
 
 ### Run All Tests
 ```bash
-# From project root
+# From project root - uses centralized test structure
 ./run_tests.sh
 ```
 
@@ -12,44 +12,86 @@
 
 #### Backend Tests
 ```bash
-cd backend
+# Unit tests
+cd tests/backend/unit
 
 # Individual test files
-python test_backend.py          # Basic functionality
-python test_logging_config.py   # Logging configuration
-python test_llm_config.py       # LLM configuration
-python test_openai.py          # OpenAI integration
-python test_ai_integration.py   # AI integration
+python test_database.py          # Database functionality
+python test_logging_config.py    # Logging configuration
+python test_llm_config.py        # LLM configuration
+python test_config_manager.py    # Configuration manager
+
+# Integration tests
+cd tests/backend/integration
+python test_api_endpoints.py     # API endpoints
+python test_ai_integration_simple.py  # AI integration
 
 # Run with pytest
-python -m pytest -v
+cd tests/backend
+python -m pytest unit/ -v        # All unit tests
+python -m pytest integration/ -v # All integration tests
+python -m pytest -v              # All backend tests
 ```
 
 #### Frontend Tests
 ```bash
+# Note: Frontend tests moved to centralized structure
+# Jest configuration needs updating for new paths
 cd frontend
 
-# Run React tests
+# Current (temporary) - runs original test files
 npm test                        # Interactive mode
 npm test -- --watchAll=false   # One-time run
 npm test -- --coverage         # With coverage report
+
+# Future (after Jest config update)
+# npm test -- --testPathPattern=../tests/frontend/
 ```
 
 ## Test Structure
 
-### Backend Tests (`/backend/`)
-- `test_backend.py` - Basic database and API functionality
-- `test_logging_config.py` - Logging configuration and endpoints
-- `test_llm_config.py` - LLM provider configuration
-- `test_openai.py` - OpenAI API integration
-- `test_ai_integration.py` - AI question generation
+### Centralized Test Organization
 
-### Frontend Tests (`/frontend/src/components/__tests__/`)
-- `Question.test.js` - Question component testing
-- `ScoreDisplay.test.js` - Score display component
-- `SubjectSelection.test.js` - Subject selection component
-- `AdminQuestions.test.js` - Admin questions management
-- `LoggingSettings.test.js` - Logging settings component
+All tests are now organized in a centralized `/tests/` directory structure:
+
+```
+tests/
+├── backend/
+│   ├── unit/              # Backend unit tests
+│   ├── integration/       # Backend integration tests
+│   └── fixtures/          # Test fixtures and mock data
+├── frontend/
+│   ├── unit/components/   # Frontend component tests
+│   └── integration/       # Frontend integration tests
+├── e2e/                   # End-to-end tests
+└── shared/                # Shared test utilities
+```
+
+### Backend Tests (`/tests/backend/`)
+- **Unit Tests** (`unit/`):
+  - `test_database.py` - Database functionality and schema
+  - `test_logging_config.py` - Logging configuration and endpoints
+  - `test_llm_config.py` - LLM provider configuration
+  - `test_config_manager.py` - Configuration management
+- **Integration Tests** (`integration/`):
+  - `test_api_endpoints.py` - API endpoint functionality
+  - `test_ai_integration.py` - AI service integration
+  - `test_ai_integration_simple.py` - Simple AI integration tests
+  - `test_openai.py` - OpenAI API integration
+  - `test_logging_integration.py` - Logging integration
+  - `test_full_workflow.py` - Complete backend workflows
+
+### Frontend Tests (`/tests/frontend/`)
+- **Unit Tests** (`unit/components/`):
+  - `Question.test.js` - Question component testing
+  - `Quiz.test.js` - Quiz component testing
+  - `ScoreDisplay.test.js` - Score display component
+  - `SubjectSelection.test.js` - Subject selection component
+  - `AdminQuestions.test.js` - Admin questions management
+  - `LoggingSettings.test.js` - Logging settings component
+- **Integration Tests** (`integration/`):
+  - `user_flows.test.js` - User journey integration tests
+  - `api_integration.test.js` - Frontend API integration tests
 
 ## Testing Dependencies
 
@@ -72,20 +114,27 @@ npm install
 
 ### Backend Testing
 ```bash
-# Run all pytest tests
+# Run all backend tests
+cd tests/backend
 pytest
 
 # Run with verbose output
 pytest -v
 
 # Run specific test file
-pytest test_backend.py
+pytest unit/test_database.py
 
 # Run with coverage
-pytest --cov=. --cov-report=html
+pytest --cov=../../backend --cov-report=html
 
-# Run with specific pattern
+# Run specific pattern
 pytest -k "test_database"
+
+# Run only unit tests
+pytest unit/
+
+# Run only integration tests
+pytest integration/
 ```
 
 ### Frontend Testing
@@ -128,8 +177,8 @@ The `run_tests.sh` script is designed to be CI-friendly:
 
 ### Backend Coverage
 ```bash
-cd backend
-pytest --cov=. --cov-report=html
+cd tests/backend
+pytest --cov=../../backend --cov-report=html
 open htmlcov/index.html
 ```
 
@@ -145,10 +194,14 @@ open coverage/lcov-report/index.html
 ### Backend Debug
 ```bash
 # Run with debug output
+cd tests/backend
 pytest -v -s
 
 # Run specific test with debug
-pytest -v -s test_backend.py::test_database
+pytest -v -s unit/test_database.py::test_database
+
+# Run with pdb debugger
+pytest --pdb unit/test_database.py
 ```
 
 ### Frontend Debug
@@ -158,6 +211,9 @@ npm test -- --verbose
 
 # Debug specific test
 npm test -- --testNamePattern="Question Component"
+
+# Run with Node.js debugger
+node --inspect-brk node_modules/.bin/react-scripts test --runInBand --no-cache
 ```
 
 ## Writing New Tests
