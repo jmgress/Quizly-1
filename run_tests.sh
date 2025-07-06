@@ -82,7 +82,8 @@ run_gitleaks_scan() {
         return 1
     fi
     
-    tar -xzf gitleaks.tar.gz
+    # Extract only the gitleaks binary to avoid overwriting project files
+    tar -xzf gitleaks.tar.gz gitleaks
     chmod +x gitleaks
     
     # Run scan

@@ -38,7 +38,8 @@ downloadGitLeaks() {
         exit 1
     fi
     
-    tar -xzf gitleaks.tar.gz
+    # Extract only the gitleaks binary to avoid overwriting project files like LICENSE
+    tar -xzf gitleaks.tar.gz gitleaks
     chmod +x gitleaks
     echo -e "${GREEN}✅ GitLeaks downloaded successfully${NC}"
 }

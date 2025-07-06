@@ -44,7 +44,9 @@ paths = [
     '''\.log$''',
     '''\.db$''',
     '''test_.*\.py$''',
-    '''.*_test\.py$'''
+    '''.*_test\.py$''',
+    '''LICENSE$''',
+    '''README\.md$'''
 ]
 
 regexes = [
