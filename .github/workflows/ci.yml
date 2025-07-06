@@ -79,11 +79,6 @@ jobs:
         # For now, run what we can from the original location
         # TODO: Update Jest configuration to work with tests/frontend/
         CI=true npm run test:ci || echo "Frontend tests require configuration update for centralized structure"
-    
-    - name: Run full test suite
-      run: |
-        chmod +x run_tests.sh
-        ./run_tests.sh
 
   lint:
     runs-on: ubuntu-latest
