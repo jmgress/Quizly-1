@@ -12,44 +12,25 @@
 
 #### Backend Tests
 ```bash
-cd backend
-
-# Individual test files
-python test_backend.py          # Basic functionality
-python test_logging_config.py   # Logging configuration
-python test_llm_config.py       # LLM configuration
-python test_openai.py          # OpenAI integration
-python test_ai_integration.py   # AI integration
-
-# Run with pytest
-python -m pytest -v
+./run_tests.sh backend unit       # Run backend unit tests
+./run_tests.sh backend integration # Run backend integration tests
 ```
 
 #### Frontend Tests
 ```bash
-cd frontend
-
-# Run React tests
-npm test                        # Interactive mode
-npm test -- --watchAll=false   # One-time run
-npm test -- --coverage         # With coverage report
+./run_tests.sh frontend unit          # React unit tests
+./run_tests.sh frontend integration   # React integration tests
 ```
 
 ## Test Structure
 
-### Backend Tests (`/backend/`)
-- `test_backend.py` - Basic database and API functionality
-- `test_logging_config.py` - Logging configuration and endpoints
-- `test_llm_config.py` - LLM provider configuration
-- `test_openai.py` - OpenAI API integration
-- `test_ai_integration.py` - AI question generation
+### Backend Tests (`/tests/backend`)
+- `unit/` - Core backend units
+- `integration/` - API and AI integration tests
 
-### Frontend Tests (`/frontend/src/components/__tests__/`)
-- `Question.test.js` - Question component testing
-- `ScoreDisplay.test.js` - Score display component
-- `SubjectSelection.test.js` - Subject selection component
-- `AdminQuestions.test.js` - Admin questions management
-- `LoggingSettings.test.js` - Logging settings component
+### Frontend Tests (`/tests/frontend`)
+- `unit/components/*.test.js` - React component tests
+- `integration/*.test.js` - Frontend integration tests
 
 ## Testing Dependencies
 
@@ -79,10 +60,10 @@ pytest
 pytest -v
 
 # Run specific test file
-pytest test_backend.py
+pytest tests/backend/unit/test_database.py
 
 # Run with coverage
-pytest --cov=. --cov-report=html
+pytest --cov=backend --cov-report=html
 
 # Run with specific pattern
 pytest -k "test_database"
@@ -91,16 +72,13 @@ pytest -k "test_database"
 ### Frontend Testing
 ```bash
 # Run all tests
-npm test
+./run_tests.sh frontend
 
 # Run specific test file
-npm test Question.test.js
+CI=true npm test -- --config=jest.config.js tests/frontend/unit/components/Question.test.js
 
 # Run with coverage
-npm test -- --coverage --watchAll=false
-
-# Run in CI mode
-CI=true npm test
+./run_tests.sh frontend unit
 ```
 
 ## Test Results
@@ -135,9 +113,8 @@ open htmlcov/index.html
 
 ### Frontend Coverage
 ```bash
-cd frontend
-npm test -- --coverage --watchAll=false
-open coverage/lcov-report/index.html
+./run_tests.sh frontend unit
+open frontend/coverage/lcov-report/index.html
 ```
 
 ## Debugging Tests
@@ -148,16 +125,16 @@ open coverage/lcov-report/index.html
 pytest -v -s
 
 # Run specific test with debug
-pytest -v -s test_backend.py::test_database
+pytest -v -s tests/backend/unit/test_database.py::test_database
 ```
 
 ### Frontend Debug
 ```bash
 # Run with debug output
-npm test -- --verbose
+CI=true npm test -- --config=jest.config.js --verbose
 
 # Debug specific test
-npm test -- --testNamePattern="Question Component"
+CI=true npm test -- --config=jest.config.js --testNamePattern="Question Component"
 ```
 
 ## Writing New Tests

@@ -9,8 +9,11 @@ import os
 import signal
 import time
 
-# Add the current directory to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add backend directory to Python path
+BACKEND_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '../../../backend')
+)
+sys.path.insert(0, BACKEND_DIR)
 
 def timeout_handler(signum, frame):
     """Handle timeout signal"""

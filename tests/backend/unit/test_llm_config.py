@@ -6,6 +6,12 @@ import os
 import sys
 import tempfile
 
+# Ensure backend modules can be imported
+BACKEND_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '../../../backend')
+)
+sys.path.append(BACKEND_DIR)
+
 # Test the configuration manager directly first
 def test_config_manager():
     """Test the configuration manager functionality."""

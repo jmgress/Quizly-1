@@ -374,10 +374,9 @@ sample_questions = [
 
 ### Testing the Backend
 
-Run the test script to verify backend functionality:
+Run the test suite from the project root:
 ```bash
-cd backend
-python test_backend.py
+./run_tests.sh backend unit
 ```
 
 ### Testing the Frontend
@@ -386,25 +385,22 @@ The frontend is configured with Jest and React Testing Library for unit testing.
 
 **Running Tests:**
 ```bash
-cd frontend
-npm test
+./run_tests.sh frontend unit
 ```
 
 **Running Tests with Coverage:**
 ```bash
-cd frontend
-npm test -- --coverage --collectCoverageFrom="src/components/**/*.{js,jsx}"
+./run_tests.sh frontend unit
 ```
 
 **Running Tests in CI Mode (no watch):**
 ```bash
-cd frontend
-npm test -- --watchAll=false
+./run_tests.sh frontend unit
 ```
 
 **Test Files:**
-- `src/components/__tests__/Question.test.js` - Tests for Question component
-- `src/components/__tests__/ScoreDisplay.test.js` - Tests for ScoreDisplay component
+- `tests/frontend/unit/components/Question.test.js` - Question component tests
+- `tests/frontend/unit/components/ScoreDisplay.test.js` - ScoreDisplay component tests
 
 **What's Tested:**
 - Question component rendering and user interactions
@@ -433,7 +429,6 @@ Quizly-1/
 ├── backend/
 │   ├── main.py              # FastAPI application
 │   ├── requirements.txt     # Python dependencies
-│   ├── test_backend.py      # Backend tests
 │   └── quiz.db             # SQLite database (auto-generated)
 ├── frontend/
 │   ├── package.json        # React dependencies
@@ -447,6 +442,11 @@ Quizly-1/
 │           ├── Quiz.js     # Quiz logic component
 │           ├── Question.js # Question display component
 │           └── ScoreDisplay.js # Score display component
+├── tests/                  # All test suites
+│   ├── backend/
+│   ├── frontend/
+│   ├── e2e/
+│   └── shared/
 ├── start.sh                # Application launcher
 ├── README.md
 └── LICENSE

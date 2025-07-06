@@ -4,7 +4,12 @@
 import sys
 import os
 import time
-sys.path.append('/Users/james.m.gress/Reops/Quizly-1/backend')
+
+# Add backend directory to Python path
+BACKEND_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), '../../../backend')
+)
+sys.path.append(BACKEND_DIR)
 
 from main import app, setup_logging
 from fastapi.testclient import TestClient
@@ -46,4 +51,4 @@ except Exception as e:
 
 logger.info("Endpoint tests completed!")
 print("✅ All endpoint tests completed!")
-print("Check the log files in /Users/james.m.gress/Reops/Quizly-1/logs/backend/")
+print("Check the log files in ./logs/backend/")

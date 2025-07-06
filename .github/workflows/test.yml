@@ -41,41 +41,16 @@ jobs:
         cd backend
         python -c "from database import init_db; init_db()"
     
-    - name: Run backend tests
-      run: |
-        cd backend
-        python test_backend.py
-    
-    - name: Run logging configuration tests
-      run: |
-        cd backend
-        python test_logging_config.py
-    
-    - name: Run LLM configuration tests
-      run: |
-        cd backend
-        python test_llm_config.py
-    
-    - name: Run AI integration tests (simple)
-      run: |
-        cd backend
-        python test_ai_integration_simple.py
-    
-    - name: Run pytest suite
-      run: |
-        cd backend
-        python -m pytest test_*.py -v --tb=short || true
-    
-    - name: Generate test coverage
-      run: |
-        cd backend
-        python -m pytest --cov=. --cov-report=xml --cov-report=html || true
-    
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./backend/coverage.xml
-        fail_ci_if_error: false
+      - name: Run backend tests
+        run: |
+          chmod +x run_tests.sh
+          ./run_tests.sh backend
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage_backend.xml
+          fail_ci_if_error: false
 
   frontend-tests:
     runs-on: ubuntu-latest
@@ -98,10 +73,10 @@ jobs:
         cd frontend
         npm ci
     
-    - name: Run frontend tests
-      run: |
-        cd frontend
-        CI=true npm test -- --coverage --watchAll=false
+      - name: Run frontend tests
+        run: |
+          chmod +x run_tests.sh
+          ./run_tests.sh frontend
     
     - name: Upload frontend coverage
       uses: codecov/codecov-action@v3
@@ -153,7 +128,7 @@ jobs:
       with:
         name: test-results
         path: |
-          backend/coverage/
+          coverage_backend.xml
           frontend/coverage/
           logs/
 
