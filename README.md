@@ -1,560 +1,498 @@
-# Gitleaks
+# 🧠 Quizly - Knowledge Testing Application
 
-```
-┌─○───┐
-│ │╲  │
-│ │ ○ │
-│ ○ ░ │
-└─░───┘
-```
+[![CI](https://github.com/yourusername/quizly/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/quizly/actions/workflows/ci.yml)
+[![Test Suite](https://github.com/yourusername/quizly/actions/workflows/test.yml/badge.svg)](https://github.com/yourusername/quizly/actions/workflows/test.yml)
+[![Deploy](https://github.com/yourusername/quizly/actions/workflows/deploy.yml/badge.svg)](https://github.com/yourusername/quizly/actions/workflows/deploy.yml)
 
-[license]: ./LICENSE
-[badge-license]: https://img.shields.io/github/license/gitleaks/gitleaks.svg
-[go-docs-badge]: https://pkg.go.dev/badge/github.com/gitleaks/gitleaks/v8?status
-[go-docs]: https://pkg.go.dev/github.com/zricethezav/gitleaks/v8
-[badge-build]: https://github.com/gitleaks/gitleaks/actions/workflows/test.yml/badge.svg
-[build]: https://github.com/gitleaks/gitleaks/actions/workflows/test.yml
-[go-report-card-badge]: https://goreportcard.com/badge/github.com/gitleaks/gitleaks/v8
-[go-report-card]: https://goreportcard.com/report/github.com/gitleaks/gitleaks/v8
-[dockerhub]: https://hub.docker.com/r/zricethezav/gitleaks
-[dockerhub-badge]: https://img.shields.io/docker/pulls/zricethezav/gitleaks.svg
-[gitleaks-action]: https://github.com/gitleaks/gitleaks-action
-[gitleaks-badge]: https://img.shields.io/badge/protected%20by-gitleaks-blue
-[gitleaks-playground-badge]: https://img.shields.io/badge/gitleaks%20-playground-blue
-[gitleaks-playground]: https://gitleaks.io/playground
+An interactive web-based quiz application that allows users to test their knowledge on various topics. Built with FastAPI backend and a responsive HTML/JavaScript frontend.
 
+## Features
 
-[![GitHub Action Test][badge-build]][build]
-[![Docker Hub][dockerhub-badge]][dockerhub]
-[![Gitleaks Playground][gitleaks-playground-badge]][gitleaks-playground]
-[![Gitleaks Action][gitleaks-badge]][gitleaks-action]
-[![GoDoc][go-docs-badge]][go-docs]
-[![GoReportCard][go-report-card-badge]][go-report-card]
-[![License][badge-license]][license]
+- 🎯 **Interactive Quiz Experience**: Multiple-choice questions with immediate feedback
+- 📊 **Progress Tracking**: Visual progress bar and question counter
+- 🏆 **Score Display**: Final score with percentage and performance message
+- 📝 **Answer Review**: Detailed review of all answers after quiz completion
+- 📱 **Responsive Design**: Works on desktop and mobile devices
+- 🎨 **Modern UI**: Clean, gradient-based design with smooth animations
+- 🔄 **Multiple Categories**: Questions across geography, science, math, and literature
+- 🎯 **Subject Selection**: Choose your preferred quiz category before starting
+- 🤖 **AI-Powered Questions**: Generate fresh questions using multiple LLM providers
+- 📚 **Dual Question Sources**: Select between curated database questions or AI-generated content
+- 🔌 **Provider-Based Architecture**: Easy switching between Ollama and OpenAI providers
+- ⚙️ **Environment Configuration**: Configure providers via environment variables
+- 🏥 **Health Checks**: Monitor LLM provider availability and status
+- 🚀 **Fast API**: RESTful API with automatic documentation
 
+## Tech Stack
 
-### Join our Discord! [![Discord](https://img.shields.io/discord/1102689410522284044.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/8Hzbrnkr7E)
+### Backend
+- **FastAPI**: Modern, fast web framework for Python
+- **SQLite**: Lightweight database for question storage
+- **LLM Providers**: Configurable AI integration supporting Ollama and OpenAI
+- **Pydantic**: Data validation and serialization
+- **Uvicorn**: ASGI server for running FastAPI
+- **Python-dotenv**: Environment variable management
 
-Gitleaks is a tool for **detecting** secrets like passwords, API keys, and tokens in git repos, files, and whatever else you wanna throw at it via `stdin`. If you wanna learn more about how the detection engine works check out this blog: [Regex is (almost) all you need](https://lookingatcomputer.substack.com/p/regex-is-almost-all-you-need).
+### Frontend
+- **React**: Modern JavaScript library for building user interfaces
+- **React Hooks**: For state management and component lifecycle
+- **Axios**: HTTP client for API communication
+- **CSS3**: Modern styling with responsive design
 
+## Quick Start
 
-```
-➜  ~/code(master) gitleaks git -v
+### Prerequisites
+- Python 3.8+
+- Node.js 14+
+- npm (Node Package Manager)
+- Modern web browser
 
-    ○
-    │╲
-    │ ○
-    ○ ░
-    ░    gitleaks
+### Backend Setup
 
+1. **Navigate to the backend directory:**
+   ```bash
+   cd backend
+   ```
 
-Finding:     "export BUNDLE_ENTERPRISE__CONTRIBSYS__COM=cafebabe:deadbeef",
-Secret:      cafebabe:deadbeef
-RuleID:      sidekiq-secret
-Entropy:     2.609850
-File:        cmd/generate/config/rules/sidekiq.go
-Line:        23
-Commit:      cd5226711335c68be1e720b318b7bc3135a30eb2
-Author:      John
-Email:       john@users.noreply.github.com
-Date:        2022-08-03T12:31:40Z
-Fingerprint: cd5226711335c68be1e720b318b7bc3135a30eb2:cmd/generate/config/rules/sidekiq.go:sidekiq-secret:23
-```
+2. **Install Python dependencies:**
+   ```bash
+   # Option 1: Using pip
+   pip install fastapi uvicorn
+   
+   # Option 2: Using system packages (Ubuntu/Debian)
+   sudo apt install python3-fastapi python3-uvicorn
+   ```
 
-## Getting Started
+3. **Run the backend server:**
+   ```bash
+   python main.py
+   ```
+   
+   The API will be available at `http://localhost:8000`
+   
+   **API Documentation:** Visit `http://localhost:8000/docs` for interactive API documentation
 
-Gitleaks can be installed using Homebrew, Docker, or Go. Gitleaks is also available in binary form for many popular platforms and OS types on the [releases page](https://github.com/gitleaks/gitleaks/releases). In addition, Gitleaks can be implemented as a pre-commit hook directly in your repo or as a GitHub action using [Gitleaks-Action](https://github.com/gitleaks/gitleaks-action).
+### Frontend Setup
 
-### Installing
+1. **Navigate to the frontend directory:**
+   ```bash
+   cd frontend
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Start the React development server:**
+   ```bash
+   npm start
+   ```
+
+4. **Open in browser:**
+   Visit `http://localhost:3000`
+
+The React dev server will automatically reload when you make changes to the code.
+
+### Automated Setup (Recommended)
+
+For the easiest setup, use the provided startup script that handles both backend and frontend:
 
 ```bash
-# MacOS
-brew install gitleaks
-
-# Docker (DockerHub)
-docker pull zricethezav/gitleaks:latest
-docker run -v ${path_to_host_folder_to_scan}:/path zricethezav/gitleaks:latest [COMMAND] [OPTIONS] [SOURCE_PATH]
-
-# Docker (ghcr.io)
-docker pull ghcr.io/gitleaks/gitleaks:latest
-docker run -v ${path_to_host_folder_to_scan}:/path ghcr.io/gitleaks/gitleaks:latest [COMMAND] [OPTIONS] [SOURCE_PATH]
-
-# From Source (make sure `go` is installed)
-git clone https://github.com/gitleaks/gitleaks.git
-cd gitleaks
-make build
+./start.sh
 ```
 
-### GitHub Action
+This script will:
+- Check for required dependencies (Python 3.8+, Node.js, npm)
+- Install npm packages if needed
+- Start both backend and frontend servers
 
-Check out the official [Gitleaks GitHub Action](https://github.com/gitleaks/gitleaks-action)
+### LLM Provider Configuration
 
-```
-name: gitleaks
-on: [pull_request, push, workflow_dispatch]
-jobs:
-  scan:
-    name: gitleaks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}} # Only required for Organizations, not personal accounts.
+Quizly supports multiple LLM providers for AI question generation. You can easily switch between providers using environment variables.
+
+#### 1. Environment Setup
+
+Create a `.env` file in the project root directory (copy from `.env.example`):
+
+```bash
+cp .env.example .env
 ```
 
-### Pre-Commit
+#### 2. Configure Your Preferred Provider
 
-1. Install pre-commit from https://pre-commit.com/#install
-2. Create a `.pre-commit-config.yaml` file at the root of your repository with the following content:
+Edit the `.env` file to configure your preferred LLM provider:
 
+**For Ollama (Default):**
+```env
+LLM_PROVIDER=ollama
+OLLAMA_MODEL=llama3.2
+OLLAMA_HOST=http://localhost:11434
+```
+
+**For OpenAI:**
+```env
+LLM_PROVIDER=openai
+OPENAI_API_KEY=your-openai-api-key-here
+OPENAI_MODEL=gpt-3.5-turbo
+```
+
+#### 3. Provider-Specific Setup
+
+**Ollama Setup:**
+1. Install Ollama from [ollama.ai](https://ollama.ai)
+2. Pull the required model:
+   ```bash
+   ollama pull llama3.2
    ```
-   repos:
-     - repo: https://github.com/gitleaks/gitleaks
-       rev: v8.24.2
-       hooks:
-         - id: gitleaks
+3. Start Ollama service:
+   ```bash
+   ollama serve
    ```
 
-   for a [native execution of gitleaks](https://github.com/gitleaks/gitleaks/releases) or use the [`gitleaks-docker` pre-commit ID](https://github.com/gitleaks/gitleaks/blob/master/.pre-commit-hooks.yaml) for executing gitleaks using the [official Docker images](#docker)
+**OpenAI Setup:**
+1. Get your API key from [OpenAI](https://platform.openai.com/api-keys)
+2. Set the `OPENAI_API_KEY` environment variable
+3. Choose your preferred model (default: gpt-3.5-turbo)
 
-3. Auto-update the config to the latest repos' versions by executing `pre-commit autoupdate`
-4. Install with `pre-commit install`
-5. Now you're all set!
+#### 4. Health Check
 
-```
-➜ git commit -m "this commit contains a secret"
-Detect hardcoded secrets.................................................Failed
-```
+You can check the health of your configured LLM provider:
 
-Note: to disable the gitleaks pre-commit hook you can prepend `SKIP=gitleaks` to the commit command
-and it will skip running gitleaks
-
-```
-➜ SKIP=gitleaks git commit -m "skip gitleaks check"
-Detect hardcoded secrets................................................Skipped
+```bash
+curl http://localhost:8000/api/llm/health
 ```
 
-## Usage
-
-```
-Usage:
-  gitleaks [command]
-
-Available Commands:
-  dir         scan directories or files for secrets
-  git         scan git repositories for secrets
-  help        Help about any command
-  stdin       detect secrets from stdin
-  version     display gitleaks version
-
-Flags:
-  -b, --baseline-path string          path to baseline with issues that can be ignored
-  -c, --config string                 config file path
-                                      order of precedence:
-                                      1. --config/-c
-                                      2. env var GITLEAKS_CONFIG
-                                      3. env var GITLEAKS_CONFIG_TOML with the file content
-                                      4. (target path)/.gitleaks.toml
-                                      If none of the four options are used, then gitleaks will use the default config
-      --diagnostics string            enable diagnostics (comma-separated list: cpu,mem,trace). cpu=CPU profiling, mem=memory profiling, trace=execution tracing
-      --diagnostics-dir string        directory to store diagnostics output files (defaults to current directory)
-      --enable-rule strings           only enable specific rules by id
-      --exit-code int                 exit code when leaks have been encountered (default 1)
-  -i, --gitleaks-ignore-path string   path to .gitleaksignore file or folder containing one (default ".")
-  -h, --help                          help for gitleaks
-      --ignore-gitleaks-allow         ignore gitleaks:allow comments
-  -l, --log-level string              log level (trace, debug, info, warn, error, fatal) (default "info")
-      --max-decode-depth int          allow recursive decoding up to this depth (default "0", no decoding is done)
-      --max-archive-depth int         allow scanning into nested archives up to this depth (default "0", no archive traversal is done)
-      --max-target-megabytes int      files larger than this will be skipped
-      --no-banner                     suppress banner
-      --no-color                      turn off color for verbose output
-      --redact uint[=100]             redact secrets from logs and stdout. To redact only parts of the secret just apply a percent value from 0..100. For example --redact=20 (default 100%)
-  -f, --report-format string          output format (json, csv, junit, sarif, template)
-  -r, --report-path string            report file
-      --report-template string        template file used to generate the report (implies --report-format=template)
-  -v, --verbose                       show verbose output from scan
-      --version                       version for gitleaks
-
-Use "gitleaks [command] --help" for more information about a command.
+This will return:
+```json
+{
+  "provider": "ollama",
+  "healthy": true,
+  "available_providers": ["ollama"]
+}
 ```
 
-### Commands
+#### 5. Supported Configuration Options
 
-⚠️ v8.19.0 introduced a change that deprecated `detect` and `protect`. Those commands are still available but
-are hidden in the `--help` menu. Take a look at this [gist](https://gist.github.com/zricethezav/b325bb93ebf41b9c0b0507acf12810d2) for easy command translations.
-If you find v8.19.0 broke an existing command (`detect`/`protect`), please open an issue.
+| Environment Variable | Description | Default |
+|---------------------|-------------|---------|
+| `LLM_PROVIDER` | Provider type: "ollama" or "openai" | ollama |
+| `OLLAMA_MODEL` | Ollama model name | llama3.2 |
+| `OLLAMA_HOST` | Ollama server URL | http://localhost:11434 |
+| `OPENAI_API_KEY` | OpenAI API key | - |
+| `OPENAI_MODEL` | OpenAI model name | gpt-3.5-turbo |
+| `DEFAULT_QUESTION_LIMIT` | Default number of questions | 5 |
+| `LOG_LEVEL` | Logging level | INFO |
 
-There are three scanning modes: `git`, `dir`, and `stdin`.
+### AI Question Generation Setup (Optional)
 
-#### Git
+To enable AI-powered question generation, you need to set up at least one LLM provider:
 
-The `git` command lets you scan local git repos. Under the hood, gitleaks uses the `git log -p` command to scan patches.
-You can configure the behavior of `git log -p` with the `log-opts` option.
-For example, if you wanted to run gitleaks on a range of commits you could use the following
-command: `gitleaks git -v --log-opts="--all commitA..commitB" path_to_repo`. See the [git log](https://git-scm.com/docs/git-log) documentation for more information.
-If there is no target specified as a positional argument, then gitleaks will attempt to scan the current working directory as a git repo.
+#### Option A: Ollama (Local/Free)
 
-#### Dir
+1. **Install Ollama:**
+   - Visit [ollama.ai](https://ollama.ai) and follow the installation instructions for your platform
+   - Or use the command line:
+     ```bash
+     curl -fsSL https://ollama.ai/install.sh | sh
+     ```
 
-The `dir` (aliases include `files`, `directory`) command lets you scan directories and files. Example: `gitleaks dir -v path_to_directory_or_file`.
-If there is no target specified as a positional argument, then gitleaks will scan the current working directory.
+2. **Pull the required model:**
+   ```bash
+   ollama pull llama3.2
+   ```
 
-#### Stdin
+3. **Start Ollama service:**
+   ```bash
+   ollama serve
+   ```
 
-You can also stream data to gitleaks with the `stdin` command. Example: `cat some_file | gitleaks -v stdin`
+#### Option B: OpenAI (Cloud/Paid)
 
-### Creating a baseline
+1. **Get an OpenAI API key:**
+   - Visit [OpenAI Platform](https://platform.openai.com/api-keys)
+   - Create a new API key
 
-When scanning large repositories or repositories with a long history, it can be convenient to use a baseline. When using a baseline,
-gitleaks will ignore any old findings that are present in the baseline. A baseline can be any gitleaks report. To create a gitleaks report, run gitleaks with the `--report-path` parameter.
+2. **Configure the environment:**
+   ```bash
+   echo "LLM_PROVIDER=openai" >> .env
+   echo "OPENAI_API_KEY=your-actual-api-key" >> .env
+   ```
 
-```
-gitleaks git --report-path gitleaks-report.json # This will save the report in a file called gitleaks-report.json
-```
+Once configured, the AI question generation feature will work automatically. If no provider is available, users can still use curated database questions.
 
-Once as baseline is created it can be applied when running the detect command again:
+The startup script will also display the URLs where the application is running.
 
-```
-gitleaks git --baseline-path gitleaks-report.json --report-path findings.json
-```
+Press `Ctrl+C` to stop both servers when done.
 
-After running the detect command with the --baseline-path parameter, report output (findings.json) will only contain new issues.
+## How to Use
 
-## Pre-Commit hook
+1. **Start Quiz**: Click "Start Quiz" on the home screen
+2. **Select Subject**: Choose your preferred quiz category (Geography, Science, Math, Literature)
+3. **Choose Question Source**:
+   - **📚 Curated Questions**: High-quality pre-written questions from the database
+   - **🤖 AI-Generated Questions**: Fresh questions powered by your configured LLM provider (Ollama or OpenAI)
+4. **Take Quiz**: Answer questions and see immediate feedback
+5. **View Results**: Review your score and answer details at the end
 
-You can run Gitleaks as a pre-commit hook by copying the example `pre-commit.py` script into
-your `.git/hooks/` directory.
+### AI Question Generation
 
-## Load Configuration
+The AI question generation feature uses your configured LLM provider to create fresh, unique questions on any topic. The system will:
 
-The order of precedence is:
+- Generate questions based on the selected subject
+- Format them consistently with the existing question structure
+- Provide appropriate difficulty levels
+- Include proper multiple-choice options with correct answers
 
-1. `--config/-c` option:
-      ```bash
-      gitleaks git --config /home/dev/customgitleaks.toml .
-      ```
-2. Environment variable `GITLEAKS_CONFIG` with the file path:
-      ```bash
-      export GITLEAKS_CONFIG="/home/dev/customgitleaks.toml"
-      gitleaks git .
-      ```
-3. Environment variable `GITLEAKS_CONFIG_TOML` with the file content:
-      ```bash
-      export GITLEAKS_CONFIG_TOML=`cat customgitleaks.toml`
-      gitleaks git .
-      ```
-4. A `.gitleaks.toml` file within the target path:
-      ```bash
-      gitleaks git .
-      ```
+If AI generation fails (provider offline, API quota exceeded, etc.), the system will gracefully fall back to curated database questions.
 
-If none of the four options are used, then gitleaks will use the default config.
+### Admin Interface
 
-## Configuration
+The admin interface allows you to view and edit all quiz questions stored in the database.
 
-Gitleaks offers a configuration format you can follow to write your own secret detection rules:
+**Access the Admin Panel:**
+1. Navigate to the Quizly homepage
+2. Click the "Admin Panel" button, or
+3. Go directly to `http://localhost:3000/#admin`
 
-```toml
-# Title for the gitleaks configuration file.
-title = "Custom Gitleaks configuration"
+**Admin Features:**
+- **View All Questions**: See all questions with their options, correct answers, and categories
+- **Edit Questions**: Click "Edit" on any question to modify:
+  - Question text
+  - Answer options (A, B, C, D)
+  - Correct answer selection
+  - Category assignment
+- **Save Changes**: Click "Save" to update questions or "Cancel" to discard changes
+- **Error Handling**: Validation ensures all required fields are filled and correct answers are valid
 
-# You have basically two options for your custom configuration:
-#
-# 1. define your own configuration, default rules do not apply
-#
-#    use e.g., the default configuration as starting point:
-#    https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml
-#
-# 2. extend a configuration, the rules are overwritten or extended
-#
-#    When you extend a configuration the extended rules take precedence over the
-#    default rules. I.e., if there are duplicate rules in both the extended
-#    configuration and the default configuration the extended rules or
-#    attributes of them will override the default rules.
-#    Another thing to know with extending configurations is you can chain
-#    together multiple configuration files to a depth of 2. Allowlist arrays are
-#    appended and can contain duplicates.
+**Admin Interface Usage:**
+- No authentication required (access via direct URL)
+- Real-time feedback on save operations
+- Mobile-responsive design for editing on any device
+- Automatic validation of question format and correct answers
 
-# useDefault and path can NOT be used at the same time. Choose one.
-[extend]
-# useDefault will extend the default gitleaks config built in to the binary
-# the latest version is located at:
-# https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml
-useDefault = true
-# or you can provide a path to a configuration to extend from.
-# The path is relative to where gitleaks was invoked,
-# not the location of the base config.
-# path = "common_config.toml"
-# If there are any rules you don't want to inherit, they can be specified here.
-disabledRules = [ "generic-api-key"]
+## API Endpoints
 
-# An array of tables that contain information that define instructions
-# on how to detect secrets
-[[rules]]
-# Unique identifier for this rule
-id = "awesome-rule-1"
+### Questions
+- **GET** `/api/questions` - Get quiz questions (supports `?category=<category>&limit=<limit>`)
+- **PUT** `/api/questions/{id}` - Update a question's content (admin endpoint)
+- **GET** `/api/questions/ai` - Generate AI-powered questions (supports `?subject=<subject>&limit=<limit>&model=<model>`)
+- **GET** `/api/categories` - Get available question categories
 
-# Short human-readable description of the rule.
-description = "awesome rule 1"
+### LLM Provider Management
+- **GET** `/api/llm/health` - Check LLM provider health and availability
+- **GET** `/api/models` - List available models for the current provider
 
-# Golang regular expression used to detect secrets. Note Golang's regex engine
-# does not support lookaheads.
-regex = '''one-go-style-regex-for-this-rule'''
+### Quiz Management
+- **POST** `/api/quiz/submit` - Submit quiz answers and get results
+- **GET** `/api/quiz/{quiz_id}` - Get quiz results by ID
 
-# Int used to extract secret from regex match and used as the group that will have
-# its entropy checked if `entropy` is set.
-secretGroup = 3
+### Example API Usage
 
-# Float representing the minimum shannon entropy a regex group must have to be considered a secret.
-entropy = 3.5
-
-# Golang regular expression used to match paths. This can be used as a standalone rule or it can be used
-# in conjunction with a valid `regex` entry.
-path = '''a-file-path-regex'''
-
-# Keywords are used for pre-regex check filtering. Rules that contain
-# keywords will perform a quick string compare check to make sure the
-# keyword(s) are in the content being scanned. Ideally these values should
-# either be part of the identiifer or unique strings specific to the rule's regex
-# (introduced in v8.6.0)
-keywords = [
-  "auth",
-  "password",
-  "token",
-]
-
-# Array of strings used for metadata and reporting purposes.
-tags = ["tag","another tag"]
-
-    # ⚠️ In v8.21.0 `[rules.allowlist]` was replaced with `[[rules.allowlists]]`.
-    # This change was backwards-compatible: instances of `[rules.allowlist]` still  work.
-    #
-    # You can define multiple allowlists for a rule to reduce false positives.
-    # A finding will be ignored if _ANY_ `[[rules.allowlists]]` matches.
-    [[rules.allowlists]]
-    description = "ignore commit A"
-    # When multiple criteria are defined the default condition is "OR".
-    # e.g., this can match on |commits| OR |paths| OR |stopwords|.
-    condition = "OR"
-    commits = [ "commit-A", "commit-B"]
-    paths = [
-      '''go\.mod''',
-      '''go\.sum'''
-    ]
-    # note: stopwords targets the extracted secret, not the entire regex match
-    # like 'regexes' does. (stopwords introduced in 8.8.0)
-    stopwords = [
-      '''client''',
-      '''endpoint''',
-    ]
-
-    [[rules.allowlists]]
-    # The "AND" condition can be used to make sure all criteria match.
-    # e.g., this matches if |regexes| AND |paths| are satisfied.
-    condition = "AND"
-    # note: |regexes| defaults to check the _Secret_ in the finding.
-    # Acceptable values for |regexTarget| are "secret" (default), "match", and "line".
-    regexTarget = "match"
-    regexes = [ '''(?i)parseur[il]''' ]
-    paths = [ '''package-lock\.json''' ]
-
-# You can extend a particular rule from the default config. e.g., gitlab-pat
-# if you have defined a custom token prefix on your GitLab instance
-[[rules]]
-id = "gitlab-pat"
-# all the other attributes from the default rule are inherited
-
-    [[rules.allowlists]]
-    regexTarget = "line"
-    regexes = [ '''MY-glpat-''' ]
-
-
-# ⚠️ In v8.25.0 `[allowlist]` was replaced with `[[allowlists]]`.
-#
-# Global allowlists have a higher order of precedence than rule-specific allowlists.
-# If a commit listed in the `commits` field below is encountered then that commit will be skipped and no
-# secrets will be detected for said commit. The same logic applies for regexes and paths.
-[[allowlists]]
-description = "global allow list"
-commits = [ "commit-A", "commit-B", "commit-C"]
-paths = [
-  '''gitleaks\.toml''',
-  '''(.*?)(jpg|gif|doc)'''
-]
-# note: (global) regexTarget defaults to check the _Secret_ in the finding.
-# Acceptable values for regexTarget are "match" and "line"
-regexTarget = "match"
-regexes = [
-  '''219-09-9999''',
-  '''078-05-1120''',
-  '''(9[0-9]{2}|666)-\d{2}-\d{4}''',
-]
-# note: stopwords targets the extracted secret, not the entire regex match
-# like 'regexes' does. (stopwords introduced in 8.8.0)
-stopwords = [
-  '''client''',
-  '''endpoint''',
-]
-
-# ⚠️ In v8.25.0, `[[allowlists]]` have a new field called |targetRules|.
-#
-# Common allowlists can be defined once and assigned to multiple rules using |targetRules|.
-# This will only run on the specified rules, not globally.
-[[allowlists]]
-targetRules = ["awesome-rule-1", "awesome-rule-2"]
-description = "Our test assets trigger false-positives in a couple rules."
-paths = ['''tests/expected/._\.json$''']
+**Get Questions:**
+```bash
+curl http://localhost:8000/api/questions
 ```
 
-Refer to the default [gitleaks config](https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml) for examples or follow the [contributing guidelines](https://github.com/gitleaks/gitleaks/blob/master/CONTRIBUTING.md) if you would like to contribute to the default configuration. Additionally, you can check out [this gitleaks blog post](https://blog.gitleaks.io/stop-leaking-secrets-configuration-2-3-aeed293b1fbf) which covers advanced configuration setups.
-
-### Additional Configuration
-
-#### gitleaks:allow
-
-If you are knowingly committing a test secret that gitleaks will catch you can add a `gitleaks:allow` comment to that line which will instruct gitleaks
-to ignore that secret. Ex:
-
-```
-class CustomClass:
-    discord_client_secret = '8dyfuiRyq=vVc3RRr_edRk-fK__JItpZ'  #gitleaks:allow
-
+**Get Questions by Category:**
+```bash
+curl "http://localhost:8000/api/questions?category=geography&limit=5"
 ```
 
-#### .gitleaksignore
-
-You can ignore specific findings by creating a `.gitleaksignore` file at the root of your repo. In release v8.10.0 Gitleaks added a `Fingerprint` value to the Gitleaks report. Each leak, or finding, has a Fingerprint that uniquely identifies a secret. Add this fingerprint to the `.gitleaksignore` file to ignore that specific secret. See Gitleaks' [.gitleaksignore](https://github.com/gitleaks/gitleaks/blob/master/.gitleaksignore) for an example. Note: this feature is experimental and is subject to change in the future.
-
-#### Decoding
-
-Sometimes secrets are encoded in a way that can make them difficult to find
-with just regex. Now you can tell gitleaks to automatically find and decode
-encoded text. The flag `--max-decode-depth` enables this feature (the default
-value "0" means the feature is disabled by default).
-
-Recursive decoding is supported since decoded text can also contain encoded
-text.  The flag `--max-decode-depth` sets the recursion limit. Recursion stops
-when there are no new segments of encoded text to decode, so setting a really
-high max depth doesn't mean it will make that many passes. It will only make as
-many as it needs to decode the text. Overall, decoding only minimally increases
-scan times.
-
-The findings for encoded text differ from normal findings in the following
-ways:
-
-- The location points the bounds of the encoded text
-  - If the rule matches outside the encoded text, the bounds are adjusted to
-    include that as well
-- The match and secret contain the decoded value
-- Two tags are added `decoded:<encoding>` and `decode-depth:<depth>`
-
-Currently supported encodings:
-
-- **percent** - Any printable ASCII percent encoded values
-- **hex** - Any printable ASCII hex encoded values >= 32 characters
-- **base64** - Any printable ASCII base64 encoded values >= 16 characters
-
-#### Archive Scanning
-
-Sometimes secrets are packaged within archive files like zip files or tarballs,
-making them difficult to discover. Now you can tell gitleaks to automatically
-extract and scan the contents of archives. The flag `--max-archive-depth`
-enables this feature for both `dir` and `git` scan types. The default value of
-"0" means this feature is disabled by default.
-
-Recursive scanning is supported since archives can also contain other archives.
-The `--max-archive-depth` flag sets the recursion limit. Recursion stops when
-there are no new archives to extract, so setting a very high max depth just
-sets the potential to go that deep. It will only go as deep as it needs to.
-
-The findings for secrets located within an archive will include the path to the
-file inside the archive. Inner paths are separated with `!`.
-
-Example finding (shortened for brevity):
-
-```
-Finding:     DB_PASSWORD=8ae31cacf141669ddfb5da
-...
-File:        testdata/archives/nested.tar.gz!archives/files.tar!files/.env.prod
-Line:        4
-Commit:      6e6ee6596d337bb656496425fb98644eb62b4a82
-...
-Fingerprint: 6e6ee6596d337bb656496425fb98644eb62b4a82:testdata/archives/nested.tar.gz!archives/files.tar!files/.env.prod:generic-api-key:4
-Link:        https://github.com/leaktk/gitleaks/blob/6e6ee6596d337bb656496425fb98644eb62b4a82/testdata/archives/nested.tar.gz
+**Check LLM Provider Health:**
+```bash
+curl http://localhost:8000/api/llm/health
 ```
 
-This means a secret was detected on line 4 of `files/.env.prod.` which is in
-`archives/files.tar` which is in `testdata/archives/nested.tar.gz`.
+**Generate AI Questions:**
+```bash
+curl "http://localhost:8000/api/questions/ai?subject=history&limit=3&model=gpt-4"
+```
 
-Currently supported formats:
+**Submit Quiz:**
+```bash
+curl -X POST http://localhost:8000/api/quiz/submit \
+  -H "Content-Type: application/json" \
+  -d '{"answers": [{"question_id": 1, "selected_answer": "c"}]}'
+```
 
-The [compression](https://github.com/mholt/archives?tab=readme-ov-file#supported-compression-formats)
-and [archive](https://github.com/mholt/archives?tab=readme-ov-file#supported-archive-formats)
-formats supported by mholt's [archives package](https://github.com/mholt/archives)
-are supported.
+**Update Question (Admin):**
+```bash
+curl -X PUT http://localhost:8000/api/questions/1 \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Updated question text?", "category": "updated_category"}'
+```
 
-#### Reporting
+## Database Schema
 
-Gitleaks has built-in support for several report formats: [`json`](https://github.com/gitleaks/gitleaks/blob/master/testdata/expected/report/json_simple.json), [`csv`](https://github.com/gitleaks/gitleaks/blob/master/testdata/expected/report/csv_simple.csv?plain=1), [`junit`](https://github.com/gitleaks/gitleaks/blob/master/testdata/expected/report/junit_simple.xml), and [`sarif`](https://github.com/gitleaks/gitleaks/blob/master/testdata/expected/report/sarif_simple.sarif).
+The application uses SQLite with the following tables:
 
-If none of these formats fit your need, you can create your own report format with a [Go `text/template` .tmpl file](https://www.digitalocean.com/community/tutorials/how-to-use-templates-in-go#step-4-writing-a-template) and the `--report-template` flag. The template can use [extended functionality from the `Masterminds/sprig` template library](https://masterminds.github.io/sprig/).
+**Questions Table:**
+- `id` (INTEGER PRIMARY KEY)
+- `text` (TEXT) - Question text
+- `options` (TEXT) - JSON array of answer options
+- `correct_answer` (TEXT) - ID of correct option
+- `category` (TEXT) - Question category
 
-For example, the following template provides a custom JSON output:
-```gotemplate
-# jsonextra.tmpl
-[{{ $lastFinding := (sub (len . ) 1) }}
-{{- range $i, $finding := . }}{{with $finding}}
+**Quiz Sessions Table:**
+- `id` (TEXT PRIMARY KEY) - Unique quiz session ID
+- `total_questions` (INTEGER)
+- `correct_answers` (INTEGER)
+- `score_percentage` (REAL)
+- `created_at` (TEXT) - ISO timestamp
+- `answers` (TEXT) - JSON array of answer details
+
+## Sample Questions
+
+The application comes with 5 sample questions covering:
+- 🌍 **Geography**: Capitals and geography facts
+- 🔬 **Science**: Planets and scientific knowledge
+- 🔢 **Math**: Basic arithmetic
+- 📚 **Literature**: Classic authors and works
+
+## Development
+
+### Adding New Questions
+
+You can add questions directly to the database or extend the initialization code in `backend/main.py`:
+
+```python
+sample_questions = [
     {
-        "Description": {{ quote .Description }},
-        "StartLine": {{ .StartLine }},
-        "EndLine": {{ .EndLine }},
-        "StartColumn": {{ .StartColumn }},
-        "EndColumn": {{ .EndColumn }},
-        "Line": {{ quote .Line }},
-        "Match": {{ quote .Match }},
-        "Secret": {{ quote .Secret }},
-        "File": "{{ .File }}",
-        "SymlinkFile": {{ quote .SymlinkFile }},
-        "Commit": {{ quote .Commit }},
-        "Entropy": {{ .Entropy }},
-        "Author": {{ quote .Author }},
-        "Email": {{ quote .Email }},
-        "Date": {{ quote .Date }},
-        "Message": {{ quote .Message }},
-        "Tags": [{{ $lastTag := (sub (len .Tags ) 1) }}{{ range $j, $tag := .Tags }}{{ quote . }}{{ if ne $j $lastTag }},{{ end }}{{ end }}],
-        "RuleID": {{ quote .RuleID }},
-        "Fingerprint": {{ quote .Fingerprint }}
-    }{{ if ne $i $lastFinding }},{{ end }}
-{{- end}}{{ end }}
+        "text": "Your question here?",
+        "options": [
+            {"id": "a", "text": "Option A"},
+            {"id": "b", "text": "Option B"},
+            {"id": "c", "text": "Option C"},
+            {"id": "d", "text": "Option D"}
+        ],
+        "correct_answer": "a",  # ID of correct option
+        "category": "your_category"
+    }
 ]
 ```
 
-Usage:
-```sh
-$ gitleaks dir ~/leaky-repo/ --report-path "report.json" --report-format template --report-template testdata/report/jsonextra.tmpl
+### Testing the Backend
+
+Run the test script to verify backend functionality:
+```bash
+# Run individual backend tests
+cd tests/backend/unit
+python test_database.py
+
+# Run all backend tests
+cd tests/backend
+python -m pytest
 ```
 
-## Sponsorships
+### Testing the Frontend
 
-<p align="left">
-	<h3><a href="https://coderabbit.ai/?utm_source=oss&utm_medium=sponsorship&utm_campaign=gitleaks">coderabbit.ai</h3>
-	  <a href="https://coderabbit.ai/?utm_source=oss&utm_medium=sponsorship&utm_campaign=gitleaks">
-		  <img alt="CodeRabbit.ai Sponsorship" src="https://github.com/gitleaks/gitleaks/assets/15034943/76c30a85-887b-47ca-9956-17a8e55c6c41" width=200>
-	  </a>
-</p>
+The frontend is configured with Jest and React Testing Library for unit testing. Tests are available for the core components.
 
+**Running Tests:**
+```bash
+cd frontend
+npm test
+```
 
-## Exit Codes
+**Running Tests with Coverage:**
+```bash
+cd frontend
+npm test -- --coverage --collectCoverageFrom="src/components/**/*.{js,jsx}"
+```
 
-You can always set the exit code when leaks are encountered with the --exit-code flag. Default exit codes below:
+**Running Tests in CI Mode (no watch):**
+```bash
+cd frontend
+npm test -- --watchAll=false
+```
+
+**Test Files:**
+- `tests/frontend/unit/components/Question.test.js` - Tests for Question component
+- `tests/frontend/unit/components/ScoreDisplay.test.js` - Tests for ScoreDisplay component
+- `tests/frontend/unit/components/Quiz.test.js` - Tests for Quiz component
+- `tests/frontend/unit/components/SubjectSelection.test.js` - Tests for SubjectSelection component  
+- `tests/frontend/unit/components/AdminQuestions.test.js` - Tests for AdminQuestions component
+- `tests/frontend/unit/components/LoggingSettings.test.js` - Tests for LoggingSettings component
+
+**Note:** Frontend tests have been moved to a centralized structure in `/tests/frontend/`. The Jest configuration may need updating to run tests from the new location.
+
+**What's Tested:**
+- Question component rendering and user interactions
+- ScoreDisplay component score display and answer review functionality
+- Component snapshots for visual regression testing
+- Coverage targets: ≥80% for tested components
+
+### CORS Configuration
+
+The backend is configured to accept requests from `http://localhost:3000`. To change this, modify the CORS settings in `backend/main.py`:
+
+```python
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "your-domain.com"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+## Project Structure
 
 ```
-0 - no leaks present
-1 - leaks or error encountered
-126 - unknown flag
+Quizly-1/
+├── backend/
+│   ├── main.py              # FastAPI application
+│   ├── requirements.txt     # Python dependencies
+│   └── quiz.db             # SQLite database (auto-generated)
+├── frontend/
+│   ├── package.json        # React dependencies
+│   ├── public/             # Public assets
+│   │   └── index.html      # HTML template for React
+│   └── src/                # React components
+│       ├── App.js          # Main App component
+│       ├── index.js        # React entry point
+│       ├── index.css       # Global styles
+│       └── components/
+│           ├── Quiz.js     # Quiz logic component
+│           ├── Question.js # Question display component
+│           └── ScoreDisplay.js # Score display component
+├── tests/                  # Centralized test organization
+│   ├── backend/           # Backend tests
+│   │   ├── unit/          # Unit tests
+│   │   ├── integration/   # Integration tests
+│   │   └── fixtures/      # Test fixtures
+│   ├── frontend/          # Frontend tests
+│   │   ├── unit/          # Component unit tests
+│   │   └── integration/   # Integration tests
+│   ├── e2e/              # End-to-end tests
+│   └── shared/           # Shared test utilities
+├── start.sh               # Application launcher
+├── run_tests.sh          # Test runner script
+├── README.md
+└── TESTING_GUIDE.md      # Comprehensive testing guide
+└── LICENSE
 ```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Future Enhancements
+
+- 👤 User authentication and profiles
+- 📈 Quiz history and statistics
+- 🏷️ Custom quiz categories
+- ⏱️ Timed quizzes
+- 🎮 Multiplayer quiz mode
+- 📱 Progressive Web App (PWA) support
+- 🌐 Internationalization
+- 📊 Admin dashboard for question management
