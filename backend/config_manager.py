@@ -57,6 +57,9 @@ class ConfigManager:
     
     def update_config(self, updates: Dict[str, Any]) -> Dict[str, Any]:
         """Update configuration with new values."""
+        # Validate updates before applying
+        self._validate_updates(updates)
+        
         for key, value in updates.items():
             if key in self._config:
                 self._config[key] = value
@@ -65,6 +68,14 @@ class ConfigManager:
         
         self.save_config()
         return self._config.copy()
+    
+    def _validate_updates(self, updates: Dict[str, Any]):
+        """Validate configuration updates."""
+        if "llm_provider" in updates:
+            provider = updates["llm_provider"]
+            valid_providers = ["ollama", "openai"]
+            if provider not in valid_providers:
+                raise ValueError(f"Invalid provider: {provider}. Must be one of: {valid_providers}")
     
     def get_provider_config(self) -> Dict[str, Any]:
         """Get provider-specific configuration."""

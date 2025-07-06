@@ -8,6 +8,7 @@ pytest-cov>=4.0.0
 
 # HTTP client for API testing
 httpx>=0.25.0
+requests>=2.25.0
 
 # Test client for FastAPI
 fastapi[all]>=0.104.0

@@ -48,7 +48,10 @@ describe('Quiz Component', () => {
   });
 
   it('displays loading state initially', () => {
-    axios.get.mockImplementation(() => new Promise(() => {})); // Never resolves
+    // Mock implementation that delays resolution to test loading state
+    axios.get.mockImplementation(() => new Promise(resolve => {
+      setTimeout(() => resolve({ data: mockQuestions }), 100);
+    }));
 
     render(<Quiz onRestart={mockOnRestart} category="geography" source="database" />);
 

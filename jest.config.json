@@ -5,6 +5,7 @@
       "testMatch": ["<rootDir>/tests/frontend/**/*.test.js"],
       "testEnvironment": "jsdom",
       "setupFilesAfterEnv": ["<rootDir>/frontend/src/setupTests.js"],
+      "testTimeout": 10000,
       "transform": {
         "^.+\\.(js|jsx)$": ["babel-jest", {
           "presets": [
