@@ -33,7 +33,7 @@ exports[`ScoreDisplay Component matches snapshot for different score values - hi
         📋 Review Your Answers:
       </h3>
       <div
-        style="margin-bottom: 20px; padding: 15px; background-color: rgb(212, 237, 218); border: 1px solid rgb(195, 230, 203); border-radius: 8px;"
+        style="margin-bottom: 20px; padding: 15px; background-color: rgb(212, 237, 218); border: 1px solid #c3e6cb; border-radius: 8px;"
       >
         <p
           style="font-weight: bold; margin-bottom: 8px;"
@@ -55,7 +55,7 @@ exports[`ScoreDisplay Component matches snapshot for different score values - hi
         </p>
       </div>
       <div
-        style="margin-bottom: 20px; padding: 15px; background-color: rgb(212, 237, 218); border: 1px solid rgb(195, 230, 203); border-radius: 8px;"
+        style="margin-bottom: 20px; padding: 15px; background-color: rgb(212, 237, 218); border: 1px solid #c3e6cb; border-radius: 8px;"
       >
         <p
           style="font-weight: bold; margin-bottom: 8px;"
@@ -123,7 +123,7 @@ exports[`ScoreDisplay Component matches snapshot for different score values - lo
         📋 Review Your Answers:
       </h3>
       <div
-        style="margin-bottom: 20px; padding: 15px; background-color: rgb(248, 215, 218); border: 1px solid rgb(245, 198, 203); border-radius: 8px;"
+        style="margin-bottom: 20px; padding: 15px; background-color: rgb(248, 215, 218); border: 1px solid #f5c6cb; border-radius: 8px;"
       >
         <p
           style="font-weight: bold; margin-bottom: 8px;"
@@ -154,7 +154,7 @@ exports[`ScoreDisplay Component matches snapshot for different score values - lo
         </p>
       </div>
       <div
-        style="margin-bottom: 20px; padding: 15px; background-color: rgb(248, 215, 218); border: 1px solid rgb(245, 198, 203); border-radius: 8px;"
+        style="margin-bottom: 20px; padding: 15px; background-color: rgb(248, 215, 218); border: 1px solid #f5c6cb; border-radius: 8px;"
       >
         <p
           style="font-weight: bold; margin-bottom: 8px;"

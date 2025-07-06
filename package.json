@@ -8,6 +8,7 @@
     "jest-environment-jsdom": "^30.0.4"
   },
   "overrides": {
-    "glob": "^10.4.5"
+    "glob": "^10.4.5",
+    "jsdom": "^20.0.1"
   }
 }
