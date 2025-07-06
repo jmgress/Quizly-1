@@ -85,8 +85,7 @@ fi
 
 # Test 5: AI Integration
 total_tests=$((total_tests + 1))
-if timeout 30 python test_ai_integration.py > /tmp/ai_test_output_$$.txt 2>&1; then
-    print_status "✅ AI Integration Test PASSED" "$GREEN"
+if run_test "AI Integration Test" "python test_ai_integration_simple.py" "/Users/james.m.gress/Reops/Quizly-1/backend"; then
     passed_tests=$((passed_tests + 1))
 else
     print_status "❌ AI Integration Test FAILED or TIMEOUT" "$RED"
