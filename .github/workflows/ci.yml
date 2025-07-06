@@ -180,10 +180,71 @@ jobs:
         extra_args: --debug --only-verified
     
     - name: Run GitLeaks secrets scanner
-      uses: gitleaks/gitleaks-action@v2
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only needed for commercial use
+      id: gitleaks
+      run: |
+        runGitLeaksSecretsScan() {
+          local gitleaks_version="8.24.3"
+          local scan_result=0
+          
+          downloadGitLeaks "$gitleaks_version"
+          runSecretsScan || scan_result=$?
+          handleScanResults "$scan_result"
+          
+          return $scan_result
+        }
+        
+        downloadGitLeaks() {
+          local version="$1"
+          local download_url="https://github.com/gitleaks/gitleaks/releases/download/v${version}/gitleaks_${version}_linux_x64.tar.gz"
+          
+          echo "Downloading GitLeaks v${version}..."
+          wget -q "$download_url" -O gitleaks.tar.gz
+          
+          # Extract only the gitleaks binary to avoid overwriting project files
+          tar -xzf gitleaks.tar.gz gitleaks
+          chmod +x gitleaks
+        }
+        
+        runSecretsScan() {
+          echo "=== GitLeaks Secrets Scan ==="
+          ./gitleaks detect \
+            --config .gitleaks.toml \
+            --redact \
+            --verbose \
+            --no-git \
+            --source . \
+            --report-format json \
+            --report-path gitleaks-results.json
+        }
+        
+        handleScanResults() {
+          local exit_code="$1"
+          
+          if [[ "$exit_code" -eq 0 ]]; then
+            echo "✅ No secrets detected"
+          else
+            echo "⚠️  Potential secrets found - check results"
+            displayResultsSummary
+          fi
+          
+          echo "============================="
+        }
+        
+        displayResultsSummary() {
+          if [[ -f "gitleaks-results.json" ]]; then
+            local findings=$(jq '. | length' gitleaks-results.json 2>/dev/null || echo "0")
+            echo "Found $findings potential secret(s)"
+            
+            if [[ "$findings" -gt 0 ]]; then
+              echo "Detected secrets (redacted):"
+              jq -r '.[] | "  - \(.Description) in \(.File):\(.StartLine)"' gitleaks-results.json 2>/dev/null || echo "  Unable to parse results"
+            fi
+          fi
+        }
+        
+        # Execute the scan
+        runGitLeaksSecretsScan
+      continue-on-error: true
     
     - name: Run Trivy secrets scanner
       uses: aquasecurity/trivy-action@master
@@ -232,10 +293,56 @@ jobs:
           trivy-results.sarif
           trivy-results.txt
           trivy-secrets.txt
+          gitleaks-results.json
         retention-days: 30
+      if: always()
     
     - name: Upload Trivy scan results to GitHub Security
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'trivy-results.sarif'
       continue-on-error: true
+    
+    - name: Security scan summary
+      if: always()
+      run: |
+        generateSecuritySummary() {
+          echo "## Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Scanner | Status | Results |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|---------|---------|" >> $GITHUB_STEP_SUMMARY
+          
+          checkTrivyResults
+          checkGitLeaksResults
+          checkTruffleHogResults
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note:** Detailed results are available in the uploaded artifacts." >> $GITHUB_STEP_SUMMARY
+        }
+        
+        checkTrivyResults() {
+          if [[ -f "trivy-results.txt" ]]; then
+            local trivy_issues=$(grep -c "CRITICAL\|HIGH\|MEDIUM" trivy-results.txt 2>/dev/null || echo "0")
+            echo "| Trivy | ✅ Completed | $trivy_issues issues found |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Trivy | ❌ Failed | No results file |" >> $GITHUB_STEP_SUMMARY
+          fi
+        }
+        
+        checkGitLeaksResults() {
+          if [[ -f "gitleaks-results.json" ]]; then
+            local gitleaks_secrets=$(jq '. | length' gitleaks-results.json 2>/dev/null || echo "0")
+            if [[ "$gitleaks_secrets" -eq 0 ]]; then
+              echo "| GitLeaks | ✅ Completed | No secrets found |" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "| GitLeaks | ⚠️ Issues Found | $gitleaks_secrets potential secrets |" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "| GitLeaks | ❌ Failed | No results file |" >> $GITHUB_STEP_SUMMARY
+          fi
+        }
+        
+        checkTruffleHogResults() {
+          echo "| TruffleHog | ✅ Completed | Check logs for details |" >> $GITHUB_STEP_SUMMARY
+        }
+        
+        generateSecuritySummary

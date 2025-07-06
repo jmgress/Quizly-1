@@ -182,7 +182,21 @@ Your CI/CD pipeline is now ready! 🎉
 - **pip-audit:** Python dependency vulnerability scanning (format: `columns`)
 - **npm audit:** Node.js dependency vulnerability scanning  
 - **Trivy:** Container and filesystem vulnerability scanning (format: `table`)
-- **TruffleHog:** Secret detection
-- **GitLeaks:** Git secret scanning
+- **TruffleHog:** Secret detection in repository history
+- **GitLeaks:** File-based secret scanning with custom configuration
+
+**GitLeaks Configuration:**
+- Custom `.gitleaks.toml` configuration file
+- Allowlist for false positives and test files
+- Redacted output for security
+- JSON report format for detailed analysis
 
 **Note:** `pip-audit` supports formats: `columns`, `json`, `cyclonedx-json`, `cyclonedx-xml`, `markdown`
+
+### 4. Local Testing
+
+**GitLeaks Testing:**
+```bash
+# Run the local GitLeaks test script
+./scripts/test_gitleaks.sh
+```
