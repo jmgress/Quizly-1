@@ -1,0 +1,6 @@
+{
+  "name": "stable",
+  "version": "0.1.8",
+  "description": "Local replacement for deprecated stable package",
+  "main": "index.js"
+}
