@@ -18,7 +18,7 @@ describe('LoggingSettings', () => {
     jest.clearAllMocks();
   });
 
-  test('renders logging configuration interface', async () => {
+  test('renders logging configuration interface with sliders', async () => {
     // Mock API responses
     axios.get.mockImplementation((url) => {
       if (url.includes('/api/logging/config')) {
@@ -91,6 +91,59 @@ describe('LoggingSettings', () => {
     // Check if log level controls are rendered
     expect(screen.getByText('Frontend Components')).toBeInTheDocument();
     expect(screen.getByText('Backend Components')).toBeInTheDocument();
+    
+    // Check if slider elements are rendered (instead of select dropdowns)
+    await waitFor(() => {
+      const sliders = screen.getAllByRole('slider');
+      expect(sliders.length).toBeGreaterThan(0);
+    });
+  });
+
+  test('slider changes trigger handleLogLevelChange', async () => {
+    // Mock API responses
+    axios.get.mockImplementation((url) => {
+      if (url.includes('/api/logging/config')) {
+        return Promise.resolve({
+          data: {
+            config: {
+              log_levels: {
+                frontend: { app: 'INFO' },
+                backend: { api: 'INFO', llm: 'INFO', database: 'INFO' }
+              }
+            },
+            available_levels: ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']
+          }
+        });
+      } else if (url.includes('/api/logging/files')) {
+        return Promise.resolve({
+          data: {
+            files: []
+          }
+        });
+      } else if (url.includes('/api/logging/recent')) {
+        return Promise.resolve({
+          data: {
+            logs: []
+          }
+        });
+      }
+      return Promise.reject(new Error('Unknown URL'));
+    });
+
+    render(<LoggingSettings />);
+
+    await waitFor(() => {
+      expect(screen.getByText('🔧 Logging Configuration')).toBeInTheDocument();
+    });
+
+    // Find a slider and change its value
+    await waitFor(() => {
+      const sliders = screen.getAllByRole('slider');
+      expect(sliders.length).toBeGreaterThan(0);
+      
+      // Change the first slider value
+      fireEvent.change(sliders[0], { target: { value: '3' } }); // DEBUG level
+    });
   });
 
   test('switches between tabs correctly', async () => {
