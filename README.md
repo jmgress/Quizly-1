@@ -83,6 +83,8 @@ An interactive web-based quiz application that allows users to test their knowle
    ```bash
    npm install
    ```
+   The project overrides `glob` to the latest version to avoid the deprecated
+   `inflight` package warning.
 
 3. **Start the React development server:**
    ```bash
