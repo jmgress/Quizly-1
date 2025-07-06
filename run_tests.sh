@@ -18,6 +18,19 @@ print_status() {
     echo -e "${2}${1}${NC}"
 }
 
+# Function to get Python interpreter
+get_python() {
+    if [ -x "$(pwd)/venv/bin/python" ]; then
+        echo "$(pwd)/venv/bin/python"
+    elif command -v python3 > /dev/null 2>&1; then
+        echo "python3"
+    elif command -v python > /dev/null 2>&1; then
+        echo "python"
+    else
+        echo "python3"  # fallback
+    fi
+}
+
 # Function to run command and capture result
 run_test() {
     local test_name=$1
@@ -51,13 +64,17 @@ total_tests=0
 passed_tests=0
 failed_tests=0
 
+# Get Python interpreter
+PYTHON_CMD=$(get_python)
+print_status "Using Python interpreter: $PYTHON_CMD" "$BLUE"
+
 # Backend Tests
 print_status "🐍 BACKEND TESTS" "$YELLOW"
 echo "=================="
 
 # Test 1: Basic Backend Unit Tests
 total_tests=$((total_tests + 1))
-if run_test "Database Unit Tests" "$(pwd)/venv/bin/python test_database.py" "$(pwd)/tests/backend/unit"; then
+if run_test "Database Unit Tests" "$PYTHON_CMD test_database.py" "$(pwd)/tests/backend/unit"; then
     passed_tests=$((passed_tests + 1))
 else
     failed_tests=$((failed_tests + 1))
@@ -65,7 +82,7 @@ fi
 
 # Test 2: Configuration Unit Tests
 total_tests=$((total_tests + 1))
-if run_test "Logging Configuration Tests" "$(pwd)/venv/bin/python test_logging_config.py" "$(pwd)/tests/backend/unit"; then
+if run_test "Logging Configuration Tests" "$PYTHON_CMD test_logging_config.py" "$(pwd)/tests/backend/unit"; then
     passed_tests=$((passed_tests + 1))
 else
     failed_tests=$((failed_tests + 1))
@@ -73,7 +90,7 @@ fi
 
 # Test 3: LLM Configuration Tests
 total_tests=$((total_tests + 1))
-if run_test "LLM Configuration Tests" "$(pwd)/venv/bin/python test_llm_config.py" "$(pwd)/tests/backend/unit"; then
+if run_test "LLM Configuration Tests" "$PYTHON_CMD test_llm_config.py" "$(pwd)/tests/backend/unit"; then
     passed_tests=$((passed_tests + 1))
 else
     failed_tests=$((failed_tests + 1))
@@ -81,7 +98,7 @@ fi
 
 # Test 4: Configuration Manager Tests
 total_tests=$((total_tests + 1))
-if run_test "Configuration Manager Tests" "$(pwd)/venv/bin/python test_config_manager.py" "$(pwd)/tests/backend/unit"; then
+if run_test "Configuration Manager Tests" "$PYTHON_CMD test_config_manager.py" "$(pwd)/tests/backend/unit"; then
     passed_tests=$((passed_tests + 1))
 else
     failed_tests=$((failed_tests + 1))
@@ -89,7 +106,7 @@ fi
 
 # Test 5: API Integration Tests
 total_tests=$((total_tests + 1))
-if run_test "API Endpoints Tests" "$(pwd)/venv/bin/python test_api_endpoints.py" "$(pwd)/tests/backend/integration"; then
+if run_test "API Endpoints Tests" "$PYTHON_CMD test_api_endpoints.py" "$(pwd)/tests/backend/integration"; then
     passed_tests=$((passed_tests + 1))
 else
     failed_tests=$((failed_tests + 1))
@@ -97,7 +114,7 @@ fi
 
 # Test 6: AI Integration Tests
 total_tests=$((total_tests + 1))
-if run_test "AI Integration Tests" "$(pwd)/venv/bin/python test_ai_integration_simple.py" "$(pwd)/tests/backend/integration"; then
+if run_test "AI Integration Tests" "$PYTHON_CMD test_ai_integration_simple.py" "$(pwd)/tests/backend/integration"; then
     passed_tests=$((passed_tests + 1))
 else
     failed_tests=$((failed_tests + 1))
@@ -113,7 +130,7 @@ else
     timeout_cmd=""
 fi
 
-if run_test "OpenAI Integration Test" "$timeout_cmd $(pwd)/venv/bin/python test_openai.py" "$(pwd)/tests/backend/integration"; then
+if run_test "OpenAI Integration Test" "$timeout_cmd $PYTHON_CMD test_openai.py" "$(pwd)/tests/backend/integration"; then
     passed_tests=$((passed_tests + 1))
 else
     print_status "⚠️  OpenAI test failed (API quota/network issue) - continuing..." "$YELLOW"
@@ -122,7 +139,7 @@ fi
 
 # Test 8: Pytest Unit Tests
 total_tests=$((total_tests + 1))
-if run_test "Backend Unit Test Suite" "$(pwd)/venv/bin/python -m pytest unit/ -v --tb=short" "$(pwd)/tests/backend"; then
+if run_test "Backend Unit Test Suite" "$PYTHON_CMD -m pytest unit/ -v --tb=short" "$(pwd)/tests/backend"; then
     passed_tests=$((passed_tests + 1))
 else
     failed_tests=$((failed_tests + 1))
@@ -130,7 +147,7 @@ fi
 
 # Test 9: Pytest Integration Tests
 total_tests=$((total_tests + 1))
-if run_test "Backend Integration Test Suite" "$(pwd)/venv/bin/python -m pytest integration/ -v --tb=short" "$(pwd)/tests/backend"; then
+if run_test "Backend Integration Test Suite" "$PYTHON_CMD -m pytest integration/ -v --tb=short" "$(pwd)/tests/backend"; then
     passed_tests=$((passed_tests + 1))
 else
     failed_tests=$((failed_tests + 1))
@@ -143,10 +160,10 @@ echo "=================="
 # Test 10: Frontend Component Tests
 total_tests=$((total_tests + 1))
 
-# Check if frontend node_modules exists
-if [ ! -d "frontend/node_modules" ]; then
+# Check if node_modules exists at project root (where dependencies are now installed)
+if [ ! -d "node_modules" ]; then
     print_status "Installing frontend dependencies..." "$BLUE"
-    cd frontend && npm install && cd ..
+    npm install
 fi
 
 # Run frontend tests using Jest from project root

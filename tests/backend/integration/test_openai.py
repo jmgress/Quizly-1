@@ -1,6 +1,7 @@
 import openai
 import os
 import sys
+import pytest
 from dotenv import load_dotenv
 
 # Add backend directory to path for imports
@@ -13,7 +14,7 @@ load_dotenv()
 api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     print("Error: OPENAI_API_KEY not found in environment variables or .env file")
-    exit(1)
+    pytest.skip("OPENAI_API_KEY not configured", allow_module_level=True)
 
 # Get model from environment (default to gpt-4o-mini if not specified)
 model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
