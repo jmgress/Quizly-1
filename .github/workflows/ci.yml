@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+    
+    - name: Set up Node.js 18
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install backend dependencies
+      run: |
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-asyncio httpx pytest-cov
+    
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: Create test environment
+      run: |
+        # Create logs directory
+        mkdir -p logs/backend logs/frontend
+        
+        # Create test database
+        cd backend
+        python -c "from database import init_db; init_db()"
+        
+        # Create test environment file
+        echo "LLM_PROVIDER=openai" > .env
+        echo "OPENAI_API_KEY=test_key" >> .env
+        echo "OPENAI_MODEL=gpt-3.5-turbo" >> .env
+    
+    - name: Run backend tests
+      run: |
+        cd backend
+        echo "Running basic backend tests..."
+        python test_backend.py
+        
+        echo "Running logging configuration tests..."
+        python test_logging_config.py
+        
+        echo "Running LLM configuration tests..."
+        python test_llm_config.py
+        
+        echo "Running AI integration tests..."
+        python test_ai_integration_simple.py
+    
+    - name: Run frontend tests
+      run: |
+        cd frontend
+        CI=true npm test -- --coverage=false --watchAll=false
+    
+    - name: Run full test suite
+      run: |
+        chmod +x run_tests.sh
+        ./run_tests.sh
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+    
+    - name: Install linting tools
+      run: |
+        pip install flake8 black isort
+    
+    - name: Run Python linting
+      run: |
+        cd backend
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || true
+        black --check . || true
+        isort --check-only . || true
+    
+    - name: Set up Node.js 18
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install frontend dependencies
+      run: |
+        cd frontend
+        npm ci
+    
+    - name: Run frontend linting
+      run: |
+        cd frontend
+        npm run lint || true

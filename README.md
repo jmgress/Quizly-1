@@ -1,5 +1,9 @@
 # 🧠 Quizly - Knowledge Testing Application
 
+[![CI](https://github.com/yourusername/quizly/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/quizly/actions/workflows/ci.yml)
+[![Test Suite](https://github.com/yourusername/quizly/actions/workflows/test.yml/badge.svg)](https://github.com/yourusername/quizly/actions/workflows/test.yml)
+[![Deploy](https://github.com/yourusername/quizly/actions/workflows/deploy.yml/badge.svg)](https://github.com/yourusername/quizly/actions/workflows/deploy.yml)
+
 An interactive web-based quiz application that allows users to test their knowledge on various topics. Built with FastAPI backend and a responsive HTML/JavaScript frontend.
 
 ## Features
