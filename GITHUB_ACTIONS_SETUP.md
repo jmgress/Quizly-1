@@ -174,3 +174,15 @@ Add these to your README.md:
 6. Set up notifications for failed builds
 
 Your CI/CD pipeline is now ready! 🎉
+
+### 3. Security Scanning (`.github/workflows/ci.yml`)
+**Purpose:** Automated security vulnerability detection
+
+**Components:**
+- **pip-audit:** Python dependency vulnerability scanning (format: `columns`)
+- **npm audit:** Node.js dependency vulnerability scanning  
+- **Trivy:** Container and filesystem vulnerability scanning (format: `table`)
+- **TruffleHog:** Secret detection
+- **GitLeaks:** Git secret scanning
+
+**Note:** `pip-audit` supports formats: `columns`, `json`, `cyclonedx-json`, `cyclonedx-xml`, `markdown`

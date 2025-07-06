@@ -156,7 +156,7 @@ jobs:
       run: |
         cd backend
         echo "=== pip-audit Results ==="
-        pip-audit --requirement requirements.txt --format=table || echo "pip-audit found vulnerabilities"
+        pip-audit --requirement requirements.txt --format=columns || echo "pip-audit found vulnerabilities"
         echo "=========================="
     
     - name: Run npm audit for Node.js dependencies
