@@ -136,7 +136,31 @@ jobs:
         format: 'sarif'
         output: 'trivy-results.sarif'
     
-    - name: Upload Trivy scan results
+    - name: Run Trivy vulnerability scanner (table format)
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'table'
+        output: 'trivy-results.txt'
+    
+    - name: Display Trivy scan results
+      run: |
+        echo "=== Trivy Security Scan Results ==="
+        cat trivy-results.txt || echo "No results file found"
+        echo "=================================="
+    
+    - name: Upload Trivy scan results as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: trivy-security-scan-results
+        path: |
+          trivy-results.sarif
+          trivy-results.txt
+        retention-days: 30
+    
+    - name: Upload Trivy scan results to GitHub Security
       uses: github/codeql-action/upload-sarif@v3
       with:
         sarif_file: 'trivy-results.sarif'
+      continue-on-error: true
