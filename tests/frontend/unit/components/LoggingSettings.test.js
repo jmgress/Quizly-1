@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import LoggingSettings from '../LoggingSettings';
+import LoggingSettings from '../../../../frontend/src/components/LoggingSettings';
 
 // Mock axios
 jest.mock('axios', () => ({

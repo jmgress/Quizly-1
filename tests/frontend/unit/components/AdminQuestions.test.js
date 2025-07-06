@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import AdminQuestions from '../AdminQuestions';
+import AdminQuestions from '../../../../frontend/src/components/AdminQuestions';
 
 // Mock axios more specifically for Jest compatibility
 jest.mock('axios', () => ({
@@ -29,14 +29,25 @@ const mockQuestions = [
 
 describe('AdminQuestions Component', () => {
   let mockOnGoHome;
+  let consoleErrorSpy;
 
   beforeEach(() => {
     jest.clearAllMocks();
     mockOnGoHome = jest.fn();
+    // Mock console.error to prevent error logs from cluttering test output
+    consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    // Restore console.error after each test
+    consoleErrorSpy.mockRestore();
   });
 
   it('displays loading state initially', () => {
-    axios.get.mockImplementation(() => new Promise(() => {})); // Never resolves
+    // Mock implementation that delays resolution to test loading state
+    axios.get.mockImplementation(() => new Promise(resolve => {
+      setTimeout(() => resolve({ data: mockQuestions }), 100);
+    }));
 
     render(<AdminQuestions onGoHome={mockOnGoHome} />);
 
@@ -44,13 +55,17 @@ describe('AdminQuestions Component', () => {
   });
 
   it('displays error state when API call fails', async () => {
-    axios.get.mockRejectedValueOnce(new Error('API Error'));
+    const apiError = new Error('API Error');
+    axios.get.mockRejectedValueOnce(apiError);
 
     render(<AdminQuestions onGoHome={mockOnGoHome} />);
 
     await waitFor(() => {
       expect(screen.getByText('Failed to load questions. Please try again later.')).toBeInTheDocument();
     });
+
+    // Verify that console.error was called with the correct error
+    expect(consoleErrorSpy).toHaveBeenCalledWith('Error fetching questions:', apiError);
   });
 
   it('loads and displays questions successfully', async () => {

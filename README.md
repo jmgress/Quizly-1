@@ -376,8 +376,13 @@ sample_questions = [
 
 Run the test script to verify backend functionality:
 ```bash
-cd backend
-python test_backend.py
+# Run individual backend tests
+cd tests/backend/unit
+python test_database.py
+
+# Run all backend tests
+cd tests/backend
+python -m pytest
 ```
 
 ### Testing the Frontend
@@ -403,8 +408,14 @@ npm test -- --watchAll=false
 ```
 
 **Test Files:**
-- `src/components/__tests__/Question.test.js` - Tests for Question component
-- `src/components/__tests__/ScoreDisplay.test.js` - Tests for ScoreDisplay component
+- `tests/frontend/unit/components/Question.test.js` - Tests for Question component
+- `tests/frontend/unit/components/ScoreDisplay.test.js` - Tests for ScoreDisplay component
+- `tests/frontend/unit/components/Quiz.test.js` - Tests for Quiz component
+- `tests/frontend/unit/components/SubjectSelection.test.js` - Tests for SubjectSelection component  
+- `tests/frontend/unit/components/AdminQuestions.test.js` - Tests for AdminQuestions component
+- `tests/frontend/unit/components/LoggingSettings.test.js` - Tests for LoggingSettings component
+
+**Note:** Frontend tests have been moved to a centralized structure in `/tests/frontend/`. The Jest configuration may need updating to run tests from the new location.
 
 **What's Tested:**
 - Question component rendering and user interactions
@@ -433,7 +444,6 @@ Quizly-1/
 ├── backend/
 │   ├── main.py              # FastAPI application
 │   ├── requirements.txt     # Python dependencies
-│   ├── test_backend.py      # Backend tests
 │   └── quiz.db             # SQLite database (auto-generated)
 ├── frontend/
 │   ├── package.json        # React dependencies
@@ -447,8 +457,20 @@ Quizly-1/
 │           ├── Quiz.js     # Quiz logic component
 │           ├── Question.js # Question display component
 │           └── ScoreDisplay.js # Score display component
-├── start.sh                # Application launcher
+├── tests/                  # Centralized test organization
+│   ├── backend/           # Backend tests
+│   │   ├── unit/          # Unit tests
+│   │   ├── integration/   # Integration tests
+│   │   └── fixtures/      # Test fixtures
+│   ├── frontend/          # Frontend tests
+│   │   ├── unit/          # Component unit tests
+│   │   └── integration/   # Integration tests
+│   ├── e2e/              # End-to-end tests
+│   └── shared/           # Shared test utilities
+├── start.sh               # Application launcher
+├── run_tests.sh          # Test runner script
 ├── README.md
+└── TESTING_GUIDE.md      # Comprehensive testing guide
 └── LICENSE
 ```
 

@@ -1,0 +1,24 @@
+{
+  "log_levels": {
+    "frontend": {
+      "app": "INFO"
+    },
+    "backend": {
+      "api": "DEBUG",
+      "llm": "INFO",
+      "database": "INFO"
+    }
+  },
+  "file_settings": {
+    "enable_file_logging": true,
+    "log_directory": "logs",
+    "max_file_size_mb": 10,
+    "max_backup_files": 5,
+    "log_format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  },
+  "monitoring": {
+    "enable_live_viewer": true,
+    "max_recent_entries": 100,
+    "auto_refresh_interval": 5000
+  }
+}

@@ -4,7 +4,9 @@
 import sys
 import os
 import time
-sys.path.append('/Users/james.m.gress/Reops/Quizly-1/backend')
+
+# Add backend directory to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'backend'))
 
 from main import app, setup_logging
 from fastapi.testclient import TestClient
