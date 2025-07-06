@@ -128,6 +128,37 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Run TruffleHog secrets scanner
+      uses: trufflesecurity/trufflehog@main
+      with:
+        path: ./
+        base: main
+        head: HEAD
+        extra_args: --debug --only-verified --fail
+    
+    - name: Run GitLeaks secrets scanner
+      uses: gitleaks/gitleaks-action@v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only needed for commercial use
+    
+    - name: Run Trivy secrets scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'table'
+        scanners: 'secret'
+        output: 'trivy-secrets.txt'
+        exit-code: '1'  # Fail if secrets are found
+    
+    - name: Display Trivy secrets scan results
+      run: |
+        echo "=== Trivy Secrets Scan Results ==="
+        cat trivy-secrets.txt || echo "No secrets found"
+        echo "=================================="
+      if: always()  # Show results even if previous step failed
+    
     - name: Run Trivy vulnerability scanner
       uses: aquasecurity/trivy-action@master
       with:
@@ -150,13 +181,14 @@ jobs:
         cat trivy-results.txt || echo "No results file found"
         echo "=================================="
     
-    - name: Upload Trivy scan results as artifact
+    - name: Upload security scan results as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: trivy-security-scan-results
+        name: security-scan-results
         path: |
           trivy-results.sarif
           trivy-results.txt
+          trivy-secrets.txt
         retention-days: 30
     
     - name: Upload Trivy scan results to GitHub Security
