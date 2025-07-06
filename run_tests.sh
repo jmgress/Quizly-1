@@ -310,11 +310,8 @@ if [ ! -d "frontend/node_modules" ]; then
     cd frontend && npm install && cd ..
 fi
 
-# Check if jest-environment-jsdom is available globally or install it
-if ! command -v jest >/dev/null 2>&1; then
-    print_status "Installing Jest globally..." "$BLUE"
-    npm install -g jest@latest jest-environment-jsdom
-fi
+# Check if jest-environment-jsdom is available - use local installation
+print_status "Using local Jest installation..." "$BLUE"
 
 # Run frontend tests using Jest from project root
 if run_test "Frontend Component Tests" "npx jest --config jest.config.json" "$(pwd)"; then
