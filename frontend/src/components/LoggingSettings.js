@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import LogLevelSlider from './LogLevelSlider'; // Import the new component
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
@@ -189,18 +190,11 @@ const LoggingSettings = () => {
             <h5>Frontend Components</h5>
             {editConfig?.log_levels?.frontend && Object.entries(editConfig.log_levels.frontend).map(([component, level]) => (
               <div key={component} className="log-level-control">
-                <label>Frontend {component}:</label>
-                <select
-                  value={level}
-                  onChange={(e) => handleLogLevelChange('frontend', component, e.target.value)}
-                  className="form-select"
-                >
-                  <option value="ERROR">ERROR</option>
-                  <option value="WARN">WARN</option>
-                  <option value="INFO">INFO</option>
-                  <option value="DEBUG">DEBUG</option>
-                  <option value="TRACE">TRACE</option>
-                </select>
+                <LogLevelSlider
+                  label={`Frontend ${component}`}
+                  currentLevel={level}
+                  onChange={(newLevel) => handleLogLevelChange('frontend', component, newLevel)}
+                />
               </div>
             ))}
           </div>
@@ -209,18 +203,11 @@ const LoggingSettings = () => {
             <h5>Backend Components</h5>
             {editConfig?.log_levels?.backend && Object.entries(editConfig.log_levels.backend).map(([component, level]) => (
               <div key={component} className="log-level-control">
-                <label>Backend {component}:</label>
-                <select
-                  value={level}
-                  onChange={(e) => handleLogLevelChange('backend', component, e.target.value)}
-                  className="form-select"
-                >
-                  <option value="ERROR">ERROR</option>
-                  <option value="WARN">WARN</option>
-                  <option value="INFO">INFO</option>
-                  <option value="DEBUG">DEBUG</option>
-                  <option value="TRACE">TRACE</option>
-                </select>
+                <LogLevelSlider
+                  label={`Backend ${component}`}
+                  currentLevel={level}
+                  onChange={(newLevel) => handleLogLevelChange('backend', component, newLevel)}
+                />
               </div>
             ))}
           </div>

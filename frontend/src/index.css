@@ -1208,3 +1208,115 @@ body {
     min-width: auto;
   }
 }
+
+/* LogLevelSlider Component Styles */
+.log-level-slider-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  margin-bottom: 1rem; /* Keep spacing similar to old .log-level-control */
+}
+
+.log-level-slider-label {
+  min-width: 120px; /* From old .log-level-control label */
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 0.5rem;
+  font-size: 14px; /* Match admin panel general text */
+}
+
+.slider-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 15px; /* From old .log-level-control */
+  margin-bottom: 0.5rem;
+}
+
+.log-level-slider {
+  flex-grow: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 8px;
+  background: #e0e0e0; /* Light grey track */
+  border-radius: 5px;
+  outline: none;
+  opacity: 0.9;
+  transition: opacity .2s;
+}
+
+.log-level-slider:hover {
+  opacity: 1;
+}
+
+/* Thumb styles for Webkit browsers (Chrome, Safari, Edge) */
+.log-level-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #667eea; /* Theme color */
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+/* Thumb styles for Firefox */
+.log-level-slider::-moz-range-thumb {
+  width: 18px; /* Slightly smaller to align appearance */
+  height: 18px;
+  background: #667eea;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+
+.log-level-value {
+  min-width: 60px; /* Space for "TRACE" */
+  text-align: center;
+  font-weight: 600;
+  color: #333;
+  background-color: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.log-level-markers {
+  display: flex;
+  justify-content: space-between;
+  position: relative; /* For absolute positioning of individual markers if needed, but flex space-between is simpler */
+  padding: 0 5px; /* Small padding so end markers don't touch edges */
+  margin-top: 2px; /* Small space above markers */
+}
+
+.log-level-marker {
+  font-size: 10px;
+  color: #666;
+  text-align: center;
+  flex: 1; /* Distribute space evenly */
+  position: relative; /* For fine-tuning if needed */
+}
+
+/* Adjust first and last marker to align better with slider ends if using flex:1 */
+.log-level-marker:first-child {
+  text-align: left;
+}
+.log-level-marker:last-child {
+  text-align: right;
+}
+
+/* Ensure .log-level-control which now wraps LogLevelSlider still provides some structure */
+.log-level-control {
+  /* display: flex; align-items: center; gap: 15px; are now handled inside slider or redundant */
+  margin-bottom: 12px; /* This was on the old .log-level-control */
+  padding-left: 10px; /* Indent slightly for visual hierarchy */
+  padding-right: 10px;
+}
+
+/* Adjustments for .component-group if needed */
+.component-group h5 {
+  padding-left: 10px; /* Align with indented controls */
+}
