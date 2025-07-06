@@ -128,6 +128,51 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+    
+    - name: Set up Node.js 18
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install dependencies for scanning
+      run: |
+        # Install Python dependencies
+        cd backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pip-audit
+        
+        # Install Node.js dependencies
+        cd ../frontend
+        npm ci
+        
+    - name: Run pip-audit for Python dependencies
+      run: |
+        cd backend
+        echo "=== pip-audit Results ==="
+        pip-audit --requirement requirements.txt --format=table || echo "pip-audit found vulnerabilities"
+        echo "=========================="
+    
+    - name: Run npm audit for Node.js dependencies
+      run: |
+        cd frontend
+        echo "=== npm audit Results ==="
+        npm audit --audit-level=moderate || echo "npm audit found vulnerabilities"
+        echo "========================="
+    
+    - name: Check Node.js licenses
+      run: |
+        cd frontend
+        echo "=== License Checker Results ==="
+        npx license-checker --production --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;Unlicense;CC0-1.0;WTFPL' --summary || echo "License issues found"
+        echo "==============================="
+    
     - name: Run TruffleHog secrets scanner
       uses: trufflesecurity/trufflehog@main
       with:
