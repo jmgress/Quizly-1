@@ -1,0 +1,3 @@
+- Follow Clean Code principles
+- Flag long functions and deep nesting
+- Use clear, descriptive names
