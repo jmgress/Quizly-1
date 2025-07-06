@@ -1,0 +1,68 @@
+title = "Quizly GitLeaks Configuration"
+
+[extend]
+# Use default rules as base
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api_key|apikey|api-key)\s*[:=]\s*['"]?([a-zA-Z0-9]{32,})['"]?'''
+keywords = ["api_key", "apikey", "api-key"]
+
+[[rules]]
+id = "jwt-token"
+description = "JWT Token"
+regex = '''eyJ[A-Za-z0-9_\/+-]*\.eyJ[A-Za-z0-9_\/+-]*\.[A-Za-z0-9_\/+-]*'''
+keywords = ["jwt", "token"]
+
+[[rules]]
+id = "database-url"
+description = "Database Connection String"
+regex = '''(?i)(database_url|db_url|connection_string)\s*[:=]\s*['"]?([^'\s"]+)['"]?'''
+keywords = ["database_url", "db_url", "connection"]
+
+[[rules]]
+id = "openai-api-key"
+description = "OpenAI API Key"
+regex = '''sk-[a-zA-Z0-9]{48}'''
+keywords = ["openai", "sk-"]
+
+[allowlist]
+description = "Allowlist for false positives"
+paths = [
+    '''\.git/''',
+    '''node_modules/''',
+    '''\.pytest_cache/''',
+    '''__pycache__/''',
+    '''\.venv/''',
+    '''venv/''',
+    '''build/''',
+    '''dist/''',
+    '''coverage/''',
+    '''logs/''',
+    '''\.log$''',
+    '''\.db$''',
+    '''test_.*\.py$''',
+    '''.*_test\.py$'''
+]
+
+regexes = [
+    '''example\.com''',
+    '''localhost''',
+    '''127\.0\.0\.1''',
+    '''0\.0\.0\.0''',
+    '''placeholder''',
+    '''REPLACE_WITH_ACTUAL''',
+    '''test_key''',
+    '''dummy_key''',
+    '''fake_key''',
+    '''mock_''',
+    '''TODO''',
+    '''FIXME''',
+    '''gpt-3\.5-turbo''',
+    '''gpt-4''',
+    '''REDACTED''',
+    '''cafebabe:deadbeef''',
+    '''BUNDLE_ENTERPRISE__CONTRIBSYS__COM'''
+]
