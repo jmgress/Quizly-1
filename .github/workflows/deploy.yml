@@ -28,16 +28,26 @@ jobs:
     
     - name: Install dependencies
       run: |
-        cd backend
-        pip install -r requirements.txt
-        cd ../frontend
-        npm ci
+        python -m pip install --upgrade pip
+        pip install -r backend/requirements.txt
+        pip install -r backend/requirements-dev.txt # For pytest, pytest-cov
+        (cd frontend && npm ci)
     
     - name: Build frontend
       run: |
-        cd frontend
-        npm run build
-    
+        (cd frontend && npm run build)
+
+    - name: Create .env for tests
+      run: |
+        echo "LLM_PROVIDER=openai" > .env
+        echo "OPENAI_API_KEY=test_key_deploy" >> .env
+        echo "OPENAI_MODEL=gpt-3.5-turbo" >> .env
+        echo "PYTHONPATH=." >> .env
+        # Minimal .env for tests; db init might also be needed if tests require a fresh db
+        # Assuming run_tests.sh or tests themselves handle db setup if needed, or use existing.
+        # For safety, let's add db init.
+        (cd backend && python -c "from database import init_db; init_db()")
+
     - name: Run tests before deployment
       run: |
         chmod +x run_tests.sh

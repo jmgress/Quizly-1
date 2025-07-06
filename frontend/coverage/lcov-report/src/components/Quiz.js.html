@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/60</span>
+                <span class='fraction'>0/63</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/22</span>
+                <span class='fraction'>0/26</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/59</span>
+                <span class='fraction'>0/62</span>
             </div>
         
             
@@ -241,7 +241,12 @@
 <a name='L176'></a><a href='#L176'>176</a>
 <a name='L177'></a><a href='#L177'>177</a>
 <a name='L178'></a><a href='#L178'>178</a>
-<a name='L179'></a><a href='#L179'>179</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -271,25 +276,28 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -297,6 +305,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -424,9 +434,9 @@ import axios from 'axios';
 import Question from './Question';
 import ScoreDisplay from './ScoreDisplay';
 &nbsp;
-const API_BASE_URL = <span class="cstat-no" title="statement not covered" >'http://localhost:8000';</span>
+const API_BASE_URL = <span class="cstat-no" title="statement not covered" >process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';</span>
 &nbsp;
-const Quiz = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({</span> onRestart, category, source }) =&gt; {</span>
+const Quiz = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >({</span> onRestart, category, source, model }) =&gt; {</span>
   const [questions, setQuestions] = <span class="cstat-no" title="statement not covered" >useState([]);</span>
   const [currentQuestionIndex, setCurrentQuestionIndex] = <span class="cstat-no" title="statement not covered" >useState(0);</span>
   const [answers, setAnswers] = <span class="cstat-no" title="statement not covered" >useState([]);</span>
@@ -439,7 +449,7 @@ const Quiz = <span class="cstat-no" title="statement not covered" ><span class="
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  useEffect(<span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    fetchQuestions();</span>
-  }, [category, source]);
+  }, [category, source, model]); // eslint-disable-line react-hooks/exhaustive-deps
 &nbsp;
   const fetchQuestions = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
@@ -449,6 +459,9 @@ const Quiz = <span class="cstat-no" title="statement not covered" ><span class="
 <span class="cstat-no" title="statement not covered" >      if (source === 'ai') {</span>
         // Fetch AI-generated questions
 <span class="cstat-no" title="statement not covered" >        url = `${API_BASE_URL}/api/questions/ai?subject=${encodeURIComponent(category)}&amp;limit=5`;</span>
+<span class="cstat-no" title="statement not covered" >        if (model) {</span>
+<span class="cstat-no" title="statement not covered" >          url += `&amp;model=${encodeURIComponent(model)}`;</span>
+        }
       } else {
         // Fetch database questions with category filter
 <span class="cstat-no" title="statement not covered" >        url = `${API_BASE_URL}/api/questions?category=${encodeURIComponent(category)}&amp;limit=10`;</span>
@@ -474,9 +487,11 @@ const Quiz = <span class="cstat-no" title="statement not covered" ><span class="
   const handleAnswerSubmit = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    if (!selectedAnswer) <span class="cstat-no" title="statement not covered" >return;</span></span>
 &nbsp;
+    const currentQuestion = <span class="cstat-no" title="statement not covered" >questions[currentQuestionIndex];</span>
     const newAnswer = <span class="cstat-no" title="statement not covered" >{</span>
-      question_id: questions[currentQuestionIndex].id,
-      selected_answer: selectedAnswer
+      question_id: currentQuestion.id,
+      selected_answer: selectedAnswer,
+      correct_answer: currentQuestion.correct_answer,
     };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    setAnswers([...answers, newAnswer]);</span>
@@ -604,7 +619,7 @@ export default Quiz;</pre></td></tr></table></pre>
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-06-22T19:23:43.686Z
+                at 2025-07-06T16:32:38.779Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

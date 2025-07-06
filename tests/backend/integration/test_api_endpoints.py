@@ -4,14 +4,18 @@
 import sys
 import os
 import time
-sys.path.append('/Users/james.m.gress/Reops/Quizly-1/backend')
 
-from main import app, setup_logging
+# Add project root to sys.path to allow backend imports
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+from backend.main import app, setup_logging
 from fastapi.testclient import TestClient
 import logging
 
 # Setup logging
-setup_logging()
+setup_logging() # This might need to be called carefully if it configures global state
 logger = logging.getLogger('endpoint_test')
 
 # Create test client
@@ -46,4 +50,4 @@ except Exception as e:
 
 logger.info("Endpoint tests completed!")
 print("✅ All endpoint tests completed!")
-print("Check the log files in /Users/james.m.gress/Reops/Quizly-1/logs/backend/")
+print("Check the log files (typically in a 'logs/backend/' directory configured in logging_config.json).")

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import ScoreDisplay from '../ScoreDisplay';
+import ScoreDisplay from '@components/ScoreDisplay';
 
 // Mock data for testing
 const mockQuestions = [

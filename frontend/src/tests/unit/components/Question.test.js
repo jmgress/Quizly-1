@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import Question from '../Question';
+import Question from '@components/Question';
 
 // Mock question data for testing
 const mockQuestion = {

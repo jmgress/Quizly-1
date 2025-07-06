@@ -374,37 +374,47 @@ sample_questions = [
 
 ### Testing the Backend
 
-Run the test script to verify backend functionality:
+Backend tests are located in the `tests/backend/` directory and are run using `pytest`.
+
+**Run all backend tests (from project root):**
 ```bash
-cd backend
-python test_backend.py
+./run_tests.sh backend
 ```
+Or directly with pytest:
+```bash
+python -m pytest tests/backend/
+```
+For more detailed backend testing instructions, see `TESTING_GUIDE.md`.
 
 ### Testing the Frontend
 
-The frontend is configured with Jest and React Testing Library for unit testing. Tests are available for the core components.
+Frontend tests are located in `frontend/src/tests/` and use Jest and React Testing Library.
 
-**Running Tests:**
+**Running Frontend Tests (from project root):**
+```bash
+./run_tests.sh frontend
+```
+Or, from the `frontend/` directory:
 ```bash
 cd frontend
 npm test
 ```
 
-**Running Tests with Coverage:**
+**Running Frontend Tests with Coverage (from `frontend/` directory):**
 ```bash
-cd frontend
-npm test -- --coverage --collectCoverageFrom="src/components/**/*.{js,jsx}"
+npm test -- --coverage --watchAll=false
 ```
+The `--collectCoverageFrom` patterns are configured in `frontend/package.json`.
 
-**Running Tests in CI Mode (no watch):**
+**Running Frontend Tests in CI Mode (from `frontend/` directory):**
 ```bash
-cd frontend
 npm test -- --watchAll=false
 ```
+(The `CI=true` environment variable is typically set by CI servers or can be prefixed if needed: `CI=true npm test -- --watchAll=false`)
 
-**Test Files:**
-- `src/components/__tests__/Question.test.js` - Tests for Question component
-- `src/components/__tests__/ScoreDisplay.test.js` - Tests for ScoreDisplay component
+**Test File Locations:**
+- Backend: `tests/backend/unit/` and `tests/backend/integration/`
+- Frontend: `frontend/src/tests/unit/components/` (and other future subdirectories like `integration` or `utils`).
 
 **What's Tested:**
 - Question component rendering and user interactions
@@ -431,24 +441,41 @@ app.add_middleware(
 ```
 Quizly-1/
 ├── backend/
-│   ├── main.py              # FastAPI application
-│   ├── requirements.txt     # Python dependencies
-│   ├── test_backend.py      # Backend tests
-│   └── quiz.db             # SQLite database (auto-generated)
+│   ├── main.py                 # FastAPI application
+│   ├── llm_providers.py        # LLM provider logic
+│   ├── config_manager.py       # Backend configuration management
+│   ├── logging_config.py       # Logging configuration management
+│   ├── database.py             # Database setup and utilities
+│   ├── requirements.txt        # Python dependencies
+│   ├── requirements-dev.txt    # Python development/test dependencies
+│   └── quiz.db                 # SQLite database (auto-generated)
 ├── frontend/
-│   ├── package.json        # React dependencies
-│   ├── public/             # Public assets
-│   │   └── index.html      # HTML template for React
-│   └── src/                # React components
-│       ├── App.js          # Main App component
-│       ├── index.js        # React entry point
-│       ├── index.css       # Global styles
-│       └── components/
-│           ├── Quiz.js     # Quiz logic component
-│           ├── Question.js # Question display component
-│           └── ScoreDisplay.js # Score display component
-├── start.sh                # Application launcher
-├── README.md
+│   ├── package.json            # React dependencies and test configuration
+│   ├── public/                 # Public assets (index.html, etc.)
+│   └── src/                    # React source code
+│       ├── App.js              # Main App component
+│       ├── index.js            # React entry point
+│       ├── index.css           # Global styles
+│       ├── components/         # UI components
+│       └── tests/              # Frontend tests
+│           ├── unit/
+│           │   └── components/ # Component unit tests
+│           └── (integration/)  # Future frontend integration tests
+├── tests/
+│   ├── backend/                # Backend tests (Pytest)
+│   │   ├── unit/               # Backend unit tests
+│   │   ├── integration/        # Backend integration tests
+│   │   └── fixtures/           # Backend test fixtures (planned)
+│   ├── e2e/                    # End-to-end tests (planned)
+│   ├── shared/                 # Shared test helpers (planned)
+│   └── README.md               # Overview of test organization
+├── .github/
+│   └── workflows/              # GitHub Actions CI/CD workflows
+├── .env.example                # Example environment file
+├── run_tests.sh                # Main test runner script
+├── start.sh                    # Application launcher script
+├── TESTING_GUIDE.md            # Detailed testing documentation
+├── README.md                   # This file
 └── LICENSE
 ```
 

@@ -6,10 +6,15 @@ import os
 import sys
 import tempfile
 
+# Add project root to sys.path to allow backend imports
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 # Test the configuration manager directly first
 def test_config_manager():
     """Test the configuration manager functionality."""
-    from config_manager import ConfigManager
+    from backend.config_manager import ConfigManager
     
     # Use temporary file for testing
     with tempfile.NamedTemporaryFile(mode='w+', suffix='.json', delete=False) as temp_file:
@@ -55,7 +60,7 @@ def test_config_manager():
 
 def test_llm_providers_import():
     """Test that the LLM providers can be imported and used."""
-    from llm_providers import create_llm_provider, get_available_providers
+    from backend.llm_providers import create_llm_provider, get_available_providers
     
     # Test creating providers
     try:
@@ -79,7 +84,7 @@ def test_llm_providers_import():
 def test_main_app_imports():
     """Test that the main app can be imported."""
     try:
-        from main import app
+        from backend.main import app
         assert app is not None
         print("Main app imported successfully")
     except Exception as e:

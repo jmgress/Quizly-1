@@ -3,14 +3,18 @@
 
 import sys
 import os
-sys.path.append('/Users/james.m.gress/Reops/Quizly-1/backend')
+
+# Add project root to sys.path to allow backend imports
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 # Test our logging setup
-from main import setup_logging
+from backend.main import setup_logging
 import logging
 
 # Setup logging
-setup_logging()
+setup_logging() # This might need to be called carefully if it configures global state
 logger = logging.getLogger('test_logging')
 
 # Test different log levels
@@ -20,4 +24,4 @@ logger.warning("Warning message - something unexpected happened")
 logger.error("Error message - something went wrong")
 
 print("✅ Logging test completed!")
-print("Check the log files in /Users/james.m.gress/Reops/Quizly-1/logs/backend/")
+print("Check the log files (typically in a 'logs/backend/' directory configured in logging_config.json).")

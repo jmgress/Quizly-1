@@ -4,15 +4,17 @@
 import sys
 import os
 
-# Add the current directory to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add project root to sys.path to allow backend imports
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 def test_ai_providers_import():
     """Test that AI providers can be imported"""
     print("Testing AI providers import...")
     
     try:
-        from llm_providers import get_available_providers, get_available_models
+        from backend.llm_providers import get_available_providers, get_available_models
         print("✅ AI providers import test passed!")
         return True
     except Exception as e:
@@ -24,7 +26,7 @@ def test_configuration_loading():
     print("Testing configuration loading...")
     
     try:
-        from config_manager import config_manager
+        from backend.config_manager import config_manager
         config = config_manager.get_config()
         
         if config and 'llm_provider' in config:
@@ -61,7 +63,7 @@ def test_fastapi_import():
     print("Testing FastAPI app import...")
     
     try:
-        from main import app
+        from backend.main import app
         print("✅ FastAPI app import test passed!")
         return True
     except Exception as e:

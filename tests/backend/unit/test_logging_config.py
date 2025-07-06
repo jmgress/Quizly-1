@@ -5,12 +5,18 @@ import json
 import os
 import tempfile
 from fastapi.testclient import TestClient
+import sys
+
+# Add project root to sys.path to allow backend imports
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 def test_logging_config_endpoints():
     """Test the logging configuration endpoints."""
     
     # Test the logging configuration manager directly first
-    from logging_config import LoggingConfigManager
+    from backend.logging_config import LoggingConfigManager
     
     # Create a temporary config file for testing
     with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
@@ -61,7 +67,7 @@ def test_logging_api_endpoints():
     """Test the logging API endpoints."""
     try:
         # Import the FastAPI app
-        from main import app
+        from backend.main import app
         client = TestClient(app)
         
         # Test get logging config endpoint

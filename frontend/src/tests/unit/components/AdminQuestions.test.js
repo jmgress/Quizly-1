@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import AdminQuestions from '../AdminQuestions';
+import AdminQuestions from '@components/AdminQuestions';
 
 // Mock axios more specifically for Jest compatibility
 jest.mock('axios', () => ({

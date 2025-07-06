@@ -13,16 +13,16 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Import LLM providers
-from llm_providers import create_llm_provider, get_available_providers
+from .llm_providers import create_llm_provider, get_available_providers
 
 # Import database module
-from database import init_db
+from .database import init_db
 
 # Import configuration manager
-from config_manager import config_manager
+from .config_manager import config_manager
 
 # Import logging configuration manager
-from logging_config import logging_config_manager
+from .logging_config import logging_config_manager
 
 import logging
 import logging.handlers
@@ -449,7 +449,7 @@ def get_llm_providers():
 def get_models(provider: Optional[str] = None):
     """Get list of available models for a provider"""
     provider_type = provider or config_manager.get_config()["llm_provider"]
-    from llm_providers import get_available_models
+    from .llm_providers import get_available_models
 
     models = get_available_models(provider_type)
     return {"provider": provider_type, "models": models}

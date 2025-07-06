@@ -9,8 +9,12 @@ import os
 import signal
 import time
 
-# Add the current directory to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Add project root to sys.path to allow backend imports
+# This assumes tests might be run directly, for pytest this might not be strictly necessary
+# if pytest is run from the project root and backend is an importable package.
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
 
 def timeout_handler(signum, frame):
     """Handle timeout signal"""
@@ -44,7 +48,7 @@ def test_ai_endpoint_error_handling():
     
     try:
         # Import here to avoid module loading issues
-        from main import app
+        from backend.main import app
         from fastapi.testclient import TestClient
         
         client = TestClient(app)
@@ -132,7 +136,7 @@ def test_mock_ai_generation():
                 }
             })
             
-            from main import generate_ai_questions
+            from backend.main import generate_ai_questions
             
             # Set environment to use ollama
             os.environ['LLM_PROVIDER'] = 'ollama'
@@ -163,7 +167,7 @@ def test_model_listing():
     print("\nTesting model listing...")
 
     try:
-        from llm_providers import get_available_models
+        from backend.llm_providers import get_available_models
         models = get_available_models("openai")
 
         if "gpt-3.5-turbo" in models:

@@ -28,10 +28,9 @@ jobs:
     
     - name: Install backend dependencies
       run: |
-        cd backend
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest pytest-asyncio httpx pytest-cov
+        pip install -r backend/requirements.txt
+        pip install -r backend/requirements-dev.txt # Installs pytest, pytest-cov etc.
     
     - name: Install frontend dependencies
       run: |
@@ -44,33 +43,21 @@ jobs:
         mkdir -p logs/backend logs/frontend
         
         # Create test database
-        cd backend
-        python -c "from database import init_db; init_db()"
-        
-        # Create test environment file
+        # Assuming database.py can be run from root or paths are handled by it.
+        # If init_db needs to be run from backend dir:
+        # (cd backend && python -c "from database import init_db; init_db()")
+        # For now, assume it's fine from root if PYTHONPATH is implicitly correct or not needed.
+        python backend/database.py # If database.py has a main guard for init_db
+        # Or more explicitly:
+        # python -c "import sys; sys.path.append('backend'); from database import init_db; init_db()"
+        # Safest is to cd if it relies on relative paths not accounting for CWD
+        (cd backend && python -c "from database import init_db; init_db()")
+
+        # Create test environment file at project root
         echo "LLM_PROVIDER=openai" > .env
         echo "OPENAI_API_KEY=test_key" >> .env
         echo "OPENAI_MODEL=gpt-3.5-turbo" >> .env
-    
-    - name: Run backend tests
-      run: |
-        cd backend
-        echo "Running basic backend tests..."
-        python test_backend.py
-        
-        echo "Running logging configuration tests..."
-        python test_logging_config.py
-        
-        echo "Running LLM configuration tests..."
-        python test_llm_config.py
-        
-        echo "Running AI integration tests..."
-        python test_ai_integration_simple.py
-    
-    - name: Run frontend tests
-      run: |
-        cd frontend
-        CI=true npm test -- --coverage=false --watchAll=false
+        echo "PYTHONPATH=." >> .env # Ensure backend modules can be found by pytest if needed
     
     - name: Run full test suite
       run: |

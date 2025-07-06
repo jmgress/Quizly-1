@@ -10,46 +10,77 @@
 
 ### Run Individual Test Suites
 
-#### Backend Tests
+The `./run_tests.sh` script is the recommended way to run specific suites:
 ```bash
-cd backend
+# From project root
+./run_tests.sh backend          # Run all backend tests
+./run_tests.sh backend unit     # Run backend unit tests
+./run_tests.sh backend integration # Run backend integration tests
+./run_tests.sh frontend         # Run all frontend tests
+```
 
-# Individual test files
-python test_backend.py          # Basic functionality
-python test_logging_config.py   # Logging configuration
-python test_llm_config.py       # LLM configuration
-python test_openai.py          # OpenAI integration
-python test_ai_integration.py   # AI integration
+For more granular control or debugging:
 
-# Run with pytest
-python -m pytest -v
+#### Backend Tests (using pytest directly from project root)
+```bash
+# Run all backend tests
+python -m pytest tests/backend/
+
+# Run backend unit tests
+python -m pytest tests/backend/unit/
+
+# Run a specific backend test file
+python -m pytest tests/backend/unit/test_config_manager.py
+
+# Run tests with verbose output
+python -m pytest -v tests/backend/
 ```
 
 #### Frontend Tests
 ```bash
 cd frontend
 
-# Run React tests
-npm test                        # Interactive mode
-npm test -- --watchAll=false   # One-time run
-npm test -- --coverage         # With coverage report
+# Run React tests (interactive mode)
+npm test
+
+# Run React tests once
+npm test -- --watchAll=false
+
+# Run React tests with coverage
+npm test -- --coverage --watchAll=false
 ```
 
 ## Test Structure
 
-### Backend Tests (`/backend/`)
-- `test_backend.py` - Basic database and API functionality
-- `test_logging_config.py` - Logging configuration and endpoints
-- `test_llm_config.py` - LLM provider configuration
-- `test_openai.py` - OpenAI API integration
-- `test_ai_integration.py` - AI question generation
+Tests are organized in a centralized `tests/` directory at the project root for backend tests, and within `frontend/src/tests/` for frontend tests.
 
-### Frontend Tests (`/frontend/src/components/__tests__/`)
-- `Question.test.js` - Question component testing
-- `ScoreDisplay.test.js` - Score display component
-- `SubjectSelection.test.js` - Subject selection component
-- `AdminQuestions.test.js` - Admin questions management
-- `LoggingSettings.test.js` - Logging settings component
+### Backend Tests (`tests/backend/`)
+- **`tests/backend/unit/`**: Unit tests for individual modules and functions.
+    - `test_config_manager.py`: Tests for `backend/config_manager.py`.
+    - `test_logging_config.py`: Tests for `backend/logging_config.py`.
+    - `test_database.py` (if created, currently in `test_backend.py`): Tests for `backend/database.py`.
+    - `test_backend.py`: General backend unit tests.
+    - `test_logging.py`: Basic logging output tests.
+    - `manual_test_openai.py`: Manual script for testing OpenAI connection (not run by default).
+- **`tests/backend/integration/`**: Integration tests for component interactions and API endpoints.
+    - `test_api_endpoints.py`: Tests for FastAPI endpoints.
+    - `test_ai_integration.py`: Tests for AI provider integration and question generation.
+    - `test_ai_integration_simple.py`: Simpler AI integration component checks.
+- **`tests/backend/fixtures/`**: (Planned for shared fixtures, e.g., `mock_data.py`, `test_config.py`) - Currently empty.
+
+### Frontend Tests (`frontend/src/tests/`)
+- **`frontend/src/tests/unit/components/`**: Unit tests for React components.
+    - `Question.test.js`
+    - `ScoreDisplay.test.js`
+    - `SubjectSelection.test.js`
+    - `AdminQuestions.test.js`
+    - `LoggingSettings.test.js`
+    - `__snapshots__/`: Jest snapshot files.
+- **`frontend/src/tests/unit/utils/`**: (Planned for utility function tests) - Currently empty.
+- **`frontend/src/tests/integration/`**: (Planned for frontend integration tests, e.g., `user_flows.test.js`) - Currently empty.
+
+### Shared Tests (`tests/shared/`)
+- (Planned for shared helpers across backend/frontend, e.g., `test_helpers.py`, `test_helpers.js`) - Currently empty.
 
 ## Testing Dependencies
 
@@ -72,35 +103,47 @@ npm install
 
 ### Backend Testing
 ```bash
-# Run all pytest tests
-pytest
+# From project root:
+
+# Run all backend tests
+python -m pytest tests/backend/
 
 # Run with verbose output
-pytest -v
+python -m pytest -v tests/backend/
 
-# Run specific test file
-pytest test_backend.py
+# Run specific test file (e.g., unit test for config_manager)
+python -m pytest tests/backend/unit/test_config_manager.py
 
-# Run with coverage
-pytest --cov=. --cov-report=html
+# Run tests in a specific directory (e.g., all integration tests)
+python -m pytest tests/backend/integration/
 
-# Run with specific pattern
-pytest -k "test_database"
+# Run with coverage report (HTML report will be in htmlcov/)
+python -m pytest tests/backend/ --cov=backend --cov-report=html
+
+# Run tests matching a specific keyword expression
+python -m pytest -k "database" tests/backend/
 ```
 
 ### Frontend Testing
 ```bash
-# Run all tests
+# From frontend/ directory:
+
+# Run all tests (interactive mode)
 npm test
 
-# Run specific test file
-npm test Question.test.js
+# Run all tests once
+npm test -- --watchAll=false
 
-# Run with coverage
+# Run specific test file (Jest will try to match the filename)
+npm test Question.test.js --watchAll=false
+
+# Run with coverage report
 npm test -- --coverage --watchAll=false
 
-# Run in CI mode
-CI=true npm test
+# Run in CI mode (often implies --watchAll=false and specific reporters)
+# The ./run_tests.sh script handles CI flags for frontend tests.
+# Equivalent direct command from frontend/ for CI-like run:
+CI=true npm test -- --coverage --watchAll=false
 ```
 
 ## Test Results
@@ -126,18 +169,24 @@ The `run_tests.sh` script is designed to be CI-friendly:
 
 ## Coverage Reports
 
-### Backend Coverage
+The `./run_tests.sh` script generates coverage reports:
+- Backend: `coverage.xml` and terminal summary. `pytest tests/backend/ --cov=backend --cov-report=html` (from root) generates an HTML report in `htmlcov/`.
+- Frontend: `frontend/coverage/` (includes LCOV and HTML).
+
+### Backend Coverage (HTML Report)
 ```bash
-cd backend
-pytest --cov=. --cov-report=html
-open htmlcov/index.html
+# From project root
+python -m pytest tests/backend/ --cov=backend --cov-report=html
+# Then open htmlcov/index.html in your browser
 ```
 
-### Frontend Coverage
+### Frontend Coverage (HTML Report)
 ```bash
-cd frontend
-npm test -- --coverage --watchAll=false
-open coverage/lcov-report/index.html
+# From project root, run:
+./run_tests.sh frontend
+# Or from frontend/ directory:
+# npm test -- --coverage --watchAll=false
+# Then open frontend/coverage/lcov-report/index.html in your browser
 ```
 
 ## Debugging Tests
