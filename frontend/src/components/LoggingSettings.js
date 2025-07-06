@@ -14,6 +14,10 @@ const LoggingSettings = () => {
   const [activeTab, setActiveTab] = useState('levels');
   const [logFilter, setLogFilter] = useState('all');
 
+  const LOG_LEVELS = ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
+  const levelToPosition = (level) => LOG_LEVELS.indexOf(level);
+  const positionToLevel = (pos) => LOG_LEVELS[pos] || 'INFO';
+
   useEffect(() => {
     fetchConfig();
     fetchLogFiles();
@@ -190,17 +194,33 @@ const LoggingSettings = () => {
             {editConfig?.log_levels?.frontend && Object.entries(editConfig.log_levels.frontend).map(([component, level]) => (
               <div key={component} className="log-level-control">
                 <label>Frontend {component}:</label>
-                <select
-                  value={level}
-                  onChange={(e) => handleLogLevelChange('frontend', component, e.target.value)}
-                  className="form-select"
-                >
-                  <option value="ERROR">ERROR</option>
-                  <option value="WARN">WARN</option>
-                  <option value="INFO">INFO</option>
-                  <option value="DEBUG">DEBUG</option>
-                  <option value="TRACE">TRACE</option>
-                </select>
+                <div className="log-slider">
+                  <input
+                    type="range"
+                    min="0"
+                    max="4"
+                    step="1"
+                    value={levelToPosition(level)}
+                    onChange={(e) =>
+                      handleLogLevelChange(
+                        'frontend',
+                        component,
+                        positionToLevel(Number(e.target.value))
+                      )
+                    }
+                    aria-label={`Set log level for frontend ${component}`}
+                  />
+                  <div className="slider-labels">
+                    {LOG_LEVELS.map((lvl, idx) => (
+                      <span
+                        key={lvl}
+                        className={idx === levelToPosition(level) ? 'active' : ''}
+                      >
+                        {lvl}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -210,17 +230,33 @@ const LoggingSettings = () => {
             {editConfig?.log_levels?.backend && Object.entries(editConfig.log_levels.backend).map(([component, level]) => (
               <div key={component} className="log-level-control">
                 <label>Backend {component}:</label>
-                <select
-                  value={level}
-                  onChange={(e) => handleLogLevelChange('backend', component, e.target.value)}
-                  className="form-select"
-                >
-                  <option value="ERROR">ERROR</option>
-                  <option value="WARN">WARN</option>
-                  <option value="INFO">INFO</option>
-                  <option value="DEBUG">DEBUG</option>
-                  <option value="TRACE">TRACE</option>
-                </select>
+                <div className="log-slider">
+                  <input
+                    type="range"
+                    min="0"
+                    max="4"
+                    step="1"
+                    value={levelToPosition(level)}
+                    onChange={(e) =>
+                      handleLogLevelChange(
+                        'backend',
+                        component,
+                        positionToLevel(Number(e.target.value))
+                      )
+                    }
+                    aria-label={`Set log level for backend ${component}`}
+                  />
+                  <div className="slider-labels">
+                    {LOG_LEVELS.map((lvl, idx) => (
+                      <span
+                        key={lvl}
+                        className={idx === levelToPosition(level) ? 'active' : ''}
+                      >
+                        {lvl}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
