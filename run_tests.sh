@@ -133,7 +133,6 @@ echo "=================="
 
 # Test 10: Frontend Component Tests
 total_tests=$((total_tests + 1))
-cd "$(pwd)"
 
 # Check if frontend node_modules exists
 if [ ! -d "frontend/node_modules" ]; then
@@ -141,11 +140,12 @@ if [ ! -d "frontend/node_modules" ]; then
     cd frontend && npm install && cd ..
 fi
 
-# Note: Frontend tests need to be run from the centralized structure
-# For now, we'll skip them and focus on the backend centralization
-print_status "⚠️  Frontend tests need Jest configuration update for centralized structure" "$YELLOW"
-print_status "📝 Frontend tests moved to tests/frontend/ - configuration pending" "$BLUE"
-passed_tests=$((passed_tests + 1))
+# Run frontend tests using Jest from project root
+if run_test "Frontend Component Tests" "npx jest --config jest.config.json" "$(pwd)"; then
+    passed_tests=$((passed_tests + 1))
+else
+    failed_tests=$((failed_tests + 1))
+fi
 
 # Test Summary
 echo ""

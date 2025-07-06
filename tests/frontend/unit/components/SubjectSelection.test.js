@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import SubjectSelection from '../../../../../frontend/src/components/SubjectSelection';
+import SubjectSelection from '../../../../frontend/src/components/SubjectSelection';
 
 // Mock axios
 jest.mock('axios', () => ({

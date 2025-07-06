@@ -1,0 +1,34 @@
+{
+  "projects": [
+    {
+      "displayName": "frontend",
+      "testMatch": ["<rootDir>/tests/frontend/**/*.test.js"],
+      "testEnvironment": "jsdom",
+      "setupFilesAfterEnv": ["<rootDir>/frontend/src/setupTests.js"],
+      "transform": {
+        "^.+\\.(js|jsx)$": ["babel-jest", {
+          "presets": [
+            ["@babel/preset-env", { "targets": { "node": "current" } }],
+            ["@babel/preset-react", { "runtime": "automatic" }]
+          ]
+        }]
+      },
+      "moduleNameMapper": {
+        "\\.(css|less|scss)$": "identity-obj-proxy",
+        "^@/(.*)$": "<rootDir>/frontend/src/$1",
+        "^components/(.*)$": "<rootDir>/frontend/src/components/$1"
+      },
+      "collectCoverageFrom": [
+        "frontend/src/**/*.{js,jsx}",
+        "!frontend/src/index.js",
+        "!frontend/src/reportWebVitals.js"
+      ],
+      "coverageDirectory": "tests/frontend/coverage",
+      "modulePaths": ["<rootDir>/frontend/src", "<rootDir>/frontend/node_modules"],
+      "moduleDirectories": ["node_modules", "frontend/node_modules"],
+      "roots": ["<rootDir>/tests/frontend", "<rootDir>/frontend/src"]
+    }
+  ],
+  "coverageReporters": ["text", "lcov", "html"],
+  "collectCoverage": false
+}

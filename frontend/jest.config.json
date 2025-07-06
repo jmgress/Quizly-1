@@ -1,0 +1,20 @@
+{
+  "testMatch": [
+    "<rootDir>/../tests/frontend/**/*.test.js"
+  ],
+  "testEnvironment": "jsdom",
+  "setupFilesAfterEnv": [
+    "<rootDir>/src/setupTests.js"
+  ],
+  "collectCoverageFrom": [
+    "src/**/*.{js,jsx}",
+    "!src/index.js",
+    "!src/reportWebVitals.js"
+  ],
+  "coverageDirectory": "../tests/frontend/coverage",
+  "coverageReporters": [
+    "text",
+    "lcov",
+    "html"
+  ]
+}

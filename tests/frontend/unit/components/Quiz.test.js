@@ -1,11 +1,12 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import Quiz from '../../../../../frontend/src/components/../../../frontend/src/components/Quiz';
+import Quiz from '../../../../frontend/src/components/Quiz';
 
 // Mock axios
 jest.mock('axios', () => ({
   get: jest.fn(),
+  post: jest.fn(),
 }));
 
 import axios from 'axios';
@@ -51,7 +52,7 @@ describe('Quiz Component', () => {
 
     render(<Quiz onRestart={mockOnRestart} category="geography" source="database" />);
 
-    expect(screen.getByText('Loading questions...')).toBeInTheDocument();
+    expect(screen.getByText('Loading geography questions...')).toBeInTheDocument();
   });
 
   it('displays error state when API call fails', async () => {
@@ -103,23 +104,37 @@ describe('Quiz Component', () => {
     const parisOption = screen.getByText('Paris');
     fireEvent.click(parisOption);
 
+    // Submit the answer
+    const submitButton = screen.getByText('Submit Answer');
+    fireEvent.click(submitButton);
+
     // Should show feedback
     await waitFor(() => {
-      expect(screen.getByText('Correct!')).toBeInTheDocument();
+      expect(screen.getByText('🎉 Correct! Well done!')).toBeInTheDocument();
     });
 
-    // Click next question
-    const nextButton = screen.getByText('Next Question');
-    fireEvent.click(nextButton);
-
-    // Should show second question
+    // Wait for auto-advance to next question (2 second delay)
     await waitFor(() => {
       expect(screen.getByText('What is 2 + 2?')).toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
   });
 
   it('shows score display when quiz is complete', async () => {
     axios.get.mockResolvedValueOnce({ data: [mockQuestions[0]] }); // Only one question
+    axios.post.mockResolvedValueOnce({ 
+      data: { 
+        score: 100, 
+        correct: 1, 
+        total: 1,
+        answers: [
+          {
+            question_id: 1,
+            selected_answer: 'c',
+            correct_answer: 'c'
+          }
+        ]
+      } 
+    });
 
     render(<Quiz onRestart={mockOnRestart} category="geography" source="database" />);
 
@@ -131,14 +146,14 @@ describe('Quiz Component', () => {
     const parisOption = screen.getByText('Paris');
     fireEvent.click(parisOption);
 
-    // Click next (should complete quiz)
-    const nextButton = screen.getByText('Next Question');
-    fireEvent.click(nextButton);
+    // Submit answer (quiz completes automatically after 2 seconds)
+    const submitButton = screen.getByText('Submit Answer');
+    fireEvent.click(submitButton);
 
-    // Should show score display
+    // Should show score display after auto-completion
     await waitFor(() => {
-      expect(screen.getByText('Quiz Complete!')).toBeInTheDocument();
-    });
+      expect(screen.getByText('🎯 Quiz Complete!')).toBeInTheDocument();
+    }, { timeout: 3000 });
   });
 
   it('displays AI error message for AI source failures', async () => {
