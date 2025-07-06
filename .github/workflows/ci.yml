@@ -37,6 +37,8 @@ jobs:
       run: |
         cd frontend
         npm ci
+        # Install additional testing dependencies globally for run_tests.sh
+        npm install -g jest@latest jest-environment-jsdom
     
     - name: Create test environment
       run: |
@@ -76,7 +78,7 @@ jobs:
         # Note: Frontend tests moved to centralized structure
         # For now, run what we can from the original location
         # TODO: Update Jest configuration to work with tests/frontend/
-        CI=true npm test -- --coverage=false --watchAll=false || echo "Frontend tests require configuration update for centralized structure"
+        CI=true npm run test:ci || echo "Frontend tests require configuration update for centralized structure"
     
     - name: Run full test suite
       run: |

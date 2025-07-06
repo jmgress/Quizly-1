@@ -3,7 +3,7 @@
     {
       "displayName": "frontend",
       "testMatch": ["<rootDir>/tests/frontend/**/*.test.js"],
-      "testEnvironment": "jsdom",
+      "testEnvironment": "jest-environment-jsdom",
       "setupFilesAfterEnv": ["<rootDir>/frontend/src/setupTests.js"],
       "testTimeout": 10000,
       "transform": {

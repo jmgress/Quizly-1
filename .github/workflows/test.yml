@@ -97,11 +97,13 @@ jobs:
       run: |
         cd frontend
         npm ci
+        # Install jest-environment-jsdom globally
+        npm install -g jest@latest jest-environment-jsdom
     
     - name: Run frontend tests
       run: |
         cd frontend
-        CI=true npm test -- --coverage --watchAll=false
+        CI=true npm run test:ci
     
     - name: Upload frontend coverage
       uses: codecov/codecov-action@v3
@@ -140,6 +142,8 @@ jobs:
         # Frontend dependencies
         cd frontend
         npm ci
+        # Install jest-environment-jsdom globally
+        npm install -g jest@latest jest-environment-jsdom
         cd ..
     
     - name: Create test database
@@ -169,6 +173,8 @@ jobs:
     
     - name: Run frontend tests
       run: |
+        # Install jest-environment-jsdom globally if not already installed
+        npm install -g jest@latest jest-environment-jsdom
         npx jest --config jest.config.json
     
     - name: Upload test results
