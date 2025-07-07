@@ -6,8 +6,13 @@
     "backend": {
       "api": "DEBUG",
       "llm": "INFO",
-      "database": "INFO"
+      "database": "INFO",
+      "llm_prompts": "INFO"
     }
+  },
+  "llm_prompt_logging": {
+    "enabled": true,
+    "level": "INFO"
   },
   "file_settings": {
     "enable_file_logging": true,

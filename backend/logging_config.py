@@ -60,6 +60,10 @@ class LoggingConfigManager:
                 "enable_live_viewer": True,
                 "max_recent_entries": 100,
                 "auto_refresh_interval": 5000
+            },
+            "llm_prompt_logging": {
+                "enabled": True,
+                "level": "INFO"
             }
         }
     
@@ -71,7 +75,15 @@ class LoggingConfigManager:
             
             # Create subdirectories for frontend and backend
             os.makedirs(os.path.join(self.logs_dir, "frontend"), exist_ok=True)
-            os.makedirs(os.path.join(self.logs_dir, "backend"), exist_ok=True)
+            backend_logs_dir = os.path.join(self.logs_dir, "backend")
+            os.makedirs(backend_logs_dir, exist_ok=True)
+
+            # Ensure llm_prompts.log file exists
+            llm_prompts_log_file = os.path.join(backend_logs_dir, "llm_prompts.log")
+            if not os.path.exists(llm_prompts_log_file):
+                with open(llm_prompts_log_file, 'w') as f:
+                    f.write("") # Create an empty file
+                logger.info(f"Created LLM prompts log file at {llm_prompts_log_file}")
             
             logger.info(f"Ensured logs directory structure at {self.logs_dir}")
         except Exception as e:
@@ -134,17 +146,50 @@ class LoggingConfigManager:
         except Exception as e:
             logger.error(f"Error setting log level: {e}")
             raise
+
+    def get_llm_prompt_logging_config(self) -> Dict[str, Any]:
+        """Get LLM prompt logging configuration."""
+        return self._config.get("llm_prompt_logging", {"enabled": False, "level": "INFO"})
+
+    def set_llm_prompt_logging_config(self, enabled: bool, level: str):
+        """Set LLM prompt logging configuration."""
+        try:
+            if "llm_prompt_logging" not in self._config:
+                self._config["llm_prompt_logging"] = {}
+            self._config["llm_prompt_logging"]["enabled"] = enabled
+            self._config["llm_prompt_logging"]["level"] = level
+            # Also update the general log_levels for the llm_prompts logger
+            if "backend" not in self._config["log_levels"]:
+                self._config["log_levels"]["backend"] = {}
+            self._config["log_levels"]["backend"]["llm_prompts"] = level
+            self.save_config()
+            logger.info(f"LLM prompt logging set to enabled: {enabled}, level: {level}")
+        except Exception as e:
+            logger.error(f"Error setting LLM prompt logging config: {e}")
+            raise
     
     def get_log_files(self) -> List[Dict[str, Any]]:
         """Get list of available log files with metadata."""
         log_files = []
         
         try:
-            # Search for log files in the logs directory
-            pattern = os.path.join(self.logs_dir, "**", "*.log")
-            for file_path in glob.glob(pattern, recursive=True):
-                try:
-                    stat = os.stat(file_path)
+            # Search for log files in the logs directory, including subdirectories
+            patterns = [
+                os.path.join(self.logs_dir, "*.log"), # Logs in root of logs_dir
+                os.path.join(self.logs_dir, "frontend", "*.log"),
+                os.path.join(self.logs_dir, "backend", "*.log")
+            ]
+
+            processed_files = set()
+
+            for pattern in patterns:
+                for file_path in glob.glob(pattern):
+                    if file_path in processed_files:
+                        continue
+                    processed_files.add(file_path)
+
+                    try:
+                        stat = os.stat(file_path)
                     rel_path = os.path.relpath(file_path, self.logs_dir)
                     
                     log_files.append({

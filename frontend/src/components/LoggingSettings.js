@@ -13,8 +13,11 @@ const LoggingSettings = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [activeTab, setActiveTab] = useState('levels');
   const [logFilter, setLogFilter] = useState('all');
+  const [llmLoggingEnabled, setLlmLoggingEnabled] = useState(false);
+  const [llmLogLevel, setLlmLogLevel] = useState('INFO');
 
   const LOG_LEVELS = ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
+  const LLM_LOG_LEVELS = ['INFO', 'DEBUG', 'TRACE']; // Specific levels for LLM
   const levelToPosition = (level) => LOG_LEVELS.indexOf(level);
   const positionToLevel = (pos) => LOG_LEVELS[pos] || 'INFO';
 
@@ -28,7 +31,18 @@ const LoggingSettings = () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_BASE_URL}/api/logging/config`);
-      setEditConfig({ ...response.data.config });
+      const configData = response.data.config;
+      setEditConfig({ ...configData });
+
+      // Set LLM logging specific states
+      if (configData.llm_prompt_logging) {
+        setLlmLoggingEnabled(configData.llm_prompt_logging.enabled);
+        setLlmLogLevel(configData.llm_prompt_logging.level);
+      } else {
+        // Default if not present in config for some reason
+        setLlmLoggingEnabled(false);
+        setLlmLogLevel('INFO');
+      }
       setError(null);
     } catch (err) {
       console.error('Failed to fetch logging config:', err);
@@ -75,6 +89,37 @@ const LoggingSettings = () => {
     } catch (err) {
       console.error('Failed to save config:', err);
       const errorMessage = err.response?.data?.detail || 'Failed to save logging configuration';
+      setError(errorMessage);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveLlmLoggingConfig = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+      setSuccessMessage('');
+
+      const response = await axios.put(`${API_BASE_URL}/api/logging/llm_prompts_config`, {
+        enabled: llmLoggingEnabled,
+        level: llmLogLevel,
+      });
+
+      // Update state from response if necessary, or assume success
+      if (response.data.config && response.data.config.llm_prompt_logging) {
+        setLlmLoggingEnabled(response.data.config.llm_prompt_logging.enabled);
+        setLlmLogLevel(response.data.config.llm_prompt_logging.level);
+      }
+      setSuccessMessage('LLM Prompt Logging configuration saved successfully!');
+
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+
+    } catch (err) {
+      console.error('Failed to save LLM prompt logging config:', err);
+      const errorMessage = err.response?.data?.detail || 'Failed to save LLM prompt logging configuration';
       setError(errorMessage);
     } finally {
       setSaving(false);
@@ -134,7 +179,35 @@ const LoggingSettings = () => {
 
   const getFilteredLogs = () => {
     if (logFilter === 'all') return recentLogs;
-    return recentLogs.filter(log => log.level.toLowerCase().includes(logFilter.toLowerCase()));
+    if (logFilter === 'llm_prompts') {
+      // Assuming llm prompt logs have a specific component name like 'backend/llm_prompts'
+      // Or, if they are JSON, we might check for a specific field if message is an object.
+      return recentLogs.filter(log =>
+        (log.component && log.component.toLowerCase().includes('llm_prompts')) ||
+        (typeof log.message === 'string' && log.message.toLowerCase().includes('llm_event_type')) // Basic check if message is JSON string
+      );
+    }
+    return recentLogs.filter(log => log.level && log.level.toLowerCase().includes(logFilter.toLowerCase()));
+  };
+
+  const parseLLMLogMessage = (message) => {
+    try {
+      const logData = JSON.parse(message);
+      // Example: "INFO: OpenAI gpt-3.5-turbo - generate_questions SUCCESS (ID: xyz)"
+      // More detailed: "DEBUG: OpenAI gpt-4o-mini - generate_questions - Prompt: Generate... - Response: [{...}] - 1234ms (ID: abc)"
+      if (logData.llm_event_type) {
+        let preview = `${logData.provider || 'LLM'} ${logData.model || ''} - ${logData.target_function || ''} ${logData.status || ''}`;
+        if (logData.request_id) preview += ` (ID: ${logData.request_id.substring(0,6)})`;
+
+        if (logData.log_level === "DEBUG" || logData.log_level === "TRACE") {
+            if(logData.prompt) preview += ` - Prompt: ${logData.prompt.substring(0,30)}...`;
+        }
+        return preview;
+      }
+    } catch (e) {
+      // Not a JSON message or not the expected format, return as is
+    }
+    return message; // Return original message if not a parsable LLM log
   };
 
   if (loading) {
@@ -278,6 +351,49 @@ const LoggingSettings = () => {
               🔄 Refresh
             </button>
           </div>
+
+          {/* LLM Prompt Logging Section */}
+          <div className="llm-prompt-logging-section component-group">
+            <h4>LLM Prompt Logging</h4>
+            <div className="log-level-control">
+              <label htmlFor="llmLoggingEnabledToggle">Enable LLM Prompt Logging:</label>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  id="llmLoggingEnabledToggle"
+                  checked={llmLoggingEnabled}
+                  onChange={(e) => setLlmLoggingEnabled(e.target.checked)}
+                  aria-label="Enable LLM Prompt Logging"
+                />
+                <span className="slider round"></span>
+              </label>
+            </div>
+
+            <div className="log-level-control">
+              <label htmlFor="llmLogLevelSelect">LLM Logging Level:</label>
+              <select
+                id="llmLogLevelSelect"
+                value={llmLogLevel}
+                onChange={(e) => setLlmLogLevel(e.target.value)}
+                disabled={!llmLoggingEnabled}
+                className="form-select"
+                aria-label="Set LLM Logging Level"
+              >
+                {LLM_LOG_LEVELS.map(level => (
+                  <option key={level} value={level}>{level}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-actions">
+              <button
+                className={`button ${saving ? 'saving' : ''}`}
+                onClick={handleSaveLlmLoggingConfig}
+                disabled={saving}
+              >
+                {saving ? 'Saving LLM Config...' : 'Save LLM Log Config'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -347,6 +463,7 @@ const LoggingSettings = () => {
                 <option value="info">INFO</option>
                 <option value="debug">DEBUG</option>
                 <option value="trace">TRACE</option>
+                <option value="llm_prompts">LLM Prompts</option>
               </select>
             </div>
             
@@ -364,7 +481,11 @@ const LoggingSettings = () => {
                 <span className="log-timestamp">{new Date(log.timestamp).toLocaleString()}</span>
                 <span className="log-level">{log.level}</span>
                 <span className="log-component">{log.component}</span>
-                <span className="log-message">{log.message}</span>
+                <span className="log-message">
+                  {log.component && log.component.includes('llm_prompts')
+                    ? parseLLMLogMessage(log.message)
+                    : log.message}
+                </span>
               </div>
             ))}
           </div>

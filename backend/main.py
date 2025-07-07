@@ -584,9 +584,13 @@ def get_providers_health():
 
 @app.get("/api/logging/config")
 def get_logging_config():
-    """Get current logging configuration"""
+    """Get current logging configuration, including LLM prompt logging settings."""
     try:
         config = logging_config_manager.get_config()
+        # Ensure llm_prompt_logging settings are present
+        if "llm_prompt_logging" not in config:
+            config["llm_prompt_logging"] = logging_config_manager.get_llm_prompt_logging_config()
+
         return {
             "config": config,
             "available_levels": ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"]
@@ -594,6 +598,40 @@ def get_logging_config():
     except Exception as e:
         logger.error(f"Error getting logging config: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to get logging configuration: {str(e)}")
+
+class LLMPromptLoggingUpdateRequest(BaseModel):
+    enabled: bool
+    level: str
+
+@app.put("/api/logging/llm_prompts_config")
+def update_llm_prompt_logging_config(update_request: LLMPromptLoggingUpdateRequest):
+    """Update LLM prompt logging configuration."""
+    try:
+        valid_levels = ["INFO", "DEBUG", "TRACE"]
+        if update_request.level not in valid_levels:
+            raise HTTPException(status_code=400, detail=f"Invalid log level: {update_request.level}. Must be one of {valid_levels}")
+
+        logging_config_manager.set_llm_prompt_logging_config(
+            enabled=update_request.enabled,
+            level=update_request.level
+        )
+        # Re-fetch the full config to return it
+        updated_full_config = logging_config_manager.get_config()
+        if "llm_prompt_logging" not in updated_full_config: # Should be there after set
+             updated_full_config["llm_prompt_logging"] = logging_config_manager.get_llm_prompt_logging_config()
+
+        return {
+            "success": True,
+            "message": "LLM prompt logging configuration updated successfully.",
+            "config": { # Return only the relevant part or the full config as needed by frontend
+                "llm_prompt_logging": updated_full_config.get("llm_prompt_logging")
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating LLM prompt logging config: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to update LLM prompt logging configuration: {str(e)}")
 
 
 @app.put("/api/logging/config")
