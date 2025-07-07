@@ -1,10 +1,16 @@
 # 🧠 Quizly - Knowledge Testing Application
 
-[![CI](https://github.com/yourusername/quizly/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/quizly/actions/workflows/ci.yml)
-[![Test Suite](https://github.com/yourusername/quizly/actions/workflows/test.yml/badge.svg)](https://github.com/yourusername/quizly/actions/workflows/test.yml)
-[![Deploy](https://github.com/yourusername/quizly/actions/workflows/deploy.yml/badge.svg)](https://github.com/yourusername/quizly/actions/workflows/deploy.yml)
+[![CI](https://github.com/jmgress/Quizly-1/actions/workflows/ci.yml/badge.svg)](https://github.com/jmgress/Quizly-1/actions/workflows/ci.yml)
 
 An interactive web-based quiz application that allows users to test their knowledge on various topics. Built with FastAPI backend and a responsive HTML/JavaScript frontend.
+
+### Project Health
+- ✅ **Backend**: FastAPI server with SQLite database
+- ✅ **Frontend**: React-based user interface
+- ✅ **Testing**: Comprehensive test suite (Backend: Python, Frontend: Jest)
+- ✅ **CI/CD**: GitHub Actions workflow for automated testing
+- ✅ **LLM Integration**: Multiple AI provider support (Ollama, OpenAI)
+- ✅ **Documentation**: Complete API docs and setup guides
 
 ## Features
 
@@ -496,3 +502,70 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - 📱 Progressive Web App (PWA) support
 - 🌐 Internationalization
 - 📊 Admin dashboard for question management
+
+## 📱 Application Screenshots & Features
+
+### Main Interface
+- **Subject Selection Screen**: Clean, intuitive interface for choosing quiz categories
+- **Question Display**: Modern card-based design with multiple-choice options
+- **Progress Tracking**: Visual progress bar showing completion status
+- **Score Summary**: Detailed results with performance feedback and answer review
+
+### Key User Interface Elements
+- **Responsive Design**: Optimized for both desktop and mobile devices
+- **Modern Gradient Theme**: Professional blue-to-purple gradient styling
+- **Interactive Buttons**: Smooth hover effects and animations
+- **Real-time Feedback**: Immediate visual feedback for correct/incorrect answers
+
+### Admin Panel Features
+- **Question Management**: Browse, edit, and manage quiz questions
+- **LLM Configuration**: Configure AI providers (Ollama, OpenAI) for question generation
+- **Logging Settings**: Monitor application logs and configure log levels
+- **Provider Health Monitoring**: Real-time status of connected LLM services
+
+### API Features
+- **Interactive Documentation**: Auto-generated API docs at `/docs`
+- **RESTful Endpoints**: Clean, well-documented API structure
+- **Health Checks**: Monitor backend and LLM provider status
+- **Error Handling**: Comprehensive error responses with helpful messages
+
+## 🧪 Testing
+
+The application includes a comprehensive test suite covering both backend and frontend components.
+
+### Run All Tests
+```bash
+./run_tests.sh
+```
+
+### Run Individual Test Suites
+```bash
+# Backend tests only
+cd backend && python -m pytest tests/ -v
+
+# Frontend tests only 
+cd frontend && npm test
+
+# Integration tests
+cd tests && python -m pytest integration/ -v
+```
+
+### Test Coverage
+- **Backend**: Unit tests, integration tests, LLM provider tests
+- **Frontend**: Component tests, user flow tests, API integration tests
+- **E2E**: End-to-end testing with real user scenarios
+
+## 🚀 Quick Demo
+
+1. **Start the application**: `./start.sh`
+2. **Open browser**: Visit `http://localhost:3000`
+3. **Select a subject**: Choose from Geography, Science, Math, or Literature
+4. **Choose question source**: Database questions or AI-generated content
+5. **Take the quiz**: Answer multiple-choice questions with immediate feedback
+6. **View results**: See your score and review correct answers
+
+### Admin Features Demo
+- **Visit**: `http://localhost:3000` and access the admin panel
+- **Manage Questions**: View and edit the question database
+- **Configure LLM**: Set up AI providers for question generation
+- **Monitor Logs**: View application logs and adjust logging levels

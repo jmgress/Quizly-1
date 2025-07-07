@@ -49,6 +49,14 @@ class LoggingConfigManager:
                     "database": "INFO"
                 }
             },
+            "llm_prompt_logging": {
+                "enabled": False,
+                "level": "INFO",
+                "log_file": "llm_prompts.log",
+                "include_metadata": True,
+                "include_timing": True,
+                "include_full_response": False
+            },
             "file_settings": {
                 "enable_file_logging": True,
                 "log_directory": self.logs_dir,
@@ -238,6 +246,101 @@ class LoggingConfigManager:
         except Exception as e:
             logger.error(f"Error rotating log file {file_path}: {e}")
             raise
+    
+    def is_llm_prompt_logging_enabled(self) -> bool:
+        """Check if LLM prompt logging is enabled."""
+        return self._config.get("llm_prompt_logging", {}).get("enabled", False)
+    
+    def get_llm_prompt_logging_level(self) -> str:
+        """Get LLM prompt logging level."""
+        return self._config.get("llm_prompt_logging", {}).get("level", "INFO")
+    
+    def get_llm_prompt_log_file(self) -> str:
+        """Get LLM prompt log file path."""
+        return self._config.get("llm_prompt_logging", {}).get("log_file", "llm_prompts.log")
+    
+    def log_llm_prompt(self, provider: str, model: str, prompt: str, response: str = None, 
+                      metadata: Dict[str, Any] = None, timing: Dict[str, Any] = None, 
+                      error: str = None, level: str = "INFO"):
+        """Log LLM prompt based on configuration."""
+        if not self.is_llm_prompt_logging_enabled():
+            return
+        
+        config_level = self.get_llm_prompt_logging_level()
+        level_hierarchy = ["ERROR", "WARN", "INFO", "DEBUG", "TRACE"]
+        
+        # Check if we should log this level (lower index = higher priority)
+        if level_hierarchy.index(level) > level_hierarchy.index(config_level):
+            return
+        
+        try:
+            log_entry = {
+                "timestamp": datetime.now().isoformat(),
+                "provider": provider,
+                "model": model,
+                "level": level,
+                "status": "error" if error else "success"
+            }
+            
+            # Add prompt based on level
+            if config_level in ["DEBUG", "TRACE"]:
+                log_entry["prompt"] = prompt[:500] + "..." if len(prompt) > 500 else prompt
+            else:
+                log_entry["prompt_preview"] = prompt[:100] + "..." if len(prompt) > 100 else prompt
+            
+            # Add response based on level
+            if config_level == "TRACE" and response:
+                log_entry["response"] = response[:500] + "..." if len(response) > 500 else response
+            elif config_level == "DEBUG" and response:
+                log_entry["response_preview"] = response[:100] + "..." if len(response) > 100 else response
+            
+            # Add metadata if configured
+            if self._config.get("llm_prompt_logging", {}).get("include_metadata", True) and metadata:
+                log_entry["metadata"] = metadata
+            
+            # Add timing if configured
+            if self._config.get("llm_prompt_logging", {}).get("include_timing", True) and timing:
+                log_entry["timing"] = timing
+            
+            # Add error if present
+            if error:
+                log_entry["error"] = error
+            
+            # Write to log file
+            log_file_path = os.path.join(self.logs_dir, self.get_llm_prompt_log_file())
+            log_dir = os.path.dirname(log_file_path)
+            if log_dir:  # Only create directory if there's a subdirectory
+                os.makedirs(log_dir, exist_ok=True)
+            else:
+                os.makedirs(self.logs_dir, exist_ok=True)
+            
+            with open(log_file_path, 'a') as f:
+                f.write(f"{json.dumps(log_entry)}\n")
+                
+        except Exception as e:
+            logger.error(f"Error logging LLM prompt: {e}")
+    
+    def get_llm_prompt_logs(self, max_entries: int = 100) -> List[Dict[str, Any]]:
+        """Get recent LLM prompt logs."""
+        log_entries = []
+        
+        try:
+            log_file_path = os.path.join(self.logs_dir, self.get_llm_prompt_log_file())
+            if os.path.exists(log_file_path):
+                with open(log_file_path, 'r') as f:
+                    lines = f.readlines()
+                    
+                for line in lines[-max_entries:]:
+                    try:
+                        entry = json.loads(line.strip())
+                        log_entries.append(entry)
+                    except json.JSONDecodeError:
+                        continue
+                        
+        except Exception as e:
+            logger.error(f"Error reading LLM prompt logs: {e}")
+        
+        return sorted(log_entries, key=lambda x: x.get("timestamp", ""), reverse=True)
 
 
 # Global instance

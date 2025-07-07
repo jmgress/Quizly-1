@@ -91,7 +91,7 @@ logger.info("Initializing Quizly FastAPI application")
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React dev server
+    allow_origins=["http://localhost:3000", "http://localhost:8080"],  # React dev server and demo server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -613,6 +613,14 @@ def update_logging_config(config_update: dict):
                     if levels not in valid_levels:
                         raise HTTPException(status_code=400, detail=f"Invalid log level: {levels}")
         
+        # Validate LLM prompt logging configuration
+        if "llm_prompt_logging" in config_update:
+            llm_config = config_update["llm_prompt_logging"]
+            if "level" in llm_config and llm_config["level"] not in valid_levels:
+                raise HTTPException(status_code=400, detail=f"Invalid LLM prompt logging level: {llm_config['level']}")
+            if "enabled" in llm_config and not isinstance(llm_config["enabled"], bool):
+                raise HTTPException(status_code=400, detail="LLM prompt logging enabled must be a boolean")
+        
         # Update configuration
         updated_config = logging_config_manager.update_config(config_update)
         
@@ -647,6 +655,40 @@ def get_recent_logs(max_entries: int = 100):
     except Exception as e:
         logger.error(f"Error getting recent logs: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to get recent logs: {str(e)}")
+
+
+@app.get("/api/logging/llm-prompts")
+def get_llm_prompt_logs(max_entries: int = 100):
+    """Get recent LLM prompt logs"""
+    try:
+        logs = logging_config_manager.get_llm_prompt_logs(max_entries)
+        return {"logs": logs}
+    except Exception as e:
+        logger.error(f"Error getting LLM prompt logs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get LLM prompt logs: {str(e)}")
+
+
+@app.post("/api/logging/llm-prompts/clear")
+def clear_llm_prompt_logs():
+    """Clear LLM prompt logs"""
+    try:
+        log_file = logging_config_manager.get_llm_prompt_log_file()
+        logging_config_manager.clear_log_file(log_file)
+        return {"message": "LLM prompt logs cleared successfully"}
+    except Exception as e:
+        logger.error(f"Error clearing LLM prompt logs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to clear LLM prompt logs: {str(e)}")
+
+
+@app.get("/api/logging/llm-prompts/download")
+def download_llm_prompt_logs():
+    """Download LLM prompt logs"""
+    try:
+        log_file = logging_config_manager.get_llm_prompt_log_file()
+        return download_log_file(log_file)
+    except Exception as e:
+        logger.error(f"Error downloading LLM prompt logs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to download LLM prompt logs: {str(e)}")
 
 
 @app.post("/api/logging/files/{file_path:path}/clear")

@@ -4,6 +4,7 @@ from typing import List, Dict, Any
 import json
 import os
 import logging
+import time
 
 from .base import LLMProvider
 
@@ -18,6 +19,14 @@ class OpenAIProvider(LLMProvider):
         self.model = model or os.getenv("OPENAI_MODEL", "gpt-4o-mini")
         self._client = None
         self._initialize_openai()
+        
+        # Initialize LLM prompt logger
+        try:
+            from llm_prompt_logger import llm_prompt_logger
+            self.prompt_logger = llm_prompt_logger
+        except ImportError:
+            logger.warning("LLM prompt logger not available")
+            self.prompt_logger = None
 
     def _initialize_openai(self):
         """Initialize OpenAI client."""
@@ -40,6 +49,7 @@ class OpenAIProvider(LLMProvider):
             raise RuntimeError("OpenAI client not initialized")
 
         prompt = self._create_prompt(subject, limit)
+        start_time = time.time()
 
         try:
             response = self._client.chat.completions.create(
@@ -48,9 +58,59 @@ class OpenAIProvider(LLMProvider):
                 temperature=0.7,
                 max_tokens=2000,
             )
+            
+            end_time = time.time()
             content = response.choices[0].message.content
-            return self._parse_response(content, subject, limit)
+            result = self._parse_response(content, subject, limit)
+            
+            # Log successful interaction
+            if self.prompt_logger:
+                self.prompt_logger.log_prompt(
+                    provider="openai",
+                    model=self.model,
+                    prompt=prompt,
+                    response=content,
+                    metadata={
+                        "subject": subject,
+                        "limit": limit,
+                        "questions_generated": len(result),
+                        "temperature": 0.7,
+                        "max_tokens": 2000
+                    },
+                    timing={
+                        "start_time": start_time,
+                        "end_time": end_time,
+                        "duration_ms": round((end_time - start_time) * 1000, 2)
+                    },
+                    level="INFO"
+                )
+            
+            return result
+            
         except Exception as e:
+            end_time = time.time()
+            
+            # Log failed interaction
+            if self.prompt_logger:
+                self.prompt_logger.log_prompt(
+                    provider="openai",
+                    model=self.model,
+                    prompt=prompt,
+                    metadata={
+                        "subject": subject,
+                        "limit": limit,
+                        "temperature": 0.7,
+                        "max_tokens": 2000
+                    },
+                    timing={
+                        "start_time": start_time,
+                        "end_time": end_time,
+                        "duration_ms": round((end_time - start_time) * 1000, 2)
+                    },
+                    error=str(e),
+                    level="ERROR"
+                )
+            
             logger.error(f"OpenAI API call failed: {str(e)}")
             raise RuntimeError(f"OpenAI question generation failed: {str(e)}")
 

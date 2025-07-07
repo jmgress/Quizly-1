@@ -9,6 +9,14 @@
       "database": "INFO"
     }
   },
+  "llm_prompt_logging": {
+    "enabled": false,
+    "level": "DEBUG",
+    "log_file": "backend/llm_prompts.log",
+    "include_metadata": true,
+    "include_timing": true,
+    "include_full_response": true
+  },
   "file_settings": {
     "enable_file_logging": true,
     "log_directory": "logs",
@@ -20,17 +28,5 @@
     "enable_live_viewer": true,
     "max_recent_entries": 100,
     "auto_refresh_interval": 5000
-  },
-  "prompt_logging": {
-    "enabled": true,
-    "level": "DEBUG"
-  },
-  "llm_prompt_logging": {
-    "enabled": true,
-    "level": "DEBUG",
-    "log_file": "backend/llm_prompts.log",
-    "include_metadata": true,
-    "include_timing": true,
-    "include_full_response": true
   }
 }

@@ -4,10 +4,18 @@
       "app": "INFO"
     },
     "backend": {
-      "api": "DEBUG",
+      "api": "INFO",
       "llm": "INFO",
       "database": "INFO"
     }
+  },
+  "llm_prompt_logging": {
+    "enabled": false,
+    "level": "ERROR",
+    "log_file": "llm_prompts.log",
+    "include_metadata": true,
+    "include_timing": true,
+    "include_full_response": false
   },
   "file_settings": {
     "enable_file_logging": true,
@@ -20,17 +28,5 @@
     "enable_live_viewer": true,
     "max_recent_entries": 100,
     "auto_refresh_interval": 5000
-  },
-  "prompt_logging": {
-    "enabled": true,
-    "level": "DEBUG"
-  },
-  "llm_prompt_logging": {
-    "enabled": true,
-    "level": "DEBUG",
-    "log_file": "backend/llm_prompts.log",
-    "include_metadata": true,
-    "include_timing": true,
-    "include_full_response": true
   }
 }

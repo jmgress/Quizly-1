@@ -72,6 +72,12 @@ describe('LoggingSettings', () => {
             ]
           }
         });
+      } else if (url.includes('/api/logging/llm-prompts')) {
+        return Promise.resolve({
+          data: {
+            logs: []
+          }
+        });
       }
       return Promise.reject(new Error('Unknown URL'));
     });
@@ -91,6 +97,85 @@ describe('LoggingSettings', () => {
     // Check if log level controls are rendered
     expect(screen.getByText('Frontend Components')).toBeInTheDocument();
     expect(screen.getByText('Backend Components')).toBeInTheDocument();
+  });
+
+  test('renders LLM prompt logging configuration', async () => {
+    // Mock API responses with LLM prompt logging
+    axios.get.mockImplementation((url) => {
+      if (url.includes('/api/logging/config')) {
+        return Promise.resolve({
+          data: {
+            config: {
+              log_levels: {
+                frontend: { app: 'INFO' },
+                backend: { api: 'INFO', llm: 'INFO', database: 'INFO' }
+              },
+              llm_prompt_logging: {
+                enabled: true,
+                level: 'DEBUG',
+                log_file: 'llm_prompts.log',
+                include_metadata: true,
+                include_timing: true,
+                include_full_response: false
+              }
+            },
+            available_levels: ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']
+          }
+        });
+      } else if (url.includes('/api/logging/files')) {
+        return Promise.resolve({
+          data: {
+            files: []
+          }
+        });
+      } else if (url.includes('/api/logging/recent')) {
+        return Promise.resolve({
+          data: {
+            logs: []
+          }
+        });
+      } else if (url.includes('/api/logging/llm-prompts')) {
+        return Promise.resolve({
+          data: {
+            logs: [{
+              timestamp: '2025-01-01T12:00:00Z',
+              provider: 'test_provider',
+              model: 'test_model',
+              level: 'INFO',
+              status: 'success',
+              prompt_preview: 'Test prompt',
+              metadata: { subject: 'test' },
+              timing: { duration_ms: 100 }
+            }]
+          }
+        });
+      }
+      return Promise.reject(new Error('Unknown URL'));
+    });
+
+    render(<LoggingSettings />);
+
+    // Wait for configuration to load
+    await waitFor(() => {
+      expect(screen.getByText('🔧 Logging Configuration')).toBeInTheDocument();
+    });
+
+    // Check if LLM prompt logging section is rendered
+    expect(screen.getByText('🤖 LLM Prompt Logging')).toBeInTheDocument();
+    expect(screen.getByText('Enable LLM Prompt Logging')).toBeInTheDocument();
+    
+    // Wait for the configuration to be loaded and checkbox to be checked
+    await waitFor(() => {
+      const enableToggle = screen.getByRole('checkbox', { name: /Enable LLM Prompt Logging/ });
+      expect(enableToggle).toBeChecked();
+    });
+    
+    // Wait for logging level dropdown to be visible and have correct value
+    await waitFor(() => {
+      const select = screen.getByRole('combobox');
+      expect(select).toBeInTheDocument();
+      expect(select.value).toBe('DEBUG');
+    });
   });
 
   test('switches between tabs correctly', async () => {
@@ -115,6 +200,12 @@ describe('LoggingSettings', () => {
           }
         });
       } else if (url.includes('/api/logging/recent')) {
+        return Promise.resolve({
+          data: {
+            logs: []
+          }
+        });
+      } else if (url.includes('/api/logging/llm-prompts')) {
         return Promise.resolve({
           data: {
             logs: []
@@ -149,16 +240,39 @@ describe('LoggingSettings', () => {
 
   test('saves configuration changes', async () => {
     // Mock API responses
-    axios.get.mockResolvedValue({
-      data: {
-        config: {
-          log_levels: {
-            frontend: { app: 'INFO' },
-            backend: { api: 'INFO', llm: 'INFO', database: 'INFO' }
+    axios.get.mockImplementation((url) => {
+      if (url.includes('/api/logging/config')) {
+        return Promise.resolve({
+          data: {
+            config: {
+              log_levels: {
+                frontend: { app: 'INFO' },
+                backend: { api: 'INFO', llm: 'INFO', database: 'INFO' }
+              }
+            },
+            available_levels: ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']
           }
-        },
-        available_levels: ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']
+        });
+      } else if (url.includes('/api/logging/files')) {
+        return Promise.resolve({
+          data: {
+            files: []
+          }
+        });
+      } else if (url.includes('/api/logging/recent')) {
+        return Promise.resolve({
+          data: {
+            logs: []
+          }
+        });
+      } else if (url.includes('/api/logging/llm-prompts')) {
+        return Promise.resolve({
+          data: {
+            logs: []
+          }
+        });
       }
+      return Promise.reject(new Error('Unknown URL'));
     });
 
     axios.put.mockResolvedValue({
