@@ -21,12 +21,16 @@
     "max_recent_entries": 100,
     "auto_refresh_interval": 5000
   },
+  "prompt_logging": {
+    "enabled": true,
+    "level": "DEBUG"
+  },
   "llm_prompt_logging": {
     "enabled": true,
     "level": "DEBUG",
-    "log_file": "llm_prompts.log",
+    "log_file": "backend/llm_prompts.log",
     "include_metadata": true,
     "include_timing": true,
-    "include_full_response": false
+    "include_full_response": true
   }
 }
