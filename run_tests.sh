@@ -8,8 +8,10 @@ echo "============================="
 
 # Create log directories if they don't exist
 echo "🔧 Ensuring log directories exist..."
-mkdir -p logs/backend
-mkdir -p logs/frontend
+DIRS=(logs/backend logs/frontend)
+for dir in "${DIRS[@]}"; do
+    mkdir -p "$dir"
+done
 
 # Color codes for output
 RED='\033[0;31m'
