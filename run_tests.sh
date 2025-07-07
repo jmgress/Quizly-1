@@ -324,8 +324,8 @@ if [ -f "jest.config.json" ]; then
     else
         print_status "❌ Jest configuration (jest.config.json) has syntax errors. See output below." "$RED"
         cat /tmp/jest_config_check_$$.txt
-        # Decide whether to exit or continue; for now, let's continue and let Jest itself fail.
-        # exit 1
+        # Jest configuration errors are critical; terminating the script.
+        exit 1
     fi
     rm -f /tmp/jest_config_check_$$.txt
 else
