@@ -68,7 +68,7 @@ def setup_logging():
     for filename, level in handlers:
         filepath = os.path.join(backend_log_dir, filename)
         file_handler = logging.handlers.RotatingFileHandler(
-            filepath, 
+            filepath,
             maxBytes=10*1024*1024,  # 10MB
             backupCount=5
         )
@@ -76,12 +76,29 @@ def setup_logging():
         file_formatter = logging.Formatter(log_format)
         file_handler.setFormatter(file_formatter)
         root_logger.addHandler(file_handler)
-    
+
+    # LLM prompt logging handler
+    prompt_cfg = logging_config.get('prompt_logging', {})
+    if prompt_cfg.get('enabled'):
+        prompt_file = os.path.join(backend_log_dir, 'llm_prompts.log')
+        prompt_handler = logging.handlers.RotatingFileHandler(
+            prompt_file,
+            maxBytes=10*1024*1024,
+            backupCount=5
+        )
+        level_name = prompt_cfg.get('level', 'INFO').upper()
+        level = logging.DEBUG if level_name == 'TRACE' else getattr(logging, level_name, logging.INFO)
+        prompt_handler.setLevel(level)
+        prompt_handler.addFilter(logging.Filter('llm_prompts'))
+        prompt_handler.setFormatter(logging.Formatter(log_format))
+        root_logger.addHandler(prompt_handler)
+
     return root_logger
 
 # Setup logging
 setup_logging()
 logger = logging.getLogger(__name__)
+prompt_logger = logging.getLogger('llm_prompts')
 
 app = FastAPI(title="Quizly API", description="Knowledge Testing Application API")
 

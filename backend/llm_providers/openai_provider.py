@@ -4,10 +4,12 @@ from typing import List, Dict, Any
 import json
 import os
 import logging
+from datetime import datetime
 
 from .base import LLMProvider
 
 logger = logging.getLogger(__name__)
+prompt_logger = logging.getLogger('llm_prompts')
 
 
 class OpenAIProvider(LLMProvider):
@@ -40,6 +42,12 @@ class OpenAIProvider(LLMProvider):
             raise RuntimeError("OpenAI client not initialized")
 
         prompt = self._create_prompt(subject, limit)
+        start_time = datetime.now()
+        prompt_logger.info(
+            f"provider=openai model={self.model} timestamp={start_time.isoformat()}"
+        )
+        if prompt_logger.isEnabledFor(logging.DEBUG):
+            prompt_logger.debug(f"prompt: {prompt}")
 
         try:
             response = self._client.chat.completions.create(
@@ -49,8 +57,12 @@ class OpenAIProvider(LLMProvider):
                 max_tokens=2000,
             )
             content = response.choices[0].message.content
+            duration = (datetime.now() - start_time).total_seconds()
+            if prompt_logger.isEnabledFor(logging.DEBUG):
+                prompt_logger.debug(f"response ({duration}s): {content}")
             return self._parse_response(content, subject, limit)
         except Exception as e:
+            prompt_logger.error(f"failed provider=openai error={str(e)}")
             logger.error(f"OpenAI API call failed: {str(e)}")
             raise RuntimeError(f"OpenAI question generation failed: {str(e)}")
 

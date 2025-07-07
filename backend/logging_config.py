@@ -60,6 +60,10 @@ class LoggingConfigManager:
                 "enable_live_viewer": True,
                 "max_recent_entries": 100,
                 "auto_refresh_interval": 5000
+            },
+            "prompt_logging": {
+                "enabled": False,
+                "level": "INFO"
             }
         }
     
@@ -185,10 +189,15 @@ class LoggingConfigManager:
                         # Get last few lines from each file
                         for line in lines[-20:]:  # Last 20 lines per file
                             if line.strip():
+                                message = line.strip()
+                                if log_file["component"] == "backend/llm_prompts":
+                                    parts = message.split(" - ", 3)
+                                    if len(parts) >= 4:
+                                        message = parts[3]
                                 all_entries.append({
                                     "timestamp": datetime.now().isoformat(),
                                     "component": log_file["component"],
-                                    "message": line.strip(),
+                                    "message": message,
                                     "level": self._extract_log_level(line)
                                 })
                 except Exception as e:

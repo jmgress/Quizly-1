@@ -20,5 +20,9 @@
     "enable_live_viewer": true,
     "max_recent_entries": 100,
     "auto_refresh_interval": 5000
+  },
+  "prompt_logging": {
+    "enabled": false,
+    "level": "INFO"
   }
 }

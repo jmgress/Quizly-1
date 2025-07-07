@@ -134,6 +134,9 @@ const LoggingSettings = () => {
 
   const getFilteredLogs = () => {
     if (logFilter === 'all') return recentLogs;
+    if (logFilter === 'llm') {
+      return recentLogs.filter(log => log.component.toLowerCase().includes('llm_prompts'));
+    }
     return recentLogs.filter(log => log.level.toLowerCase().includes(logFilter.toLowerCase()));
   };
 
@@ -261,8 +264,52 @@ const LoggingSettings = () => {
             ))}
           </div>
 
+          <div className="component-group">
+            <h5>LLM Prompt Logging</h5>
+            <div className="prompt-toggle">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={editConfig?.prompt_logging?.enabled || false}
+                  onChange={(e) =>
+                    setEditConfig(prev => ({
+                      ...prev,
+                      prompt_logging: {
+                        ...prev.prompt_logging,
+                        enabled: e.target.checked
+                      }
+                    }))
+                  }
+                />{' '}
+                Enable Prompt Logging
+              </label>
+            </div>
+            <div className="prompt-level">
+              <label>
+                Level:
+                <select
+                  value={editConfig?.prompt_logging?.level || 'INFO'}
+                  onChange={(e) =>
+                    setEditConfig(prev => ({
+                      ...prev,
+                      prompt_logging: {
+                        ...prev.prompt_logging,
+                        level: e.target.value
+                      }
+                    }))
+                  }
+                  className="form-select"
+                >
+                  <option value="INFO">INFO</option>
+                  <option value="DEBUG">DEBUG</option>
+                  <option value="TRACE">TRACE</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
           <div className="form-actions">
-            <button 
+            <button
               className={`button ${saving ? 'saving' : ''}`}
               onClick={handleSaveConfig}
               disabled={saving}
@@ -335,7 +382,7 @@ const LoggingSettings = () => {
           
           <div className="monitor-controls">
             <div className="filter-group">
-              <label>Filter by level:</label>
+              <label>Filter:</label>
               <select
                 value={logFilter}
                 onChange={(e) => setLogFilter(e.target.value)}
@@ -347,6 +394,7 @@ const LoggingSettings = () => {
                 <option value="info">INFO</option>
                 <option value="debug">DEBUG</option>
                 <option value="trace">TRACE</option>
+                <option value="llm">LLM Prompts</option>
               </select>
             </div>
             

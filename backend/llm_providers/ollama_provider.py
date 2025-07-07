@@ -4,10 +4,12 @@ from typing import List, Dict, Any
 import json
 import os
 import logging
+from datetime import datetime
 
 from .base import LLMProvider
 
 logger = logging.getLogger(__name__)
+prompt_logger = logging.getLogger('llm_prompts')
 
 
 class OllamaProvider(LLMProvider):
@@ -35,14 +37,26 @@ class OllamaProvider(LLMProvider):
             raise RuntimeError("Ollama client not initialized")
 
         prompt = self._create_prompt(subject, limit)
+        start_time = datetime.now()
+        prompt_logger.info(
+            f"provider=ollama model={self.model} timestamp={start_time.isoformat()}"
+        )
+        if prompt_logger.isEnabledFor(logging.DEBUG):
+            prompt_logger.debug(f"prompt: {prompt}")
 
         try:
             response = self._ollama.chat(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
             )
+            duration = (datetime.now() - start_time).total_seconds()
+            if prompt_logger.isEnabledFor(logging.DEBUG):
+                prompt_logger.debug(
+                    f"response ({duration}s): {response['message']['content']}"
+                )
             return self._parse_response(response["message"]["content"], subject, limit)
         except Exception as e:
+            prompt_logger.error(f"failed provider=ollama error={str(e)}")
             logger.error(f"Ollama API call failed: {str(e)}")
             raise RuntimeError(f"Ollama question generation failed: {str(e)}")
 
