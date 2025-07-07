@@ -6,6 +6,11 @@
 echo "🧪 Running Quizly Test Suite"
 echo "============================="
 
+# Create log directories if they don't exist
+echo "🔧 Ensuring log directories exist..."
+mkdir -p logs/backend
+mkdir -p logs/frontend
+
 # Color codes for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -308,6 +313,22 @@ fi
 # Frontend Tests
 print_status "🌐 FRONTEND TESTS" "$YELLOW"
 echo "=================="
+
+# Validate Jest configuration
+print_status "Validating Jest configuration (jest.config.json)..." "$BLUE"
+if [ -f "jest.config.json" ]; then
+    if node -e "try { JSON.parse(require('fs').readFileSync('jest.config.json', 'utf8')); console.log('Jest config syntax OK'); process.exit(0); } catch (e) { console.error('Jest config syntax error:', e.message); process.exit(1); }" > /tmp/jest_config_check_$$.txt 2>&1; then
+        print_status "✅ Jest configuration syntax is valid." "$GREEN"
+    else
+        print_status "❌ Jest configuration (jest.config.json) has syntax errors. See output below." "$RED"
+        cat /tmp/jest_config_check_$$.txt
+        # Decide whether to exit or continue; for now, let's continue and let Jest itself fail.
+        # exit 1
+    fi
+    rm -f /tmp/jest_config_check_$$.txt
+else
+    print_status "⚠️  jest.config.json not found, skipping validation." "$YELLOW"
+fi
 
 # Test 12: Frontend Component Tests
 total_tests=$((total_tests + 1))
