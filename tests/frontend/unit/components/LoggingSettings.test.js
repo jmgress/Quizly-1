@@ -93,6 +93,78 @@ describe('LoggingSettings', () => {
     expect(screen.getByText('Backend Components')).toBeInTheDocument();
   });
 
+  test('renders LLM prompt logging configuration', async () => {
+    // Mock API responses with LLM prompt logging
+    axios.get.mockImplementation((url) => {
+      if (url.includes('/api/logging/config')) {
+        return Promise.resolve({
+          data: {
+            config: {
+              log_levels: {
+                frontend: { app: 'INFO' },
+                backend: { api: 'INFO', llm: 'INFO', database: 'INFO' }
+              },
+              llm_prompt_logging: {
+                enabled: true,
+                level: 'DEBUG',
+                log_file: 'llm_prompts.log',
+                include_metadata: true,
+                include_timing: true,
+                include_full_response: false
+              }
+            },
+            available_levels: ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE']
+          }
+        });
+      } else if (url.includes('/api/logging/files')) {
+        return Promise.resolve({
+          data: {
+            files: []
+          }
+        });
+      } else if (url.includes('/api/logging/recent')) {
+        return Promise.resolve({
+          data: {
+            logs: []
+          }
+        });
+      } else if (url.includes('/api/logging/llm-prompts')) {
+        return Promise.resolve({
+          data: {
+            logs: [{
+              timestamp: '2025-01-01T12:00:00Z',
+              provider: 'test_provider',
+              model: 'test_model',
+              level: 'INFO',
+              status: 'success',
+              prompt_preview: 'Test prompt',
+              metadata: { subject: 'test' },
+              timing: { duration_ms: 100 }
+            }]
+          }
+        });
+      }
+      return Promise.reject(new Error('Unknown URL'));
+    });
+
+    render(<LoggingSettings />);
+
+    await waitFor(() => {
+      expect(screen.getByText('🔧 Logging Configuration')).toBeInTheDocument();
+    });
+
+    // Check if LLM prompt logging section is rendered
+    expect(screen.getByText('🤖 LLM Prompt Logging')).toBeInTheDocument();
+    expect(screen.getByText('Enable LLM Prompt Logging')).toBeInTheDocument();
+    
+    // Check if the toggle is checked (enabled)
+    const enableToggle = screen.getByRole('checkbox', { name: /Enable LLM Prompt Logging/ });
+    expect(enableToggle).toBeChecked();
+    
+    // Check if logging level dropdown is visible
+    expect(screen.getByDisplayValue('DEBUG')).toBeInTheDocument();
+  });
+
   test('switches between tabs correctly', async () => {
     // Mock API responses for all tabs
     axios.get.mockImplementation((url) => {

@@ -20,5 +20,13 @@
     "enable_live_viewer": true,
     "max_recent_entries": 100,
     "auto_refresh_interval": 5000
+  },
+  "llm_prompt_logging": {
+    "enabled": true,
+    "level": "DEBUG",
+    "log_file": "llm_prompts.log",
+    "include_metadata": true,
+    "include_timing": true,
+    "include_full_response": false
   }
 }

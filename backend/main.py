@@ -91,7 +91,7 @@ logger.info("Initializing Quizly FastAPI application")
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React dev server
+    allow_origins=["http://localhost:3000", "http://localhost:8080"],  # React dev server and demo server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

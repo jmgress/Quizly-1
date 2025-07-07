@@ -9,6 +9,14 @@
       "database": "INFO"
     }
   },
+  "llm_prompt_logging": {
+    "enabled": false,
+    "level": "INFO",
+    "log_file": "llm_prompts.log",
+    "include_metadata": true,
+    "include_timing": true,
+    "include_full_response": false
+  },
   "file_settings": {
     "enable_file_logging": true,
     "log_directory": "logs",
