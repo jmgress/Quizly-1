@@ -7,12 +7,14 @@ const LoggingSettings = () => {
   const [editConfig, setEditConfig] = useState(null);
   const [logFiles, setLogFiles] = useState([]);
   const [recentLogs, setRecentLogs] = useState([]);
+  const [llmPromptLogs, setLlmPromptLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
   const [activeTab, setActiveTab] = useState('levels');
   const [logFilter, setLogFilter] = useState('all');
+  const [logTypeFilter, setLogTypeFilter] = useState('all');
 
   const LOG_LEVELS = ['ERROR', 'WARN', 'INFO', 'DEBUG', 'TRACE'];
   const levelToPosition = (level) => LOG_LEVELS.indexOf(level);
@@ -22,6 +24,7 @@ const LoggingSettings = () => {
     fetchConfig();
     fetchLogFiles();
     fetchRecentLogs();
+    fetchLlmPromptLogs();
   }, []);
 
   const fetchConfig = async () => {
@@ -53,6 +56,15 @@ const LoggingSettings = () => {
       setRecentLogs(response.data.logs);
     } catch (err) {
       console.error('Failed to fetch recent logs:', err);
+    }
+  };
+
+  const fetchLlmPromptLogs = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/logging/llm-prompts?max_entries=100`);
+      setLlmPromptLogs(response.data.logs);
+    } catch (err) {
+      console.error('Failed to fetch LLM prompt logs:', err);
     }
   };
 
@@ -94,6 +106,16 @@ const LoggingSettings = () => {
     }));
   };
 
+  const handleLLMPromptLoggingChange = (field, value) => {
+    setEditConfig(prev => ({
+      ...prev,
+      llm_prompt_logging: {
+        ...prev.llm_prompt_logging,
+        [field]: value
+      }
+    }));
+  };
+
   const handleClearLogFile = async (filePath) => {
     try {
       await axios.post(`${API_BASE_URL}/api/logging/files/${filePath}/clear`);
@@ -124,6 +146,18 @@ const LoggingSettings = () => {
     window.open(`${API_BASE_URL}/api/logging/files/${filePath}/download`, '_blank');
   };
 
+  const handleClearLlmPromptLogs = async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/api/logging/llm-prompts/clear`);
+      setSuccessMessage('LLM prompt logs cleared successfully!');
+      fetchLlmPromptLogs();
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      console.error('Failed to clear LLM prompt logs:', err);
+      setError(`Failed to clear LLM prompt logs: ${err.response?.data?.detail || 'Unknown error'}`);
+    }
+  };
+
   const formatFileSize = (bytes) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -133,8 +167,34 @@ const LoggingSettings = () => {
   };
 
   const getFilteredLogs = () => {
-    if (logFilter === 'all') return recentLogs;
-    return recentLogs.filter(log => log.level.toLowerCase().includes(logFilter.toLowerCase()));
+    let logs = [];
+    
+    // Combine logs based on type filter
+    if (logTypeFilter === 'all' || logTypeFilter === 'general') {
+      // Add general logs with type marker
+      logs = logs.concat(recentLogs.map(log => ({ ...log, logType: 'general' })));
+    }
+    
+    if (logTypeFilter === 'all' || logTypeFilter === 'llm') {
+      // Add LLM prompt logs with type marker and formatted display
+      logs = logs.concat(llmPromptLogs.map(log => ({
+        ...log,
+        logType: 'llm',
+        component: `${log.provider}/${log.model}`,
+        message: log.prompt_preview || log.prompt || 'LLM interaction',
+        timestamp: log.timestamp
+      })));
+    }
+    
+    // Sort by timestamp
+    logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    
+    // Filter by level
+    if (logFilter !== 'all') {
+      logs = logs.filter(log => log.level.toLowerCase().includes(logFilter.toLowerCase()));
+    }
+    
+    return logs;
   };
 
   if (loading) {
@@ -261,6 +321,37 @@ const LoggingSettings = () => {
             ))}
           </div>
 
+          <div className="component-group">
+            <h5>🤖 LLM Prompt Logging</h5>
+            <div className="llm-prompt-section">
+              <div className="llm-prompt-control">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={editConfig?.llm_prompt_logging?.enabled || false}
+                    onChange={(e) => handleLLMPromptLoggingChange('enabled', e.target.checked)}
+                  />
+                  Enable LLM Prompt Logging
+                </label>
+              </div>
+              
+              {editConfig?.llm_prompt_logging?.enabled && (
+                <div className="llm-prompt-control">
+                  <label>Logging Level:</label>
+                  <select
+                    value={editConfig?.llm_prompt_logging?.level || 'INFO'}
+                    onChange={(e) => handleLLMPromptLoggingChange('level', e.target.value)}
+                    className="form-select"
+                  >
+                    <option value="INFO">INFO - Basic metadata only</option>
+                    <option value="DEBUG">DEBUG - Full prompts and responses</option>
+                    <option value="TRACE">TRACE - Complete API calls and errors</option>
+                  </select>
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="form-actions">
             <button 
               className={`button ${saving ? 'saving' : ''}`}
@@ -318,6 +409,32 @@ const LoggingSettings = () => {
             ))}
           </div>
 
+          {editConfig?.llm_prompt_logging?.enabled && (
+            <div className="llm-log-file-section">
+              <h5>🤖 LLM Prompts Log File</h5>
+              <div className="log-file-item llm-special">
+                <div className="file-info">
+                  <span className="file-name">{editConfig?.llm_prompt_logging?.log_file || 'llm_prompts.log'}</span>
+                  <span className="file-component">LLM Prompts</span>
+                </div>
+                <div className="file-actions">
+                  <button 
+                    className="button small"
+                    onClick={() => window.open(`${API_BASE_URL}/api/logging/llm-prompts/download`, '_blank')}
+                  >
+                    📥 Download
+                  </button>
+                  <button 
+                    className="button small danger"
+                    onClick={handleClearLlmPromptLogs}
+                  >
+                    🗑️ Clear
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="form-actions">
             <button 
               className="button secondary"
@@ -350,9 +467,25 @@ const LoggingSettings = () => {
               </select>
             </div>
             
+            <div className="filter-group">
+              <label>Filter by type:</label>
+              <select
+                value={logTypeFilter}
+                onChange={(e) => setLogTypeFilter(e.target.value)}
+                className="form-select"
+              >
+                <option value="all">All Logs</option>
+                <option value="general">General Logs</option>
+                <option value="llm">LLM Prompts</option>
+              </select>
+            </div>
+            
             <button 
               className="button secondary"
-              onClick={fetchRecentLogs}
+              onClick={() => {
+                fetchRecentLogs();
+                fetchLlmPromptLogs();
+              }}
             >
               🔄 Refresh Logs
             </button>
@@ -360,11 +493,20 @@ const LoggingSettings = () => {
 
           <div className="log-entries">
             {getFilteredLogs().map((log, index) => (
-              <div key={index} className={`log-entry ${log.level.toLowerCase()}`}>
+              <div key={index} className={`log-entry ${log.level.toLowerCase()} ${log.logType === 'llm' ? 'llm-log' : ''}`}>
                 <span className="log-timestamp">{new Date(log.timestamp).toLocaleString()}</span>
                 <span className="log-level">{log.level}</span>
                 <span className="log-component">{log.component}</span>
+                {log.logType === 'llm' && (
+                  <span className="log-type-badge">🤖 LLM</span>
+                )}
                 <span className="log-message">{log.message}</span>
+                {log.logType === 'llm' && log.timing && (
+                  <span className="log-timing">{log.timing.duration_ms}ms</span>
+                )}
+                {log.logType === 'llm' && log.status && (
+                  <span className={`log-status ${log.status}`}>{log.status}</span>
+                )}
               </div>
             ))}
           </div>

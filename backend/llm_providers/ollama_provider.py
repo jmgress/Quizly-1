@@ -4,6 +4,7 @@ from typing import List, Dict, Any
 import json
 import os
 import logging
+import time
 
 from .base import LLMProvider
 
@@ -18,6 +19,14 @@ class OllamaProvider(LLMProvider):
         self.host = host
         self._ollama = None
         self._initialize_ollama()
+        
+        # Initialize LLM prompt logger
+        try:
+            from llm_prompt_logger import llm_prompt_logger
+            self.prompt_logger = llm_prompt_logger
+        except ImportError:
+            logger.warning("LLM prompt logger not available")
+            self.prompt_logger = None
 
     def _initialize_ollama(self):
         """Initialize Ollama client."""
@@ -35,14 +44,62 @@ class OllamaProvider(LLMProvider):
             raise RuntimeError("Ollama client not initialized")
 
         prompt = self._create_prompt(subject, limit)
+        start_time = time.time()
 
         try:
             response = self._ollama.chat(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
             )
-            return self._parse_response(response["message"]["content"], subject, limit)
+            
+            end_time = time.time()
+            content = response["message"]["content"]
+            result = self._parse_response(content, subject, limit)
+            
+            # Log successful interaction
+            if self.prompt_logger:
+                self.prompt_logger.log_prompt(
+                    provider="ollama",
+                    model=self.model,
+                    prompt=prompt,
+                    response=content,
+                    metadata={
+                        "subject": subject,
+                        "limit": limit,
+                        "questions_generated": len(result)
+                    },
+                    timing={
+                        "start_time": start_time,
+                        "end_time": end_time,
+                        "duration_ms": round((end_time - start_time) * 1000, 2)
+                    },
+                    level="INFO"
+                )
+            
+            return result
+            
         except Exception as e:
+            end_time = time.time()
+            
+            # Log failed interaction
+            if self.prompt_logger:
+                self.prompt_logger.log_prompt(
+                    provider="ollama",
+                    model=self.model,
+                    prompt=prompt,
+                    metadata={
+                        "subject": subject,
+                        "limit": limit
+                    },
+                    timing={
+                        "start_time": start_time,
+                        "end_time": end_time,
+                        "duration_ms": round((end_time - start_time) * 1000, 2)
+                    },
+                    error=str(e),
+                    level="ERROR"
+                )
+            
             logger.error(f"Ollama API call failed: {str(e)}")
             raise RuntimeError(f"Ollama question generation failed: {str(e)}")
 

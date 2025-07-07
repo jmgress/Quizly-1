@@ -971,6 +971,123 @@ body {
   background: transparent;
 }
 
+/* LLM Prompt Logging Styles */
+.llm-prompt-section {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  margin-top: 10px;
+}
+
+.llm-prompt-control {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.llm-prompt-control label {
+  font-weight: 500;
+  color: #4a5568;
+  min-width: 120px;
+}
+
+.llm-prompt-control input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.llm-prompt-control .form-select {
+  min-width: 200px;
+}
+
+/* LLM Log Entry Styles */
+.log-entry.llm-log {
+  background: #f0f9ff;
+  border-left: 3px solid #0ea5e9;
+}
+
+.log-type-badge {
+  background: #0ea5e9;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.log-timing {
+  color: #64748b;
+  font-size: 12px;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.log-status {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.log-status.success {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.log-status.error {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* LLM Log File Section */
+.llm-log-file-section {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.llm-log-file-section h5 {
+  color: #374151;
+  margin-bottom: 15px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.log-file-item.llm-special {
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+}
+
+.log-file-item.llm-special .file-name {
+  color: #0ea5e9;
+  font-weight: 600;
+}
+
+/* Filter Groups */
+.monitor-controls {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+  align-items: end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter-group label {
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 14px;
+}
+
 .log-levels-section {
   background: #f9f9f9;
   padding: 20px;
