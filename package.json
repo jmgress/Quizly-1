@@ -9,7 +9,8 @@
   },
   "overrides": {
     "glob": "^10.4.5",
-    "sourcemap-codec": "npm:@jridgewell/sourcemap-codec@^1.5.0"
+    "sourcemap-codec": "npm:@jridgewell/sourcemap-codec@^1.5.0",
+    "webpack-dev-server": "5.2.1"
   },
   "dependencies": {
     "@testing-library/jest-dom": "^6.6.3",
