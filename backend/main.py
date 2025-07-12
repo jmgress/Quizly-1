@@ -731,7 +731,7 @@ def download_log_file(file_path: str):
         
         return FileResponse(
             path=full_path,
-            filename=os.path.basename(file_path),
+            filename=os.path.basename(full_path),
             media_type="text/plain"
         )
     except ValueError as e:
