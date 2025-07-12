@@ -225,7 +225,15 @@ else
     failed_tests=$((failed_tests + 1))
 fi
 
-# Test 6: API Integration Tests
+# Test 6: Path Traversal Security Tests
+total_tests=$((total_tests + 1))
+if run_test "Path Traversal Security Tests" "$PYTHON_EXE test_path_traversal_security.py" "$(pwd)/tests/backend/unit"; then
+    passed_tests=$((passed_tests + 1))
+else
+    failed_tests=$((failed_tests + 1))
+fi
+
+# Test 7: API Integration Tests
 total_tests=$((total_tests + 1))
 if run_test "API Endpoints Tests" "$PYTHON_EXE test_api_endpoints.py" "$(pwd)/tests/backend/integration"; then
     passed_tests=$((passed_tests + 1))
@@ -233,7 +241,7 @@ else
     failed_tests=$((failed_tests + 1))
 fi
 
-# Test 7: AI Integration Tests
+# Test 8: AI Integration Tests
 total_tests=$((total_tests + 1))
 if run_test "AI Integration Tests" "$PYTHON_EXE test_ai_integration_simple.py" "$(pwd)/tests/backend/integration"; then
     passed_tests=$((passed_tests + 1))
@@ -241,7 +249,7 @@ else
     failed_tests=$((failed_tests + 1))
 fi
 
-# Test 8: OpenAI Integration (if configured) - with timeout
+# Test 9: OpenAI Integration (if configured) - with timeout
 total_tests=$((total_tests + 1))
 if command -v gtimeout >/dev/null 2>&1; then
     timeout_cmd="gtimeout 30"
@@ -258,7 +266,7 @@ else
     passed_tests=$((passed_tests + 1))  # Count as passed since API failures are expected
 fi
 
-# Test 9: Pytest Unit Tests
+# Test 10: Pytest Unit Tests
 total_tests=$((total_tests + 1))
 if run_test "Backend Unit Test Suite" "$PYTHON_EXE -m pytest unit/ -v --tb=short" "$(pwd)/tests/backend"; then
     passed_tests=$((passed_tests + 1))
@@ -266,7 +274,7 @@ else
     failed_tests=$((failed_tests + 1))
 fi
 
-# Test 10: Pytest Integration Tests
+# Test 11: Pytest Integration Tests
 total_tests=$((total_tests + 1))
 print_status "Running Backend Integration Test Suite..." "$BLUE"
 print_status "Note: Some tests may fail if API server is not running or database is empty" "$YELLOW"
@@ -288,7 +296,7 @@ fi
 print_status "🔒 SECURITY TESTS" "$YELLOW"
 echo "=================="
 
-# Test 11: GitLeaks Security Scan
+# Test 12: GitLeaks Security Scan
 total_tests=$((total_tests + 1))
 if [ -f "./scripts/test_gitleaks.sh" ]; then
     # Use the standalone GitLeaks test script
@@ -332,7 +340,7 @@ else
     print_status "⚠️  jest.config.json not found, skipping validation." "$YELLOW"
 fi
 
-# Test 12: Frontend Component Tests
+# Test 13: Frontend Component Tests
 total_tests=$((total_tests + 1))
 
 # Check if frontend node_modules exists
