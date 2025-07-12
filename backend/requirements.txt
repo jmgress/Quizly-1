@@ -1,75 +1,26 @@
+# Install with: pip install -r requirements.txt
 annotated-types==0.7.0
-    # via pydantic
 anyio==4.9.0
-    # via
-    #   fastapi
-    #   httpx
-    #   openai
-    #   starlette
 certifi==2025.6.15
-    # via
-    #   httpcore
-    #   httpx
 click==8.1.8
-    # via uvicorn
 distro==1.9.0
-    # via openai
 exceptiongroup==1.3.0
-    # via anyio
 fastapi==0.115.14
-    # via -r backend/requirements.txt
 h11==0.16.0
-    # via
-    #   httpcore
-    #   uvicorn
 httpcore==1.0.9
-    # via httpx
 httpx==0.28.1
-    # via
-    #   ollama
-    #   openai
 idna==3.10
-    # via
-    #   anyio
-    #   httpx
 jiter==0.10.0
-    # via openai
 ollama==0.5.1
-    # via -r backend/requirements.txt
 openai==1.93.0
-    # via -r backend/requirements.txt
 pydantic==2.11.7
-    # via
-    #   -r backend/requirements.txt
-    #   fastapi
-    #   ollama
-    #   openai
 pydantic-core==2.33.2
-    # via pydantic
 python-dotenv==1.1.1
-    # via -r backend/requirements.txt
 python-multipart==0.0.20
-    # via -r backend/requirements.txt
 sniffio==1.3.1
-    # via
-    #   anyio
-    #   openai
 starlette==0.46.0
-    # via fastapi
 tqdm==4.67.1
-    # via openai
 typing-extensions==4.14.1
-    # via
-    #   exceptiongroup
-    #   fastapi
-    #   openai
-    #   pydantic
-    #   pydantic-core
-    #   starlette
-    #   typing-inspection
-    #   uvicorn
 typing-inspection==0.4.1
-    # via pydantic
 uvicorn==0.35.0
-    # via -r backend/requirements.txt
-zipp==3.23.0 # not directly required, pinned by Snyk to avoid a vulnerability
+zipp==3.23.0 
