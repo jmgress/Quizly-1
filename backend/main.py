@@ -724,7 +724,8 @@ def download_log_file(file_path: str):
         from fastapi.responses import FileResponse
         import os
         
-        full_path = os.path.join(logging_config_manager.logs_dir, file_path)
+        # Validate path to prevent directory traversal
+        full_path = logging_config_manager._validate_safe_path(file_path)
         if not os.path.exists(full_path):
             raise HTTPException(status_code=404, detail="Log file not found")
         
@@ -733,6 +734,9 @@ def download_log_file(file_path: str):
             filename=os.path.basename(file_path),
             media_type="text/plain"
         )
+    except ValueError as e:
+        logger.error(f"Invalid file path {file_path}: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Invalid file path: {str(e)}")
     except HTTPException:
         raise
     except Exception as e:

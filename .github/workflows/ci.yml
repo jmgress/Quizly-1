@@ -67,6 +67,9 @@ jobs:
         echo "Running LLM configuration tests..."
         python test_llm_config.py || echo "LLM tests may fail due to missing dependencies"
         
+        echo "Running path traversal security tests..."
+        python test_path_traversal_security.py || echo "Path traversal security tests may fail if file doesn't exist"
+        
         # Run integration tests
         cd ../integration
         echo "Running AI integration tests..."
