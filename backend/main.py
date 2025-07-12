@@ -723,17 +723,25 @@ def download_log_file(file_path: str):
     try:
         from fastapi.responses import FileResponse
         import os
-        
-        # Validate path to prevent directory traversal
+
+        # Use safe_join to prevent directory traversal
+        from starlette.datastructures import URLPath
+
         logs_base_dir = logging_config_manager.get_logs_base_dir() if hasattr(logging_config_manager, "get_logs_base_dir") else "logs"
         safe_base = os.path.abspath(logs_base_dir)
-        requested_path = os.path.abspath(os.path.join(safe_base, file_path))
-        if not requested_path.startswith(safe_base + os.sep):
-            logger.error(f"Attempted directory traversal attack: {file_path}")
-            raise HTTPException(status_code=400, detail="Invalid file path")
+
+        # Use Starlette's URLPath for safe joining
+        def safe_join(base: str, *paths: str) -> str:
+            # Only allow relative paths, no ".."
+            joined = os.path.normpath(os.path.join(base, *paths))
+            if not joined.startswith(base + os.sep) and joined != base:
+                raise ValueError("Attempted directory traversal attack")
+            return joined
+
+        requested_path = safe_join(safe_base, file_path)
         if not os.path.exists(requested_path):
             raise HTTPException(status_code=404, detail="Log file not found")
-        
+
         return FileResponse(
             path=requested_path,
             filename=os.path.basename(requested_path),
