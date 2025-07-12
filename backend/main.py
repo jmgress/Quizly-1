@@ -725,13 +725,18 @@ def download_log_file(file_path: str):
         import os
         
         # Validate path to prevent directory traversal
-        full_path = logging_config_manager._validate_safe_path(file_path)
-        if not os.path.exists(full_path):
+        logs_base_dir = logging_config_manager.get_logs_base_dir() if hasattr(logging_config_manager, "get_logs_base_dir") else "logs"
+        safe_base = os.path.abspath(logs_base_dir)
+        requested_path = os.path.abspath(os.path.join(safe_base, file_path))
+        if not requested_path.startswith(safe_base + os.sep):
+            logger.error(f"Attempted directory traversal attack: {file_path}")
+            raise HTTPException(status_code=400, detail="Invalid file path")
+        if not os.path.exists(requested_path):
             raise HTTPException(status_code=404, detail="Log file not found")
         
         return FileResponse(
-            path=full_path,
-            filename=os.path.basename(full_path),
+            path=requested_path,
+            filename=os.path.basename(requested_path),
             media_type="text/plain"
         )
     except ValueError as e:
