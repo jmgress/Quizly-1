@@ -11,6 +11,8 @@ An interactive web-based quiz application that allows users to test their knowle
 - ✅ **CI/CD**: GitHub Actions workflow for automated testing
 - ✅ **LLM Integration**: Multiple AI provider support (Ollama, OpenAI)
 - ✅ **Documentation**: Complete API docs and setup guides
+- ✅ **Security**: CWE-23 path traversal protection and comprehensive security testing
+- ✅ **Logging**: Advanced logging system with configurable levels and log management
 
 ## Features
 
@@ -28,6 +30,8 @@ An interactive web-based quiz application that allows users to test their knowle
 - ⚙️ **Environment Configuration**: Configure providers via environment variables
 - 🏥 **Health Checks**: Monitor LLM provider availability and status
 - 🚀 **Fast API**: RESTful API with automatic documentation
+- 🔒 **Security**: Path traversal protection and input validation
+- 📊 **Logging**: Comprehensive logging with admin management interface
 
 ## Tech Stack
 
@@ -62,11 +66,11 @@ An interactive web-based quiz application that allows users to test their knowle
 
 2. **Install Python dependencies:**
    ```bash
-   # Option 1: Using pip
-   pip install fastapi uvicorn
+   # Using requirements file (recommended)
+   pip install -r requirements.txt
    
-   # Option 2: Using system packages (Ubuntu/Debian)
-   sudo apt install python3-fastapi python3-uvicorn
+   # Or install minimal dependencies manually
+   pip install fastapi uvicorn python-dotenv
    ```
 
 3. **Run the backend server:**
@@ -140,7 +144,7 @@ OLLAMA_HOST=http://localhost:11434
 ```env
 LLM_PROVIDER=openai
 OPENAI_API_KEY=your-openai-api-key-here
-OPENAI_MODEL=gpt-3.5-turbo
+OPENAI_MODEL=gpt-4o-mini
 ```
 
 #### 3. Provider-Specific Setup
@@ -186,7 +190,7 @@ This will return:
 | `OLLAMA_MODEL` | Ollama model name | llama3.2 |
 | `OLLAMA_HOST` | Ollama server URL | http://localhost:11434 |
 | `OPENAI_API_KEY` | OpenAI API key | - |
-| `OPENAI_MODEL` | OpenAI model name | gpt-3.5-turbo |
+| `OPENAI_MODEL` | OpenAI model name | gpt-4o-mini |
 | `DEFAULT_QUESTION_LIMIT` | Default number of questions | 5 |
 | `LOG_LEVEL` | Logging level | INFO |
 
@@ -277,6 +281,18 @@ The admin interface allows you to view and edit all quiz questions stored in the
 - Mobile-responsive design for editing on any device
 - Automatic validation of question format and correct answers
 
+**LLM Settings Management:**
+- Configure AI providers (Ollama, OpenAI) through the web interface
+- Test provider connectivity and model availability
+- Switch between providers without restarting the application
+- View real-time provider health status
+
+**Logging Management:**
+- View and download application logs through the admin interface
+- Configure log levels (DEBUG, INFO, WARNING, ERROR)
+- Clear and rotate log files
+- Secure file access with path traversal protection (CWE-23 compliance)
+
 ## API Endpoints
 
 ### Questions
@@ -288,6 +304,18 @@ The admin interface allows you to view and edit all quiz questions stored in the
 ### LLM Provider Management
 - **GET** `/api/llm/health` - Check LLM provider health and availability
 - **GET** `/api/models` - List available models for the current provider
+
+### Configuration Management
+- **GET** `/api/config` - Get current configuration settings
+- **PUT** `/api/config` - Update configuration settings
+
+### Logging Management
+- **GET** `/api/logging/files` - List available log files
+- **GET** `/api/logging/files/{filename}/download` - Download log file (secure)
+- **POST** `/api/logging/files/{filename}/clear` - Clear log file contents
+- **POST** `/api/logging/files/{filename}/rotate` - Rotate log file
+- **GET** `/api/logging/config` - Get logging configuration
+- **PUT** `/api/logging/config` - Update logging configuration
 
 ### Quiz Management
 - **POST** `/api/quiz/submit` - Submit quiz answers and get results
@@ -450,6 +478,14 @@ Quizly-1/
 ├── backend/
 │   ├── main.py              # FastAPI application
 │   ├── requirements.txt     # Python dependencies
+│   ├── requirements-dev.txt # Development dependencies
+│   ├── database.py          # Database operations
+│   ├── config_manager.py    # Configuration management
+│   ├── logging_config.py    # Logging configuration
+│   ├── llm_providers/       # LLM provider implementations
+│   │   ├── base.py          # Base provider interface
+│   │   ├── ollama_provider.py
+│   │   └── openai_provider.py
 │   └── quiz.db             # SQLite database (auto-generated)
 ├── frontend/
 │   ├── package.json        # React dependencies
@@ -460,12 +496,17 @@ Quizly-1/
 │       ├── index.js        # React entry point
 │       ├── index.css       # Global styles
 │       └── components/
-│           ├── Quiz.js     # Quiz logic component
-│           ├── Question.js # Question display component
-│           └── ScoreDisplay.js # Score display component
+│           ├── Quiz.js           # Quiz logic component
+│           ├── Question.js       # Question display component
+│           ├── ScoreDisplay.js   # Score display component
+│           ├── SubjectSelection.js # Subject selection
+│           ├── AdminPanel.js     # Admin interface
+│           ├── AdminQuestions.js # Question management
+│           ├── LLMSettings.js    # LLM configuration
+│           └── LoggingSettings.js # Logging management
 ├── tests/                  # Centralized test organization
 │   ├── backend/           # Backend tests
-│   │   ├── unit/          # Unit tests
+│   │   ├── unit/          # Unit tests (including security tests)
 │   │   ├── integration/   # Integration tests
 │   │   └── fixtures/      # Test fixtures
 │   ├── frontend/          # Frontend tests
@@ -473,10 +514,15 @@ Quizly-1/
 │   │   └── integration/   # Integration tests
 │   ├── e2e/              # End-to-end tests
 │   └── shared/           # Shared test utilities
+├── docs/                  # Documentation
+├── scripts/               # Utility scripts
+├── logs/                  # Application logs
+├── .github/workflows/     # GitHub Actions CI/CD
 ├── start.sh               # Application launcher
 ├── run_tests.sh          # Test runner script
+├── .env.example          # Environment variables template
 ├── README.md
-└── TESTING_GUIDE.md      # Comprehensive testing guide
+├── TESTING_GUIDE.md      # Comprehensive testing guide
 └── LICENSE
 ```
 
