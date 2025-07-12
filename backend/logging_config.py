@@ -100,6 +100,44 @@ class LoggingConfigManager:
         """Get current logging configuration."""
         return self._config.copy()
     
+    def _validate_safe_path(self, file_path: str) -> str:
+        """Validate and sanitize file path to prevent directory traversal attacks.
+        
+        Args:
+            file_path: The file path to validate
+            
+        Returns:
+            str: Safe, absolute path within the logs directory
+            
+        Raises:
+            ValueError: If the path is invalid or attempts directory traversal
+        """
+        import os.path
+        
+        # Remove any null bytes and strip whitespace
+        file_path = file_path.replace('\0', '').strip()
+        
+        # Reject empty paths
+        if not file_path:
+            raise ValueError("File path cannot be empty")
+        
+        # Reject paths with dangerous sequences
+        if '..' in file_path or file_path.startswith('/') or file_path.startswith('\\'):
+            raise ValueError("Invalid file path: directory traversal not allowed")
+        
+        # Get absolute path of logs directory
+        logs_abs_path = os.path.abspath(self.logs_dir)
+        
+        # Combine and resolve the path
+        candidate_path = os.path.join(logs_abs_path, file_path)
+        resolved_path = os.path.abspath(candidate_path)
+        
+        # Ensure the resolved path is within the logs directory
+        if not resolved_path.startswith(logs_abs_path + os.sep) and resolved_path != logs_abs_path:
+            raise ValueError("Invalid file path: access outside logs directory not allowed")
+        
+        return resolved_path
+    
     def update_config(self, updates: Dict[str, Any]) -> Dict[str, Any]:
         """Update logging configuration with new values."""
         try:
@@ -221,13 +259,17 @@ class LoggingConfigManager:
     def clear_log_file(self, file_path: str):
         """Clear contents of a specific log file."""
         try:
-            full_path = os.path.join(self.logs_dir, file_path)
+            # Validate path to prevent directory traversal
+            full_path = self._validate_safe_path(file_path)
             if os.path.exists(full_path):
                 with open(full_path, 'w') as f:
                     f.write("")
                 logger.info(f"Cleared log file: {file_path}")
             else:
                 raise FileNotFoundError(f"Log file not found: {file_path}")
+        except ValueError as e:
+            logger.error(f"Invalid file path {file_path}: {e}")
+            raise
         except Exception as e:
             logger.error(f"Error clearing log file {file_path}: {e}")
             raise
@@ -235,7 +277,8 @@ class LoggingConfigManager:
     def rotate_log_file(self, file_path: str):
         """Rotate a specific log file."""
         try:
-            full_path = os.path.join(self.logs_dir, file_path)
+            # Validate path to prevent directory traversal
+            full_path = self._validate_safe_path(file_path)
             if os.path.exists(full_path):
                 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
                 backup_path = f"{full_path}.{timestamp}"
@@ -243,6 +286,9 @@ class LoggingConfigManager:
                 logger.info(f"Rotated log file: {file_path} -> {backup_path}")
             else:
                 raise FileNotFoundError(f"Log file not found: {file_path}")
+        except ValueError as e:
+            logger.error(f"Invalid file path {file_path}: {e}")
+            raise
         except Exception as e:
             logger.error(f"Error rotating log file {file_path}: {e}")
             raise
