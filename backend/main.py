@@ -7,6 +7,7 @@ import json
 import uuid
 from datetime import datetime
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -82,6 +83,15 @@ def setup_logging():
 # Setup logging
 setup_logging()
 logger = logging.getLogger(__name__)
+
+
+def secure_log_path(file_path: str) -> str:
+    """Return an absolute path within the configured logs directory."""
+    base_dir = Path(logging_config_manager.logs_dir).resolve()
+    requested_path = (base_dir / file_path).resolve()
+    if not str(requested_path).startswith(str(base_dir)):
+        raise HTTPException(status_code=400, detail="Invalid file path")
+    return str(requested_path)
 
 app = FastAPI(title="Quizly API", description="Knowledge Testing Application API")
 
@@ -722,9 +732,8 @@ def download_log_file(file_path: str):
     """Download a specific log file"""
     try:
         from fastapi.responses import FileResponse
-        import os
         
-        full_path = os.path.join(logging_config_manager.logs_dir, file_path)
+        full_path = secure_log_path(file_path)
         if not os.path.exists(full_path):
             raise HTTPException(status_code=404, detail="Log file not found")
         
