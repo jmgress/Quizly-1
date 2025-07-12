@@ -2,27 +2,27 @@
 # Install with: pip install -r requirements-dev.txt
 
 # Testing framework
-pytest>=7.0.0
-pytest-asyncio>=0.23.0
-pytest-cov>=4.0.0
+pytest==8.4.1
+pytest-asyncio==1.0.0
+pytest-cov==6.2.1
 
 # HTTP client for API testing
-httpx>=0.25.0
+httpx==0.28.1
 requests==2.32.4
 
 # Test client for FastAPI
-fastapi[all]>=0.104.0
+fastapi[all]==0.115.14
 
 # Mock and testing utilities
-pytest-mock>=3.10.0
-requests-mock>=1.10.0
+pytest-mock==3.14.1
+requests-mock==1.12.1
 
 # Code quality tools
-black>=23.0.0
-flake8>=6.0.0
-mypy>=1.5.0
+black==25.1.0
+flake8==7.3.0
+mypy==1.16.1
 
 # Coverage reporting
-coverage>=7.0.0
+coverage==7.9.2
 urllib3==2.5.0 # not directly required, pinned by Snyk to avoid a vulnerability
 zipp==3.23.0 

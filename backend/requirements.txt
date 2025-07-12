@@ -72,4 +72,4 @@ typing-inspection==0.4.1
     # via pydantic
 uvicorn==0.35.0
     # via -r backend/requirements.txt
-zipp>=3.23.0 # not directly required, pinned by Snyk to avoid a vulnerability
+zipp==3.23.0 # not directly required, pinned by Snyk to avoid a vulnerability
