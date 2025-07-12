@@ -695,6 +695,11 @@ def download_llm_prompt_logs():
 def clear_log_file(file_path: str):
     """Clear a specific log file"""
     try:
+        # Sanitize file_path to prevent path traversal
+        secure_path = os.path.normpath(os.path.join(logging_config_manager.logs_dir, os.path.basename(file_path)))
+        if not secure_path.startswith(os.path.abspath(logging_config_manager.logs_dir)):
+            raise HTTPException(status_code=400, detail="Invalid log file path")
+
         logging_config_manager.clear_log_file(file_path)
         return {"success": True, "message": f"Log file {file_path} cleared successfully"}
     except FileNotFoundError as e:
@@ -708,6 +713,11 @@ def clear_log_file(file_path: str):
 def rotate_log_file(file_path: str):
     """Rotate a specific log file"""
     try:
+        # Sanitize file_path to prevent path traversal
+        secure_path = os.path.normpath(os.path.join(logging_config_manager.logs_dir, os.path.basename(file_path)))
+        if not secure_path.startswith(os.path.abspath(logging_config_manager.logs_dir)):
+            raise HTTPException(status_code=400, detail="Invalid log file path")
+
         logging_config_manager.rotate_log_file(file_path)
         return {"success": True, "message": f"Log file {file_path} rotated successfully"}
     except FileNotFoundError as e:
@@ -724,12 +734,13 @@ def download_log_file(file_path: str):
         from fastapi.responses import FileResponse
         import os
         
-        full_path = os.path.join(logging_config_manager.logs_dir, file_path)
-        if not os.path.exists(full_path):
+        # Sanitize file_path to prevent path traversal
+        secure_path = os.path.normpath(os.path.join(logging_config_manager.logs_dir, os.path.basename(file_path)))
+        if not secure_path.startswith(os.path.abspath(logging_config_manager.logs_dir)) or not os.path.exists(secure_path):
             raise HTTPException(status_code=404, detail="Log file not found")
         
         return FileResponse(
-            path=full_path,
+            path=secure_path,
             filename=os.path.basename(file_path),
             media_type="text/plain"
         )
