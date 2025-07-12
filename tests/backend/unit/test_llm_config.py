@@ -69,7 +69,7 @@ def test_llm_providers_import():
         assert "ollama" in str(e).lower() or "import" in str(e).lower()
     
     try:
-        openai_provider = create_llm_provider("openai", api_key="test-key")
+        openai_provider = create_llm_provider("openai")
         assert openai_provider is not None
     except Exception as e:
         # Expected if OpenAI package is not properly configured
