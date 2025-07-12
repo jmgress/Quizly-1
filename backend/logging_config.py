@@ -113,29 +113,29 @@ class LoggingConfigManager:
             ValueError: If the path is invalid or attempts directory traversal
         """
         import os.path
-        
+
         # Remove any null bytes and strip whitespace
         file_path = file_path.replace('\0', '').strip()
-        
+
         # Reject empty paths
         if not file_path:
             raise ValueError("File path cannot be empty")
-        
+
         # Reject paths with dangerous sequences
         if '..' in file_path or file_path.startswith('/') or file_path.startswith('\\'):
             raise ValueError("Invalid file path: directory traversal not allowed")
-        
-        # Get absolute path of logs directory
-        logs_abs_path = os.path.abspath(self.logs_dir)
-        
-        # Combine and resolve the path
+
+        # Get absolute, real path of logs directory (handle symlinks)
+        logs_abs_path = os.path.realpath(os.path.abspath(self.logs_dir))
+
+        # Combine and resolve the path, following symlinks
         candidate_path = os.path.join(logs_abs_path, file_path)
-        resolved_path = os.path.abspath(candidate_path)
-        
+        resolved_path = os.path.realpath(os.path.abspath(candidate_path))
+
         # Ensure the resolved path is within the logs directory
         if not resolved_path.startswith(logs_abs_path + os.sep) and resolved_path != logs_abs_path:
             raise ValueError("Invalid file path: access outside logs directory not allowed")
-        
+
         return resolved_path
     
     def update_config(self, updates: Dict[str, Any]) -> Dict[str, Any]:

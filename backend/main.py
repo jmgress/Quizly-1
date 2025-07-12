@@ -729,9 +729,11 @@ def download_log_file(file_path: str):
         if not os.path.exists(full_path):
             raise HTTPException(status_code=404, detail="Log file not found")
         
+        safe_filename = os.path.basename(full_path)
+
         return FileResponse(
             path=full_path,
-            filename=os.path.basename(file_path),
+            filename=safe_filename,
             media_type="text/plain"
         )
     except ValueError as e:
