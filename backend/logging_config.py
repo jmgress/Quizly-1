@@ -112,8 +112,12 @@ class LoggingConfigManager:
         Raises:
             ValueError: If the path is invalid or attempts directory traversal
         """
+        from urllib.parse import unquote
         import os.path
         
+        # URL-decode the file path
+        file_path = unquote(file_path)
+
         # Remove any null bytes and strip whitespace
         file_path = file_path.replace('\0', '').strip()
         
