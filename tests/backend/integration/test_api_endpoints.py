@@ -39,7 +39,7 @@ except Exception as e:
 
 # Test the questions endpoint
 try:
-    response = client.get("/api/questions?limit=5")
+    response = client.get("/api/questions?limit=10")
     logger.info(f"Questions endpoint response: {response.status_code}")
     data = response.json()
     logger.info(f"Questions endpoint returned {len(data)} questions")

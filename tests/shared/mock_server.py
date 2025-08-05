@@ -128,7 +128,7 @@ class MockQuizlyServer:
                 
                 elif path == '/api/questions/ai':
                     subject = query.get('subject', ['general'])[0]
-                    limit = int(query.get('limit', [5])[0])
+                    limit = int(query.get('limit', [10])[0])
                     model = query.get('model', ['gpt-3.5-turbo'])[0]
                     ai_questions = mock_server._generate_ai_questions(subject, limit, model)
                     self._send_json_response(ai_questions)

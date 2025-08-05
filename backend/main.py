@@ -389,12 +389,12 @@ def check_llm_health():
 
 
 @app.get("/api/questions/ai", response_model=List[Question])
-def generate_ai_questions(subject: str, limit: Optional[int] = 5, provider_type: Optional[str] = None, model: Optional[str] = None):
+def generate_ai_questions(subject: str, limit: Optional[int] = 10, provider_type: Optional[str] = None, model: Optional[str] = None):
     """Generate AI-powered questions for a specific subject using configured LLM provider"""
     try:
         # Get default limit from environment if not provided
         if limit is None:
-            limit = int(os.getenv("DEFAULT_QUESTION_LIMIT", "5"))
+            limit = int(os.getenv("DEFAULT_QUESTION_LIMIT", "10"))
         
         # Use provider from config manager or query parameter
         config = config_manager.get_config()
