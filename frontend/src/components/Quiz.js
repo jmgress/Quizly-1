@@ -20,6 +20,14 @@ const Quiz = ({ onRestart, category, source, model }) => {
     fetchQuestions();
   }, [category, source, model]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Restore selected answer when currentQuestionIndex changes
+  useEffect(() => {
+    if (questions.length > 0) {
+      const existingAnswer = answers[currentQuestionIndex];
+      setSelectedAnswer(existingAnswer ? existingAnswer.selected_answer : null);
+    }
+  }, [currentQuestionIndex, questions.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const fetchQuestions = async () => {
     try {
       setLoading(true);
@@ -63,7 +71,10 @@ const Quiz = ({ onRestart, category, source, model }) => {
       correct_answer: currentQuestion.correct_answer,
     };
 
-    setAnswers([...answers, newAnswer]);
+    // Update answers array at current question index instead of appending
+    const updatedAnswers = [...answers];
+    updatedAnswers[currentQuestionIndex] = newAnswer;
+    setAnswers(updatedAnswers);
     setShowFeedback(true);
 
     // Auto-advance to next question after showing feedback
@@ -74,9 +85,26 @@ const Quiz = ({ onRestart, category, source, model }) => {
         setShowFeedback(false);
       } else {
         // Quiz complete - submit answers
-        submitQuiz([...answers, newAnswer]);
+        submitQuiz(updatedAnswers);
       }
     }, 2000);
+  };
+
+  const goToPreviousQuestion = () => {
+    if (currentQuestionIndex > 0 && !showFeedback && !loading) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      // Restore previously selected answer for this question
+      const previousAnswer = answers[currentQuestionIndex - 1];
+      setSelectedAnswer(previousAnswer ? previousAnswer.selected_answer : null);
+      setShowFeedback(false);
+    }
+  };
+
+  const goToSubjectSelection = () => {
+    // Navigate back to subject selection screen
+    if (currentQuestionIndex === 0 && !showFeedback && !loading) {
+      onRestart();
+    }
   };
 
   const submitQuiz = async (finalAnswers) => {
@@ -169,13 +197,33 @@ const Quiz = ({ onRestart, category, source, model }) => {
       />
       
       {!showFeedback && (
-        <button 
-          className="button" 
-          onClick={handleAnswerSubmit}
-          disabled={!selectedAnswer}
-        >
-          Submit Answer
-        </button>
+        <div className="quiz-actions">
+          {currentQuestionIndex > 0 ? (
+            <button 
+              className="button secondary" 
+              onClick={goToPreviousQuestion}
+              disabled={showFeedback || loading}
+            >
+              ← Back
+            </button>
+          ) : (
+            <button 
+              className="button secondary" 
+              onClick={goToSubjectSelection}
+              disabled={showFeedback || loading}
+            >
+              ← Subject Selection
+            </button>
+          )}
+          
+          <button 
+            className="button" 
+            onClick={handleAnswerSubmit}
+            disabled={!selectedAnswer}
+          >
+            Submit Answer
+          </button>
+        </div>
       )}
     </div>
   );
