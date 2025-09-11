@@ -43,6 +43,42 @@ docs/
 ## 🔧 Contributing
 
 When adding new documentation:
+## Architecture Diagram
+
+```mermaid
+graph TD
+	subgraph Frontend
+		FE[React App]
+		FE -->|API Calls| API
+	end
+
+	subgraph Backend
+		API[main.py - API Server]
+		DB[quiz.db]
+		LLM[llm_providers]
+		LOG[logging_config.py]
+		CFG[config_manager.py]
+		API --> DB
+		API --> LLM
+		API --> LOG
+		API --> CFG
+	end
+
+	subgraph Docs
+		DOCS[Documentation]
+	end
+
+	subgraph Tests
+		TESTS[Unit/Integration/E2E Tests]
+	end
+
+	FE --> DOCS
+	FE --> TESTS
+	API --> LOG
+	API --> CFG
+	API --> DOCS
+	API --> TESTS
+```
 
 1. **Follow clean code principles** - Use clear, descriptive filenames
 2. **Maintain consistent formatting** - Follow the existing markdown style
