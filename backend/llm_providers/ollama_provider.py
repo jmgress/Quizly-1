@@ -38,7 +38,7 @@ class OllamaProvider(LLMProvider):
             logger.error("Ollama package not installed. Install with: pip install ollama")
             raise ImportError("Ollama package not available")
 
-    def generate_questions(self, subject: str, limit: int = 5) -> List[Dict[str, Any]]:
+    def generate_questions(self, subject: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Generate questions using Ollama."""
         if not self._ollama:
             raise RuntimeError("Ollama client not initialized")

@@ -41,7 +41,7 @@ class TestFullWorkflow:
         
         # 2. Get questions for a category
         category = categories[0]
-        response = requests.get(f"{API_BASE_URL}/api/questions?category={category}&limit=5")
+        response = requests.get(f"{API_BASE_URL}/api/questions?category={category}&limit=10")
         assert response.status_code == 200
         questions = response.json()
         assert len(questions) > 0

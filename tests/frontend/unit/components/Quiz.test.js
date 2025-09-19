@@ -91,7 +91,7 @@ describe('Quiz Component', () => {
     });
 
     // Check if API was called with correct URL for AI questions
-    expect(axios.get).toHaveBeenCalledWith('http://localhost:8000/api/questions/ai?subject=geography&limit=5&model=llama3.2');
+    expect(axios.get).toHaveBeenCalledWith('http://localhost:8000/api/questions/ai?subject=geography&limit=10&model=llama3.2');
   });
 
   it('progresses through questions when answers are selected', async () => {

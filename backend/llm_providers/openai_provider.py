@@ -43,7 +43,7 @@ class OpenAIProvider(LLMProvider):
             logger.error("OpenAI package not installed. Install with: pip install openai")
             raise ImportError("OpenAI package not available")
 
-    def generate_questions(self, subject: str, limit: int = 5) -> List[Dict[str, Any]]:
+    def generate_questions(self, subject: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Generate questions using OpenAI."""
         if not self._client:
             raise RuntimeError("OpenAI client not initialized")

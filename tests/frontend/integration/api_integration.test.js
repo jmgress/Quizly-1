@@ -47,10 +47,10 @@ describe('API Integration Tests', () => {
 
       mockedAxios.get.mockResolvedValueOnce({ data: mockAIQuestions });
 
-      const response = await axios.get('http://localhost:8000/api/questions/ai?subject=python&limit=5');
+      const response = await axios.get('http://localhost:8000/api/questions/ai?subject=python&limit=10');
       
       expect(response.data).toEqual(mockAIQuestions);
-      expect(mockedAxios.get).toHaveBeenCalledWith('http://localhost:8000/api/questions/ai?subject=python&limit=5');
+      expect(mockedAxios.get).toHaveBeenCalledWith('http://localhost:8000/api/questions/ai?subject=python&limit=10');
     });
 
     it('should handle API errors gracefully', async () => {

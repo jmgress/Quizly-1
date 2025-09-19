@@ -8,7 +8,7 @@ class LLMProvider(ABC):
     """Abstract base class for LLM providers."""
 
     @abstractmethod
-    def generate_questions(self, subject: str, limit: int = 5) -> List[Dict[str, Any]]:
+    def generate_questions(self, subject: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Generate quiz questions for a given subject."""
         pass
 

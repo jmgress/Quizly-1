@@ -27,7 +27,7 @@ const Quiz = ({ onRestart, category, source, model }) => {
       
       if (source === 'ai') {
         // Fetch AI-generated questions
-        url = `${API_BASE_URL}/api/questions/ai?subject=${encodeURIComponent(category)}&limit=5`;
+        url = `${API_BASE_URL}/api/questions/ai?subject=${encodeURIComponent(category)}&limit=10`;
         if (model) {
           url += `&model=${encodeURIComponent(model)}`;
         }
