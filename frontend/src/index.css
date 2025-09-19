@@ -1,3 +1,66 @@
+/* Dark mode styles */
+[data-theme="dark"] {
+  background: linear-gradient(135deg, #232526 0%, #414345 100%);
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .container {
+  background: none;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .card {
+  background: #232526;
+  color: #e0e0e0;
+  border: 1px solid #444;
+}
+
+[data-theme="dark"] .button {
+  background: #444;
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .button:hover {
+  background: #667eea;
+  color: #fff;
+}
+
+[data-theme="dark"] .question-text {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .option-button {
+  background: #333;
+  color: #e0e0e0;
+  border-color: #444;
+}
+
+[data-theme="dark"] .option-button.selected {
+  background: #667eea;
+  color: #fff;
+}
+
+[data-theme="dark"] .option-button.correct {
+  background: #28a745;
+  color: #fff;
+}
+
+[data-theme="dark"] .option-button.incorrect {
+  background: #dc3545;
+  color: #fff;
+}
+
+[data-theme="dark"] .score-number {
+  color: #e0e0e0;
+}
+
+[data-theme="dark"] .score-message {
+  color: #bbb;
+}
+
+[data-theme="dark"] .llm-status {
+  color: #e0e0e0;
+}
 * {
   margin: 0;
   padding: 0;
