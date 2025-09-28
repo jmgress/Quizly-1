@@ -12,12 +12,18 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
+# Activate virtual environment if it exists
+if [ -d ".venv" ]; then
+    echo "🐍 Activating virtual environment..."
+    source .venv/bin/activate
+fi
+
 # Check for required Python packages
 echo "🔍 Checking Python dependencies..."
 cd backend
-if ! python3 -c "import dotenv" &> /dev/null; then
+if ! python -c "import dotenv" &> /dev/null; then
     echo "📦 Installing required Python packages..."
-    pip install -r requirements.txt || pip install python-dotenv fastapi uvicorn sqlalchemy
+    python -m pip install -r requirements.txt || python -m pip install python-dotenv fastapi uvicorn sqlalchemy
 fi
 cd ..
 
@@ -60,7 +66,7 @@ fi
 # Start backend server
 echo "🚀 Starting FastAPI backend on http://localhost:8000..."
 cd backend
-python3 main.py > ../backend_log.txt 2>&1 &
+python main.py > ../backend_log.txt 2>&1 &
 BACKEND_PID=$!
 cd ..
 
