@@ -20,6 +20,45 @@ const Quiz = ({ onRestart, category, source, model }) => {
     fetchQuestions();
   }, [category, source, model]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Function to shuffle answer options while maintaining correct answer mapping
+  const shuffleAnswers = (questions) => {
+    return questions.map(question => {
+      // Create a copy of the question to avoid mutating the original
+      const shuffledQuestion = { ...question };
+      
+      // Create array of options with their original IDs
+      const optionsWithOriginalIds = shuffledQuestion.options.map((option, index) => ({
+        ...option,
+        originalId: option.id
+      }));
+      
+      // Shuffle the options array
+      const shuffledOptions = [...optionsWithOriginalIds];
+      for (let i = shuffledOptions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledOptions[i], shuffledOptions[j]] = [shuffledOptions[j], shuffledOptions[i]];
+      }
+      
+      // Reassign IDs to maintain a, b, c, d structure but find new correct answer
+      const newOptions = shuffledOptions.map((option, index) => ({
+        id: String.fromCharCode(97 + index), // 'a', 'b', 'c', 'd'
+        text: option.text
+      }));
+      
+      // Find the new ID for the correct answer
+      const correctOptionIndex = shuffledOptions.findIndex(
+        option => option.originalId === question.correct_answer
+      );
+      const newCorrectAnswer = String.fromCharCode(97 + correctOptionIndex);
+      
+      return {
+        ...shuffledQuestion,
+        options: newOptions,
+        correct_answer: newCorrectAnswer
+      };
+    });
+  };
+
   const fetchQuestions = async () => {
     try {
       setLoading(true);
@@ -37,7 +76,9 @@ const Quiz = ({ onRestart, category, source, model }) => {
       }
       
       const response = await axios.get(url);
-      setQuestions(response.data);
+      // Shuffle the answer options for each question
+      const questionsWithShuffledAnswers = shuffleAnswers(response.data);
+      setQuestions(questionsWithShuffledAnswers);
       setLoading(false);
     } catch (err) {
       if (source === 'ai') {
