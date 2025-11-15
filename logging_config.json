@@ -17,6 +17,17 @@
     "include_timing": true,
     "include_full_response": true
   },
+  "llm_verbose_logging": {
+    "enabled": false,
+    "level": "detailed",
+    "providers": ["ollama", "openai"],
+    "include_responses": true,
+    "include_metadata": true,
+    "log_file": "backend/llm_prompts_verbose.log",
+    "max_file_size_mb": 50,
+    "retention_days": 30,
+    "sanitize_api_keys": true
+  },
   "file_settings": {
     "enable_file_logging": true,
     "log_directory": "logs",

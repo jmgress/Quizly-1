@@ -45,8 +45,12 @@ class OllamaProvider(LLMProvider):
 
         prompt = self._create_prompt(subject, limit)
         start_time = time.time()
+        request_id = None
 
         try:
+            import uuid
+            request_id = str(uuid.uuid4())
+            
             response = self._ollama.chat(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
@@ -56,6 +60,22 @@ class OllamaProvider(LLMProvider):
             content = response["message"]["content"]
             result = self._parse_response(content, subject, limit)
             
+            # Enhanced metadata for verbose logging
+            enhanced_metadata = {
+                "subject": subject,
+                "limit": limit,
+                "questions_generated": len(result),
+                "request_id": request_id,
+                "model": self.model,
+                "provider": "ollama"
+            }
+            
+            timing = {
+                "start_time": start_time,
+                "end_time": end_time,
+                "duration_ms": round((end_time - start_time) * 1000, 2)
+            }
+            
             # Log successful interaction
             if self.prompt_logger:
                 self.prompt_logger.log_prompt(
@@ -63,17 +83,11 @@ class OllamaProvider(LLMProvider):
                     model=self.model,
                     prompt=prompt,
                     response=content,
-                    metadata={
-                        "subject": subject,
-                        "limit": limit,
-                        "questions_generated": len(result)
-                    },
-                    timing={
-                        "start_time": start_time,
-                        "end_time": end_time,
-                        "duration_ms": round((end_time - start_time) * 1000, 2)
-                    },
-                    level="INFO"
+                    metadata=enhanced_metadata,
+                    timing=timing,
+                    level="INFO",
+                    request_id=request_id,
+                    status_code=200
                 )
             
             return result
@@ -81,23 +95,34 @@ class OllamaProvider(LLMProvider):
         except Exception as e:
             end_time = time.time()
             
+            # Enhanced metadata for error logging
+            enhanced_metadata = {
+                "subject": subject,
+                "limit": limit,
+                "request_id": request_id,
+                "model": self.model,
+                "provider": "ollama",
+                "error_type": type(e).__name__
+            }
+            
+            timing = {
+                "start_time": start_time,
+                "end_time": end_time,
+                "duration_ms": round((end_time - start_time) * 1000, 2)
+            }
+            
             # Log failed interaction
             if self.prompt_logger:
                 self.prompt_logger.log_prompt(
                     provider="ollama",
                     model=self.model,
                     prompt=prompt,
-                    metadata={
-                        "subject": subject,
-                        "limit": limit
-                    },
-                    timing={
-                        "start_time": start_time,
-                        "end_time": end_time,
-                        "duration_ms": round((end_time - start_time) * 1000, 2)
-                    },
+                    metadata=enhanced_metadata,
+                    timing=timing,
                     error=str(e),
-                    level="ERROR"
+                    level="ERROR",
+                    request_id=request_id,
+                    status_code=500
                 )
             
             logger.error(f"Ollama API call failed: {str(e)}")

@@ -6,6 +6,7 @@ import logging
 from typing import Dict, Any, Optional, List
 from datetime import datetime
 import glob
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,17 @@ class LoggingConfigManager:
                 "include_metadata": True,
                 "include_timing": True,
                 "include_full_response": False
+            },
+            "llm_verbose_logging": {
+                "enabled": False,
+                "level": "detailed",
+                "providers": ["ollama", "openai"],
+                "include_responses": True,
+                "include_metadata": True,
+                "log_file": "backend/llm_prompts_verbose.log",
+                "max_file_size_mb": 50,
+                "retention_days": 30,
+                "sanitize_api_keys": True
             },
             "file_settings": {
                 "enable_file_logging": True,
@@ -387,6 +399,168 @@ class LoggingConfigManager:
             logger.error(f"Error reading LLM prompt logs: {e}")
         
         return sorted(log_entries, key=lambda x: x.get("timestamp", ""), reverse=True)
+    
+    def is_verbose_logging_enabled(self) -> bool:
+        """Check if verbose LLM logging is enabled."""
+        return self._config.get("llm_verbose_logging", {}).get("enabled", False)
+    
+    def get_verbose_logging_level(self) -> str:
+        """Get verbose logging level (basic, detailed, full)."""
+        return self._config.get("llm_verbose_logging", {}).get("level", "detailed")
+    
+    def get_verbose_logging_providers(self) -> List[str]:
+        """Get list of providers to log verbosely."""
+        return self._config.get("llm_verbose_logging", {}).get("providers", ["ollama", "openai"])
+    
+    def get_verbose_log_file(self) -> str:
+        """Get verbose log file path."""
+        return self._config.get("llm_verbose_logging", {}).get("log_file", "backend/llm_prompts_verbose.log")
+    
+    def _sanitize_for_logging(self, text: str) -> str:
+        """Sanitize text to remove potential API keys or sensitive data."""
+        import re
+        
+        # Pattern for common API key formats
+        patterns = [
+            (r'sk-[a-zA-Z0-9]{20,}', '[API_KEY_REDACTED]'),  # OpenAI keys
+            (r'Bearer\s+[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+', '[JWT_TOKEN_REDACTED]'),  # JWT tokens
+            (r'api[_-]?key["\s:=]+[a-zA-Z0-9]{20,}', '[API_KEY_REDACTED]'),  # Generic API keys
+            (r'token["\s:=]+[a-zA-Z0-9]{20,}', '[TOKEN_REDACTED]'),  # Generic tokens
+        ]
+        
+        sanitized = text
+        for pattern, replacement in patterns:
+            sanitized = re.sub(pattern, replacement, sanitized, flags=re.IGNORECASE)
+        
+        return sanitized
+    
+    def log_verbose_llm_interaction(self, provider: str, model: str, prompt: str, 
+                                   response: str = None, metadata: Dict[str, Any] = None,
+                                   timing: Dict[str, Any] = None, error: str = None,
+                                   request_id: str = None, status_code: int = None):
+        """Log verbose LLM interaction with full details."""
+        if not self.is_verbose_logging_enabled():
+            return
+        
+        # Check if provider should be logged
+        enabled_providers = self.get_verbose_logging_providers()
+        if provider not in enabled_providers:
+            return
+        
+        try:
+            verbose_level = self.get_verbose_logging_level()
+            
+            log_entry = {
+                "timestamp": datetime.now().isoformat(),
+                "request_id": request_id or str(uuid.uuid4()),
+                "provider": provider,
+                "model": model,
+                "status": "error" if error else "success",
+            }
+            
+            # Add status code if available
+            if status_code is not None:
+                log_entry["status_code"] = status_code
+            
+            # Add prompt based on verbosity level
+            sanitize = self._config.get("llm_verbose_logging", {}).get("sanitize_api_keys", True)
+            
+            if verbose_level == "basic":
+                # Basic: Just metadata, no content
+                log_entry["prompt_length"] = len(prompt)
+                if response:
+                    log_entry["response_length"] = len(response)
+            elif verbose_level == "detailed":
+                # Detailed: Include prompts and responses with truncation
+                prompt_text = self._sanitize_for_logging(prompt) if sanitize else prompt
+                log_entry["prompt"] = prompt_text[:1000] + "..." if len(prompt_text) > 1000 else prompt_text
+                
+                if response and self._config.get("llm_verbose_logging", {}).get("include_responses", True):
+                    response_text = self._sanitize_for_logging(response) if sanitize else response
+                    log_entry["response"] = response_text[:1000] + "..." if len(response_text) > 1000 else response_text
+            else:  # full
+                # Full: Complete prompts and responses
+                prompt_text = self._sanitize_for_logging(prompt) if sanitize else prompt
+                log_entry["prompt_full"] = prompt_text
+                
+                if response and self._config.get("llm_verbose_logging", {}).get("include_responses", True):
+                    response_text = self._sanitize_for_logging(response) if sanitize else response
+                    log_entry["response_full"] = response_text
+            
+            # Add metadata if configured and available
+            if self._config.get("llm_verbose_logging", {}).get("include_metadata", True) and metadata:
+                log_entry["metadata"] = metadata
+            
+            # Add timing information
+            if timing:
+                log_entry["timing"] = timing
+            
+            # Add error if present
+            if error:
+                log_entry["error"] = error
+            
+            # Write to verbose log file
+            log_file_path = os.path.join(self.logs_dir, self.get_verbose_log_file())
+            log_dir = os.path.dirname(log_file_path)
+            if log_dir:
+                os.makedirs(log_dir, exist_ok=True)
+            
+            with open(log_file_path, 'a') as f:
+                f.write(f"{json.dumps(log_entry)}\n")
+                
+        except Exception as e:
+            logger.error(f"Error logging verbose LLM interaction: {e}")
+    
+    def get_verbose_llm_logs(self, max_entries: int = 100, provider: str = None) -> List[Dict[str, Any]]:
+        """Get recent verbose LLM logs, optionally filtered by provider."""
+        log_entries = []
+        
+        try:
+            log_file_path = os.path.join(self.logs_dir, self.get_verbose_log_file())
+            if os.path.exists(log_file_path):
+                with open(log_file_path, 'r') as f:
+                    lines = f.readlines()
+                    
+                for line in lines[-max_entries*2:]:  # Read more to account for filtering
+                    try:
+                        entry = json.loads(line.strip())
+                        # Filter by provider if specified
+                        if provider is None or entry.get("provider") == provider:
+                            log_entries.append(entry)
+                    except json.JSONDecodeError:
+                        continue
+                        
+        except Exception as e:
+            logger.error(f"Error reading verbose LLM logs: {e}")
+        
+        # Sort and limit results
+        log_entries = sorted(log_entries, key=lambda x: x.get("timestamp", ""), reverse=True)
+        return log_entries[:max_entries]
+    
+    def clear_verbose_logs(self):
+        """Clear verbose LLM logs."""
+        try:
+            log_file_path = os.path.join(self.logs_dir, self.get_verbose_log_file())
+            if os.path.exists(log_file_path):
+                with open(log_file_path, 'w') as f:
+                    f.write("")
+                logger.info("Cleared verbose LLM logs")
+        except Exception as e:
+            logger.error(f"Error clearing verbose logs: {e}")
+            raise
+    
+    def rotate_verbose_logs(self):
+        """Rotate verbose LLM logs."""
+        try:
+            log_file_path = os.path.join(self.logs_dir, self.get_verbose_log_file())
+            if os.path.exists(log_file_path):
+                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                backup_path = f"{log_file_path}.{timestamp}"
+                os.rename(log_file_path, backup_path)
+                logger.info(f"Rotated verbose logs to {backup_path}")
+        except Exception as e:
+            logger.error(f"Error rotating verbose logs: {e}")
+            raise
 
 
 # Global instance

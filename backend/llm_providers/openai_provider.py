@@ -50,8 +50,12 @@ class OpenAIProvider(LLMProvider):
 
         prompt = self._create_prompt(subject, limit)
         start_time = time.time()
+        request_id = None
 
         try:
+            import uuid
+            request_id = str(uuid.uuid4())
+            
             response = self._client.chat.completions.create(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
@@ -63,6 +67,27 @@ class OpenAIProvider(LLMProvider):
             content = response.choices[0].message.content
             result = self._parse_response(content, subject, limit)
             
+            # Enhanced metadata for verbose logging with token usage
+            enhanced_metadata = {
+                "subject": subject,
+                "limit": limit,
+                "questions_generated": len(result),
+                "request_id": request_id,
+                "model": self.model,
+                "provider": "openai",
+                "temperature": 0.7,
+                "max_tokens": 2000,
+                "completion_tokens": response.usage.completion_tokens if hasattr(response, 'usage') else None,
+                "prompt_tokens": response.usage.prompt_tokens if hasattr(response, 'usage') else None,
+                "total_tokens": response.usage.total_tokens if hasattr(response, 'usage') else None
+            }
+            
+            timing = {
+                "start_time": start_time,
+                "end_time": end_time,
+                "duration_ms": round((end_time - start_time) * 1000, 2)
+            }
+            
             # Log successful interaction
             if self.prompt_logger:
                 self.prompt_logger.log_prompt(
@@ -70,19 +95,11 @@ class OpenAIProvider(LLMProvider):
                     model=self.model,
                     prompt=prompt,
                     response=content,
-                    metadata={
-                        "subject": subject,
-                        "limit": limit,
-                        "questions_generated": len(result),
-                        "temperature": 0.7,
-                        "max_tokens": 2000
-                    },
-                    timing={
-                        "start_time": start_time,
-                        "end_time": end_time,
-                        "duration_ms": round((end_time - start_time) * 1000, 2)
-                    },
-                    level="INFO"
+                    metadata=enhanced_metadata,
+                    timing=timing,
+                    level="INFO",
+                    request_id=request_id,
+                    status_code=200
                 )
             
             return result
@@ -90,25 +107,36 @@ class OpenAIProvider(LLMProvider):
         except Exception as e:
             end_time = time.time()
             
+            # Enhanced metadata for error logging
+            enhanced_metadata = {
+                "subject": subject,
+                "limit": limit,
+                "request_id": request_id,
+                "model": self.model,
+                "provider": "openai",
+                "temperature": 0.7,
+                "max_tokens": 2000,
+                "error_type": type(e).__name__
+            }
+            
+            timing = {
+                "start_time": start_time,
+                "end_time": end_time,
+                "duration_ms": round((end_time - start_time) * 1000, 2)
+            }
+            
             # Log failed interaction
             if self.prompt_logger:
                 self.prompt_logger.log_prompt(
                     provider="openai",
                     model=self.model,
                     prompt=prompt,
-                    metadata={
-                        "subject": subject,
-                        "limit": limit,
-                        "temperature": 0.7,
-                        "max_tokens": 2000
-                    },
-                    timing={
-                        "start_time": start_time,
-                        "end_time": end_time,
-                        "duration_ms": round((end_time - start_time) * 1000, 2)
-                    },
+                    metadata=enhanced_metadata,
+                    timing=timing,
                     error=str(e),
-                    level="ERROR"
+                    level="ERROR",
+                    request_id=request_id,
+                    status_code=500
                 )
             
             logger.error(f"OpenAI API call failed: {str(e)}")

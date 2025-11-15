@@ -691,6 +691,55 @@ def download_llm_prompt_logs():
         raise HTTPException(status_code=500, detail=f"Failed to download LLM prompt logs: {str(e)}")
 
 
+@app.get("/api/logging/verbose-llm-prompts")
+def get_verbose_llm_prompt_logs(max_entries: int = 100, provider: Optional[str] = None):
+    """Get recent verbose LLM prompt logs, optionally filtered by provider"""
+    try:
+        logs = logging_config_manager.get_verbose_llm_logs(max_entries, provider)
+        return {
+            "logs": logs,
+            "enabled": logging_config_manager.is_verbose_logging_enabled(),
+            "level": logging_config_manager.get_verbose_logging_level(),
+            "providers": logging_config_manager.get_verbose_logging_providers()
+        }
+    except Exception as e:
+        logger.error(f"Error getting verbose LLM prompt logs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get verbose LLM prompt logs: {str(e)}")
+
+
+@app.post("/api/logging/verbose-llm-prompts/clear")
+def clear_verbose_llm_prompt_logs():
+    """Clear verbose LLM prompt logs"""
+    try:
+        logging_config_manager.clear_verbose_logs()
+        return {"message": "Verbose LLM prompt logs cleared successfully"}
+    except Exception as e:
+        logger.error(f"Error clearing verbose LLM prompt logs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to clear verbose LLM prompt logs: {str(e)}")
+
+
+@app.post("/api/logging/verbose-llm-prompts/rotate")
+def rotate_verbose_llm_prompt_logs():
+    """Rotate verbose LLM prompt logs"""
+    try:
+        logging_config_manager.rotate_verbose_logs()
+        return {"message": "Verbose LLM prompt logs rotated successfully"}
+    except Exception as e:
+        logger.error(f"Error rotating verbose LLM prompt logs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to rotate verbose LLM prompt logs: {str(e)}")
+
+
+@app.get("/api/logging/verbose-llm-prompts/download")
+def download_verbose_llm_prompt_logs():
+    """Download verbose LLM prompt logs"""
+    try:
+        log_file = logging_config_manager.get_verbose_log_file()
+        return download_log_file(log_file)
+    except Exception as e:
+        logger.error(f"Error downloading verbose LLM prompt logs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to download verbose LLM prompt logs: {str(e)}")
+
+
 @app.post("/api/logging/files/{file_path:path}/clear")
 def clear_log_file(file_path: str):
     """Clear a specific log file"""
