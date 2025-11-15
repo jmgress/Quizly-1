@@ -717,6 +717,10 @@ def rotate_log_file(file_path: str):
         raise HTTPException(status_code=500, detail=f"Failed to rotate log file: {str(e)}")
 
 
+# Endpoint: Download a specific log file by path.
+# - Uses safe_join to prevent directory traversal attacks.
+# - Only allows access to files within the logs directory.
+# - Returns the requested log file as a plain text response.
 @app.get("/api/logging/files/{file_path:path}/download")
 def download_log_file(file_path: str):
     """Download a specific log file"""
