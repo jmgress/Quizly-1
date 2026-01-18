@@ -49,6 +49,115 @@ An interactive web-based quiz application that allows users to test their knowle
 - **Axios**: HTTP client for API communication
 - **CSS3**: Modern styling with responsive design
 
+## 🔄 Application Flow
+
+The following diagram illustrates the complete user journey and system interactions in Quizly:
+
+```mermaid
+flowchart TD
+    A[🏠 User Visits Quizly] --> B{🔍 Check URL Hash}
+    B -->|hash=#admin| C[🔧 Admin Panel]
+    B -->|no hash| D[🎯 Home Screen]
+    
+    D --> E[🤖 Load LLM Config]
+    E --> F[📱 Display Home Screen]
+    F --> G{🎮 User Action}
+    
+    G -->|Start Quiz| H[📚 Subject Selection]
+    G -->|Admin Panel| C
+    G -->|🌙/☀️ Toggle Theme| I[🎨 Theme Manager]
+    
+    I --> J[💾 Save to localStorage]
+    J --> K[🎨 Apply CSS Theme]
+    K --> F
+    
+    H --> L{📋 Select Question Source}
+    L -->|Database Questions| M[🗄️ Fetch from SQLite]
+    L -->|AI Generated| N[🤖 LLM Provider Selection]
+    
+    N --> O{🔌 Provider Type}
+    O -->|Ollama| P[🦙 Ollama API Call]
+    O -->|OpenAI| Q[🔮 OpenAI API Call]
+    
+    P --> R[📝 Generate Questions]
+    Q --> R
+    M --> S[📊 Quiz Component]
+    R --> S
+    
+    S --> T[❓ Display Question]
+    T --> U{👆 User Interaction}
+    
+    U -->|Select Answer| V[✅ Record Answer]
+    U -->|Next Question| W{🔢 More Questions?}
+    
+    V --> W
+    W -->|Yes| T
+    W -->|No| X[🏆 Calculate Score]
+    
+    X --> Y[📈 Display Results]
+    Y --> Z{🔄 User Choice}
+    
+    Z -->|Restart Quiz| F
+    Z -->|New Subject| H
+    Z -->|Home| F
+    
+    C --> AA[⚙️ Admin Functions]
+    AA --> BB{🛠️ Admin Action}
+    
+    BB -->|Manage Questions| CC[📝 Question Management]
+    BB -->|LLM Settings| DD[🤖 LLM Configuration]
+    BB -->|Logging Settings| EE[📋 Log Management]
+    BB -->|View Logs| FF[📄 Log Viewer]
+    
+    CC --> GG[💾 Database Operations]
+    DD --> HH[🔧 Update Config]
+    EE --> II[⚙️ Logging Config]
+    FF --> JJ[📁 Secure File Access]
+    
+    GG --> C
+    HH --> C
+    II --> C
+    JJ --> C
+
+    %% Error Handling Paths
+    P -.->|API Error| KK[⚠️ Error Handler]
+    Q -.->|API Error| KK
+    M -.->|DB Error| KK
+    JJ -.->|Path Traversal Block| LL[🛡️ Security Filter]
+    
+    KK --> MM[📢 User Notification]
+    LL --> MM
+    MM --> F
+
+    %% Background Processes
+    N1[🔄 Health Checks] -.-> O
+    N2[📊 Logging System] -.-> AA
+    N3[🛡️ Security Scans] -.-> GG
+    
+    classDef userAction fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef systemProcess fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef database fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef llmProvider fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef security fill:#ffebee,stroke:#b71c1c,stroke-width:2px
+    classDef admin fill:#f1f8e9,stroke:#33691e,stroke-width:2px
+    
+    class A,G,U,Z,BB userAction
+    class E,I,S,T,X,Y systemProcess
+    class M,GG database
+    class N,O,P,Q,R llmProvider
+    class KK,LL,MM,N3 security
+    class C,AA,CC,DD,EE,FF admin
+```
+
+### Key Flow Components
+
+1. **🏠 User Journey**: Home → Subject Selection → Quiz → Results
+2. **🤖 LLM Integration**: Dynamic provider selection (Ollama/OpenAI) with health checks
+3. **🔧 Admin Functions**: Question management, LLM configuration, logging oversight
+4. **🛡️ Security Layer**: Path traversal protection, error handling, input validation
+5. **🎨 Theme System**: Persistent user preferences with localStorage
+6. **📊 Data Flow**: SQLite database ↔ FastAPI backend ↔ React frontend
+
 ## Quick Start
 
 ### Prerequisites

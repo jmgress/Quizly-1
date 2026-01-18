@@ -1,5 +1,5 @@
 ---
-mode: ask
+mode: agent
 ---
 
 # Comprehensive Code Review Assistant
