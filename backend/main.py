@@ -145,6 +145,14 @@ class QuizResult(BaseModel):
     score_percentage: float
     answers: List[dict]
 
+class QuizSession(BaseModel):
+    id: str
+    total_questions: int
+    correct_answers: int
+    score_percentage: float
+    created_at: str
+    answers: Optional[List[dict]] = None
+
 # Initialize database on startup
 logger.info("Initializing database...")
 init_db()
@@ -260,6 +268,28 @@ def submit_quiz(submission: QuizSubmission):
         score_percentage=score_percentage,
         answers=answer_details
     )
+
+@app.get("/api/quiz/sessions", response_model=List[QuizSession])
+def get_quiz_sessions(limit: Optional[int] = 100):
+    """Get all quiz sessions ordered by creation date"""
+    conn = sqlite3.connect('quiz.db')
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM quiz_sessions ORDER BY created_at DESC LIMIT ?", (limit,))
+
+    sessions = []
+    for row in cursor.fetchall():
+        sessions.append({
+            "id": row[0],
+            "total_questions": row[1],
+            "correct_answers": row[2],
+            "score_percentage": row[3],
+            "created_at": row[4],
+            "answers": json.loads(row[5]) if row[5] else []
+        })
+
+    conn.close()
+    return sessions
 
 @app.get("/api/quiz/{quiz_id}", response_model=QuizResult)
 def get_quiz_result(quiz_id: str):
