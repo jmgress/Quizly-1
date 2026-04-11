@@ -1,98 +1,77 @@
-#!/usr/bin/env python3
+"""Tests for basic database functionality."""
 
-# Test script to check basic functionality
+import pytest
 import sqlite3
 import json
-import uuid
-import sys
-import os
-from datetime import datetime
 
-# Add backend directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'backend'))
 
-def test_database():
-    """Test database functionality"""
-    print("Testing database setup...")
-    
-    # Initialize database
-    conn = sqlite3.connect('/tmp/test_quiz.db')
+def test_database(tmp_path):
+    """Test database creation, insertion, and retrieval."""
+    db_path = str(tmp_path / "test_quiz.db")
+    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
-    
-    # Create questions table
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS questions (
+
+    cursor.execute(
+        """CREATE TABLE IF NOT EXISTS questions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             text TEXT NOT NULL,
             options TEXT NOT NULL,
             correct_answer TEXT NOT NULL,
             category TEXT DEFAULT 'general'
-        )
-    ''')
-    
-    # Insert sample question
+        )"""
+    )
+
     sample_question = {
         "text": "What is the capital of France?",
         "options": [
             {"id": "a", "text": "London"},
-            {"id": "b", "text": "Berlin"}, 
+            {"id": "b", "text": "Berlin"},
             {"id": "c", "text": "Paris"},
-            {"id": "d", "text": "Madrid"}
+            {"id": "d", "text": "Madrid"},
         ],
         "correct_answer": "c",
-        "category": "geography"
+        "category": "geography",
     }
-    
+
     cursor.execute(
         "INSERT INTO questions (text, options, correct_answer, category) VALUES (?, ?, ?, ?)",
-        (sample_question["text"], json.dumps(sample_question["options"]), 
-         sample_question["correct_answer"], sample_question["category"])
+        (
+            sample_question["text"],
+            json.dumps(sample_question["options"]),
+            sample_question["correct_answer"],
+            sample_question["category"],
+        ),
     )
-    
-    # Test retrieval
+    conn.commit()
+
     cursor.execute("SELECT * FROM questions")
     row = cursor.fetchone()
-    
-    if row:
-        print("✅ Database test passed!")
-        print(f"Sample question: {row[1]}")
-        print(f"Options: {json.loads(row[2])}")
-        print(f"Correct answer: {row[3]}")
-    else:
-        print("❌ Database test failed!")
-    
-    conn.commit()
     conn.close()
 
-def test_quiz_logic():
-    """Test quiz scoring logic"""
-    print("\nTesting quiz scoring logic...")
-    
-    # Sample answers
-    answers = [
-        {"question_id": 1, "selected_answer": "c", "correct_answer": "c"},  # Correct
-        {"question_id": 2, "selected_answer": "a", "correct_answer": "b"},  # Incorrect
-    ]
+    assert row is not None, "Expected a row in the questions table"
+    assert row[1] == "What is the capital of France?"
+    assert json.loads(row[2]) == sample_question["options"]
+    assert row[3] == "c"
+    assert row[4] == "geography"
 
+
+def test_quiz_logic():
+    """Test quiz scoring calculation."""
+    answers = [
+        {"question_id": 1, "selected_answer": "c"},  # correct
+        {"question_id": 2, "selected_answer": "a"},  # incorrect
+    ]
     correct_answers_map = {1: "c", 2: "b"}
-    
-    correct_count = 0
-    for answer in answers:
-        if correct_answers_map.get(answer["question_id"]) == answer["selected_answer"]:
-            correct_count += 1
-    
+
+    correct_count = sum(
+        1
+        for answer in answers
+        if correct_answers_map.get(answer["question_id"]) == answer["selected_answer"]
+    )
+
     total_questions = len(answers)
     score_percentage = (correct_count / total_questions) * 100
-    
-    print(f"Correct answers: {correct_count}/{total_questions}")
-    print(f"Score: {score_percentage}%")
-    
-    if score_percentage == 50.0:  # Expected score
-        print("✅ Quiz logic test passed!")
-    else:
-        print("❌ Quiz logic test failed!")
 
-if __name__ == "__main__":
-    test_database()
-    test_quiz_logic()
-    print("\n🎉 All tests completed!")
+    assert correct_count == 1
+    assert total_questions == 2
+    assert score_percentage == 50.0

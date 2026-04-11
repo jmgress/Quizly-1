@@ -1,51 +1,39 @@
-#!/usr/bin/env python3
-"""Test endpoint calls to verify logging"""
+"""Tests for API endpoint logging and basic responses."""
 
+import pytest
 import sys
 import os
-import time
+import logging
 
-# Add backend directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..', 'backend'))
 
 from main import app, setup_logging
 from fastapi.testclient import TestClient
-import logging
 
-# Setup logging
-setup_logging()
-logger = logging.getLogger('endpoint_test')
 
-# Create test client
-client = TestClient(app)
+@pytest.fixture(scope="module")
+def client():
+    setup_logging()
+    return TestClient(app)
 
-logger.info("Starting endpoint tests...")
 
-# Test the root endpoint
-try:
+def test_root_endpoint(client):
+    """Test that the root endpoint returns a 200 response."""
     response = client.get("/")
-    logger.info(f"Root endpoint response: {response.status_code}")
-    logger.info(f"Root endpoint body: {response.json()}")
-except Exception as e:
-    logger.error(f"Error testing root endpoint: {e}")
+    assert response.status_code == 200
 
-# Test the health endpoint
-try:
+
+def test_health_endpoint(client):
+    """Test that the health endpoint returns a 200 response."""
     response = client.get("/api/health")
-    logger.info(f"Health endpoint response: {response.status_code}")
-    logger.info(f"Health endpoint body: {response.json()}")
-except Exception as e:
-    logger.error(f"Error testing health endpoint: {e}")
-
-# Test the questions endpoint
-try:
-    response = client.get("/api/questions?limit=5")
-    logger.info(f"Questions endpoint response: {response.status_code}")
+    assert response.status_code == 200
     data = response.json()
-    logger.info(f"Questions endpoint returned {len(data)} questions")
-except Exception as e:
-    logger.error(f"Error testing questions endpoint: {e}")
+    assert isinstance(data, dict)
 
-logger.info("Endpoint tests completed!")
-print("✅ All endpoint tests completed!")
-print("Check the log files in /Users/james.m.gress/Reops/Quizly-1/logs/backend/")
+
+def test_questions_endpoint(client):
+    """Test that the questions endpoint returns a list."""
+    response = client.get("/api/questions?limit=5")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)

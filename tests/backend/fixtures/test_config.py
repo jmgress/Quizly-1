@@ -29,7 +29,7 @@ TEST_ENV_VARS = {
     "OPENAI_MODEL": "gpt-3.5-turbo"
 }
 
-class TestConfig:
+class QuizTestConfig:
     """Configuration class for testing environments."""
     
     def __init__(self):
