@@ -212,11 +212,13 @@ def submit_quiz(submission: QuizSubmission):
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
-    # Get correct answers for submitted questions
-    question_ids = [answer.question_id for answer in submission.answers]
-    placeholders = ','.join(['?'] * len(question_ids)) if question_ids else ''
+    # Get correct answers for submitted questions.
+    # Build the IN clause using only '?' placeholders (no user data in the SQL
+    # string itself); the actual values are passed as parameterized arguments.
+    question_ids = tuple(answer.question_id for answer in submission.answers)
     db_correct_answers = {}
-    if placeholders:
+    if question_ids:
+        placeholders = ','.join(['?'] * len(question_ids))
         cursor.execute(
             f"SELECT id, correct_answer FROM questions WHERE id IN ({placeholders})",
             question_ids
@@ -330,8 +332,14 @@ def update_question(question_id: int, question_update: QuestionUpdate):
     if question_update.category is not None:
         update_data["category"] = question_update.category
     
-    # Build dynamic UPDATE query
+    # Build dynamic UPDATE query using an allowlist of valid column names
+    # to prevent SQL injection via column name manipulation
+    ALLOWED_UPDATE_COLUMNS = {"text", "options", "correct_answer", "category"}
     if update_data:
+        invalid_columns = set(update_data.keys()) - ALLOWED_UPDATE_COLUMNS
+        if invalid_columns:
+            conn.close()
+            raise HTTPException(status_code=400, detail=f"Invalid column(s) for update: {invalid_columns}")
         set_clause = ", ".join([f"{key} = ?" for key in update_data.keys()])
         query = f"UPDATE questions SET {set_clause} WHERE id = ?"
         values = list(update_data.values()) + [question_id]
