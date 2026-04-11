@@ -348,6 +348,8 @@ def update_question(question_id: int, question_update: QuestionUpdate):
         # Return updated question
         cursor.execute("SELECT * FROM questions WHERE id = ?", (question_id,))
         row = cursor.fetchone()
+        if row is None:
+            raise HTTPException(status_code=404, detail="Question not found after update")
         result = {
             "id": row[0],
             "text": row[1],
