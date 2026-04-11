@@ -348,16 +348,17 @@ def update_question(question_id: int, question_update: QuestionUpdate):
         # Return updated question
         cursor.execute("SELECT * FROM questions WHERE id = ?", (question_id,))
         row = cursor.fetchone()
+        result = {
+            "id": row[0],
+            "text": row[1],
+            "options": json.loads(row[2]),
+            "correct_answer": row[3],
+            "category": row[4]
+        }
     finally:
         conn.close()
     
-    return {
-        "id": row[0],
-        "text": row[1],
-        "options": json.loads(row[2]),
-        "correct_answer": row[3],
-        "category": row[4]
-    }
+    return result
 
 @app.get("/api/categories")
 def get_categories():
