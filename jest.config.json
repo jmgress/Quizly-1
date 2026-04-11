@@ -14,10 +14,19 @@
           ]
         }]
       },
+      "transformIgnorePatterns": [
+        "/node_modules/(?!axios)"
+      ],
       "moduleNameMapper": {
         "\\.(css|less|scss)$": "identity-obj-proxy",
         "^@/(.*)$": "<rootDir>/frontend/src/$1",
-        "^components/(.*)$": "<rootDir>/frontend/src/components/$1"
+        "^components/(.*)$": "<rootDir>/frontend/src/components/$1",
+        "^react$": "<rootDir>/frontend/node_modules/react",
+        "^react/(.*)$": "<rootDir>/frontend/node_modules/react/$1",
+        "^react-dom$": "<rootDir>/frontend/node_modules/react-dom",
+        "^react-dom/(.*)$": "<rootDir>/frontend/node_modules/react-dom/$1",
+        "^axios$": "<rootDir>/frontend/node_modules/axios",
+        "^axios/(.*)$": "<rootDir>/frontend/node_modules/axios/$1"
       },
       "collectCoverageFrom": [
         "frontend/src/**/*.{js,jsx}",
