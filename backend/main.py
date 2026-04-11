@@ -291,65 +291,65 @@ def update_question(question_id: int, question_update: QuestionUpdate):
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
-    # First, check if the question exists
-    cursor.execute("SELECT * FROM questions WHERE id = ?", (question_id,))
-    row = cursor.fetchone()
-    
-    if not row:
+    try:
+        # First, check if the question exists
+        cursor.execute("SELECT * FROM questions WHERE id = ?", (question_id,))
+        row = cursor.fetchone()
+        
+        if not row:
+            raise HTTPException(status_code=404, detail="Question not found")
+        
+        # Get current question data
+        current_question = {
+            "id": row[0],
+            "text": row[1],
+            "options": json.loads(row[2]),
+            "correct_answer": row[3],
+            "category": row[4]
+        }
+        
+        # Update only provided fields
+        update_data = {}
+        if question_update.text is not None:
+            update_data["text"] = question_update.text
+        if question_update.options is not None:
+            # Validate options format
+            if len(question_update.options) != 4:
+                raise HTTPException(status_code=400, detail="Question must have exactly 4 options")
+            option_ids = [opt.id for opt in question_update.options]
+            if len(set(option_ids)) != 4 or not all(id in ['a', 'b', 'c', 'd'] for id in option_ids):
+                raise HTTPException(status_code=400, detail="Options must have unique IDs 'a', 'b', 'c', 'd'")
+            update_data["options"] = json.dumps([{"id": opt.id, "text": opt.text} for opt in question_update.options])
+        if question_update.correct_answer is not None:
+            # Validate correct answer
+            if question_update.options:
+                valid_ids = [opt.id for opt in question_update.options]
+            else:
+                valid_ids = [opt["id"] for opt in current_question["options"]]
+            if question_update.correct_answer not in valid_ids:
+                raise HTTPException(status_code=400, detail="Correct answer must be one of the option IDs")
+            update_data["correct_answer"] = question_update.correct_answer
+        if question_update.category is not None:
+            update_data["category"] = question_update.category
+        
+        # Build dynamic UPDATE query using an allowlist of valid column names
+        # to prevent SQL injection via column name manipulation
+        ALLOWED_UPDATE_COLUMNS = {"text", "options", "correct_answer", "category"}
+        if update_data:
+            invalid_columns = set(update_data.keys()) - ALLOWED_UPDATE_COLUMNS
+            if invalid_columns:
+                raise HTTPException(status_code=400, detail=f"Invalid column(s) for update: {invalid_columns}")
+            set_clause = ", ".join([f"{key} = ?" for key in update_data.keys()])
+            query = f"UPDATE questions SET {set_clause} WHERE id = ?"
+            values = list(update_data.values()) + [question_id]
+            cursor.execute(query, values)
+            conn.commit()
+        
+        # Return updated question
+        cursor.execute("SELECT * FROM questions WHERE id = ?", (question_id,))
+        row = cursor.fetchone()
+    finally:
         conn.close()
-        raise HTTPException(status_code=404, detail="Question not found")
-    
-    # Get current question data
-    current_question = {
-        "id": row[0],
-        "text": row[1],
-        "options": json.loads(row[2]),
-        "correct_answer": row[3],
-        "category": row[4]
-    }
-    
-    # Update only provided fields
-    update_data = {}
-    if question_update.text is not None:
-        update_data["text"] = question_update.text
-    if question_update.options is not None:
-        # Validate options format
-        if len(question_update.options) != 4:
-            raise HTTPException(status_code=400, detail="Question must have exactly 4 options")
-        option_ids = [opt.id for opt in question_update.options]
-        if len(set(option_ids)) != 4 or not all(id in ['a', 'b', 'c', 'd'] for id in option_ids):
-            raise HTTPException(status_code=400, detail="Options must have unique IDs 'a', 'b', 'c', 'd'")
-        update_data["options"] = json.dumps([{"id": opt.id, "text": opt.text} for opt in question_update.options])
-    if question_update.correct_answer is not None:
-        # Validate correct answer
-        if question_update.options:
-            valid_ids = [opt.id for opt in question_update.options]
-        else:
-            valid_ids = [opt["id"] for opt in current_question["options"]]
-        if question_update.correct_answer not in valid_ids:
-            raise HTTPException(status_code=400, detail="Correct answer must be one of the option IDs")
-        update_data["correct_answer"] = question_update.correct_answer
-    if question_update.category is not None:
-        update_data["category"] = question_update.category
-    
-    # Build dynamic UPDATE query using an allowlist of valid column names
-    # to prevent SQL injection via column name manipulation
-    ALLOWED_UPDATE_COLUMNS = {"text", "options", "correct_answer", "category"}
-    if update_data:
-        invalid_columns = set(update_data.keys()) - ALLOWED_UPDATE_COLUMNS
-        if invalid_columns:
-            conn.close()
-            raise HTTPException(status_code=400, detail=f"Invalid column(s) for update: {invalid_columns}")
-        set_clause = ", ".join([f"{key} = ?" for key in update_data.keys()])
-        query = f"UPDATE questions SET {set_clause} WHERE id = ?"
-        values = list(update_data.values()) + [question_id]
-        cursor.execute(query, values)
-        conn.commit()
-    
-    # Return updated question
-    cursor.execute("SELECT * FROM questions WHERE id = ?", (question_id,))
-    row = cursor.fetchone()
-    conn.close()
     
     return {
         "id": row[0],
