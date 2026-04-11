@@ -34,6 +34,12 @@ def test_fastapi_import():
 
 def test_environment_variables():
     """Test that environment variables can be set and retrieved."""
-    os.environ["TEST_VAR"] = "test_value"
-    assert os.getenv("TEST_VAR") == "test_value"
-    del os.environ["TEST_VAR"]
+    original = os.environ.get("TEST_VAR")
+    try:
+        os.environ["TEST_VAR"] = "test_value"
+        assert os.getenv("TEST_VAR") == "test_value"
+    finally:
+        if original is None:
+            os.environ.pop("TEST_VAR", None)
+        else:
+            os.environ["TEST_VAR"] = original
