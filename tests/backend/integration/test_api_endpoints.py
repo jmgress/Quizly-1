@@ -37,3 +37,24 @@ def test_questions_endpoint(client):
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
+
+
+def test_questions_endpoint_custom_limit(client):
+    """Test that the questions endpoint honours a custom limit."""
+    response = client.get("/api/questions?limit=3")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) <= 3
+
+
+def test_questions_endpoint_invalid_limit_zero(client):
+    """Test that the questions endpoint rejects a zero limit."""
+    response = client.get("/api/questions?limit=0")
+    assert response.status_code == 400
+
+
+def test_questions_endpoint_invalid_limit_negative(client):
+    """Test that the questions endpoint rejects a negative limit."""
+    response = client.get("/api/questions?limit=-1")
+    assert response.status_code == 400

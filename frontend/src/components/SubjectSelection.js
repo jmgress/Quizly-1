@@ -3,11 +3,27 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
+const MIN_QUESTIONS = 1;
+const MAX_QUESTIONS = 20;
+const DEFAULT_QUESTION_LIMIT = parseInt(process.env.REACT_APP_DEFAULT_QUESTION_LIMIT, 10) || 10;
+
+const getInitialQuestionCount = () => {
+  const stored = localStorage.getItem('questionCount');
+  if (stored) {
+    const parsed = parseInt(stored, 10);
+    if (parsed >= MIN_QUESTIONS && parsed <= MAX_QUESTIONS) {
+      return parsed;
+    }
+  }
+  return DEFAULT_QUESTION_LIMIT;
+};
+
 const SubjectSelection = ({ onSelectionComplete }) => {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [customTopic, setCustomTopic] = useState('');
   const [questionSource, setQuestionSource] = useState('database'); // 'database' or 'ai'
+  const [questionCount, setQuestionCount] = useState(getInitialQuestionCount);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -27,6 +43,15 @@ const SubjectSelection = ({ onSelectionComplete }) => {
     }
   };
 
+  const handleQuestionCountChange = (e) => {
+    const parsed = parseInt(e.target.value, 10);
+    const value = Number.isNaN(parsed)
+      ? DEFAULT_QUESTION_LIMIT
+      : Math.min(MAX_QUESTIONS, Math.max(MIN_QUESTIONS, parsed));
+    setQuestionCount(value);
+    localStorage.setItem('questionCount', String(value));
+  };
+
   const handleStartQuiz = () => {
     const selectedTopic = questionSource === 'ai' ? customTopic : selectedCategory;
     
@@ -41,6 +66,7 @@ const SubjectSelection = ({ onSelectionComplete }) => {
     const config = {
       category: selectedTopic,
       source: questionSource,
+      limit: questionCount,
     };
 
     onSelectionComplete(config);
@@ -136,6 +162,30 @@ const SubjectSelection = ({ onSelectionComplete }) => {
             </small>
           </div>
         )}
+
+        <div className="form-group">
+          <label htmlFor="question-count-slider">
+            Number of Questions: <strong>{questionCount}</strong>
+          </label>
+          <input
+            id="question-count-slider"
+            type="range"
+            min={MIN_QUESTIONS}
+            max={MAX_QUESTIONS}
+            step="1"
+            value={questionCount}
+            onChange={handleQuestionCountChange}
+            className="question-count-slider"
+            aria-valuemin={MIN_QUESTIONS}
+            aria-valuemax={MAX_QUESTIONS}
+            aria-valuenow={questionCount}
+            aria-label={`Number of Questions: ${questionCount}`}
+          />
+          <div className="slider-range-labels">
+            <span>{MIN_QUESTIONS}</span>
+            <span>{MAX_QUESTIONS}</span>
+          </div>
+        </div>
 
         <button 
           className="button"
