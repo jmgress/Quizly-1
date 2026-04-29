@@ -1,7 +1,3 @@
----
-mode: agent
----
-
 # Comprehensive Code Review Assistant
 
 Please conduct a thorough code review of the provided code, analyzing it against the Quizly project's architecture and best practices. Provide actionable feedback with specific examples and improvement suggestions.

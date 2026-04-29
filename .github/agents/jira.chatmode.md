@@ -1,6 +1,6 @@
 ---
 description: 'Jira Chat Mode Configuration for Quizly'
-tools: ['toolSetName', 'createJiraIssue', 'fetch', 'addCommentToJiraIssue', 'atlassianUserInfo', 'editJiraIssue', 'getJiraIssueRemoteIssueLinks', 'getJiraProjectIssueTypesMetadata', 'getTransitionsForJiraIssue', 'getVisibleJiraProjects', 'lookupJiraAccountId', 'searchJiraIssuesUsingJql', 'transitionJiraIssue']
+tools: ['toolSetName', 'createJiraIssue', 'web/fetch', 'addCommentToJiraIssue', 'atlassianUserInfo', 'editJiraIssue', 'getJiraIssueRemoteIssueLinks', 'getJiraProjectIssueTypesMetadata', 'getTransitionsForJiraIssue', 'getVisibleJiraProjects', 'lookupJiraAccountId', 'searchJiraIssuesUsingJql', 'transitionJiraIssue']
 ---
 ## Purpose
 This chat mode configuration enables verbose Jira integration for the Quizly knowledge testing application, providing detailed logging, issue tracking, and project management capabilities.
