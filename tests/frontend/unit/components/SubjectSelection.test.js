@@ -75,7 +75,8 @@ describe('SubjectSelection Component', () => {
     // Check that callback was called with correct parameters
     expect(mockOnSelectionComplete).toHaveBeenCalledWith({
       category: 'geography',
-      source: 'database'
+      source: 'database',
+      questionCount: 5,
     });
   });
 
@@ -107,7 +108,8 @@ describe('SubjectSelection Component', () => {
     // Check that callback was called with correct parameters (no model anymore)
     expect(mockOnSelectionComplete).toHaveBeenCalledWith({
       category: 'Ancient Rome',
-      source: 'ai'
+      source: 'ai',
+      questionCount: 5,
     });
   });
 
@@ -178,6 +180,49 @@ describe('SubjectSelection Component', () => {
 
     // Should show retry button
     expect(screen.getByText('Try Again')).toBeInTheDocument();
+  });
+
+  test('renders question count slider with default value of 5', async () => {
+    setupMocks(['geography']);
+
+    render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Geography')).toBeInTheDocument();
+    });
+
+    const slider = screen.getByLabelText('Number of questions');
+    expect(slider).toBeInTheDocument();
+    expect(slider).toHaveAttribute('type', 'range');
+    expect(slider).toHaveAttribute('min', '1');
+    expect(slider).toHaveAttribute('max', '20');
+    expect(slider.value).toBe('5');
+  });
+
+  test('updates question count when slider is moved', async () => {
+    setupMocks(['geography']);
+
+    render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Geography')).toBeInTheDocument();
+    });
+
+    const slider = screen.getByLabelText('Number of questions');
+    fireEvent.change(slider, { target: { value: '10' } });
+
+    // Slider value should reflect the updated count
+    expect(slider.value).toBe('10');
+
+    // Select a category and start
+    fireEvent.change(screen.getByLabelText('Subject:'), { target: { value: 'geography' } });
+    fireEvent.click(screen.getByText('Start Quiz'));
+
+    expect(mockOnSelectionComplete).toHaveBeenCalledWith({
+      category: 'geography',
+      source: 'database',
+      questionCount: 10,
+    });
   });
 
   test('default question source is database', async () => {

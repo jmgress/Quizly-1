@@ -78,7 +78,7 @@ describe('Quiz Component', () => {
     });
 
     // Check if API was called with correct URL for database questions
-    expect(axios.get).toHaveBeenCalledWith('http://localhost:8000/api/questions?category=geography&limit=10');
+    expect(axios.get).toHaveBeenCalledWith('http://localhost:8000/api/questions?category=geography&limit=5');
   });
 
   it('loads and displays AI-generated questions', async () => {
