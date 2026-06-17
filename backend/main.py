@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional
@@ -6,6 +6,7 @@ import sqlite3
 import json
 import uuid
 from datetime import datetime
+import time
 import os
 from dotenv import load_dotenv
 
@@ -40,9 +41,15 @@ def setup_logging():
     backend_log_dir = os.path.join(log_dir, 'backend')
     os.makedirs(backend_log_dir, exist_ok=True)
     
-    # Get log format from config
-    log_format = logging_config.get('file_settings', {}).get('log_format', 
-                                                             '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    # Verbose format includes function name and line number for better traceability
+    verbose_format = (
+        '%(asctime)s - %(name)s - %(levelname)s - '
+        '[%(funcName)s:%(lineno)d] - %(message)s'
+    )
+    # Honour any non-empty override in the config file; fall back to verbose format
+    log_format = (
+        logging_config.get('file_settings', {}).get('log_format') or verbose_format
+    )
     
     # Configure root logger
     root_logger = logging.getLogger()
@@ -51,18 +58,22 @@ def setup_logging():
     # Clear existing handlers
     root_logger.handlers.clear()
     
-    # Console handler
+    # Console handler — show DEBUG and above so verbose messages reach stdout
     console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.DEBUG)
     console_formatter = logging.Formatter(log_format)
     console_handler.setFormatter(console_formatter)
     root_logger.addHandler(console_handler)
     
     # File handlers for different log types
+    # api.log  – INFO and above (general request/response activity)
+    # debug.log – DEBUG and above (all verbose details)
+    # error.log – ERROR and above (errors only)
+    # llm.log   – DEBUG and above, filtered to LLM-related loggers
     handlers = [
         ('api.log', logging.INFO),
+        ('debug.log', logging.DEBUG),
         ('error.log', logging.ERROR),
-        ('database.log', logging.DEBUG)
     ]
     
     for filename, level in handlers:
@@ -76,6 +87,27 @@ def setup_logging():
         file_formatter = logging.Formatter(log_format)
         file_handler.setFormatter(file_formatter)
         root_logger.addHandler(file_handler)
+    
+    # Dedicated LLM log file — captures only LLM-provider loggers
+    llm_log_path = os.path.join(backend_log_dir, 'llm.log')
+    llm_file_handler = logging.handlers.RotatingFileHandler(
+        llm_log_path,
+        maxBytes=10 * 1024 * 1024,
+        backupCount=5
+    )
+    llm_file_handler.setLevel(logging.DEBUG)
+    llm_file_handler.setFormatter(logging.Formatter(log_format))
+
+    class _LLMFilter(logging.Filter):
+        """Only pass records from LLM-provider related loggers."""
+        def filter(self, record: logging.LogRecord) -> bool:
+            return any(
+                record.name.startswith(pkg)
+                for pkg in ('llm_providers', 'llm_prompt_logger', 'openai', 'ollama')
+            )
+
+    llm_file_handler.addFilter(_LLMFilter())
+    root_logger.addHandler(llm_file_handler)
     
     return root_logger
 
@@ -99,11 +131,81 @@ app.add_middleware(
 
 logger.info("CORS middleware configured for localhost:3000")
 
+# ---------------------------------------------------------------------------
+# Request / Response logging middleware
+# ---------------------------------------------------------------------------
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """Log every incoming request and its response with timing."""
+    start = time.time()
+    method = request.method
+    path = request.url.path
+    query = str(request.url.query)
+    client = request.client.host if request.client else "unknown"
+
+    logger.debug(
+        "Incoming request: %s %s%s from %s",
+        method, path, f"?{query}" if query else "", client
+    )
+
+    response = await call_next(request)
+
+    duration_ms = round((time.time() - start) * 1000, 2)
+    logger.info(
+        "Request completed: %s %s -> %s in %sms",
+        method, path, response.status_code, duration_ms
+    )
+    if response.status_code >= 500:
+        logger.error(
+            "Server error: %s %s returned %s in %sms",
+            method, path, response.status_code, duration_ms
+        )
+    elif response.status_code >= 400:
+        logger.warning(
+            "Client error: %s %s returned %s in %sms",
+            method, path, response.status_code, duration_ms
+        )
+
+    return response
+
 # Startup event handler
 @app.on_event("startup")
 async def startup_event():
     logger.info("=== Quizly API Server Starting ===")
     logger.info(f"FastAPI version: {app.version}")
+
+    # Log complete LLM provider configuration (mask sensitive keys)
+    try:
+        cfg = config_manager.get_config()
+        provider = cfg.get("llm_provider", "unknown")
+        logger.info("LLM provider: %s", provider)
+        if provider == "openai":
+            logger.info("OpenAI model: %s", cfg.get("openai_model", "N/A"))
+            # Log only whether the key is set, never the key value itself
+            api_key_status = "yes" if cfg.get("openai_api_key") else "no"
+            logger.info("OpenAI API key configured: %s", api_key_status)
+        elif provider == "ollama":
+            logger.info("Ollama model: %s", cfg.get("ollama_model", "N/A"))
+            logger.info("Ollama host: %s", cfg.get("ollama_host", "N/A"))
+    except Exception as exc:
+        logger.warning("Could not read LLM config during startup: %s", exc)
+
+    # Log logging configuration summary
+    try:
+        log_cfg = logging_config_manager.get_config()
+        levels = log_cfg.get("log_levels", {})
+        logger.info("Logging levels — backend: %s", levels.get("backend", {}))
+        logger.info("Logging levels — frontend: %s", levels.get("frontend", {}))
+        llm_prompt_cfg = log_cfg.get("llm_prompt_logging", {})
+        logger.info(
+            "LLM prompt logging enabled: %s (level: %s)",
+            llm_prompt_cfg.get("enabled", False),
+            llm_prompt_cfg.get("level", "INFO"),
+        )
+    except Exception as exc:
+        logger.warning("Could not read logging config during startup: %s", exc)
+
     logger.info("Server is ready to accept requests")
 
 # Shutdown event handler
@@ -209,6 +311,13 @@ def get_questions(category: Optional[str] = None, limit: Optional[int] = 10):
 @app.post("/api/quiz/submit", response_model=QuizResult)
 def submit_quiz(submission: QuizSubmission):
     """Submit quiz answers and get results"""
+    total = len(submission.answers)
+    logger.info("Quiz submission received: %d answers", total)
+    logger.debug(
+        "Submitted question IDs: %s",
+        [a.question_id for a in submission.answers],
+    )
+
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
@@ -245,8 +354,14 @@ def submit_quiz(submission: QuizSubmission):
     total_questions = len(submission.answers)
     score_percentage = (correct_count / total_questions) * 100 if total_questions > 0 else 0
     
+    logger.debug(
+        "Quiz scored: %d/%d correct (%.1f%%)",
+        correct_count, total_questions, score_percentage
+    )
+
     # Save quiz session
     quiz_id = str(uuid.uuid4())
+    logger.debug("Saving quiz session: %s", quiz_id)
     cursor.execute(
         "INSERT INTO quiz_sessions (id, total_questions, correct_answers, score_percentage, created_at, answers) VALUES (?, ?, ?, ?, ?, ?)",
         (quiz_id, total_questions, correct_count, score_percentage, datetime.now().isoformat(), json.dumps(answer_details))
@@ -255,6 +370,10 @@ def submit_quiz(submission: QuizSubmission):
     conn.commit()
     conn.close()
     
+    logger.info(
+        "Quiz session %s saved: %d/%d correct (%.1f%%)",
+        quiz_id, correct_count, total_questions, score_percentage
+    )
     return QuizResult(
         quiz_id=quiz_id,
         total_questions=total_questions,
@@ -266,6 +385,7 @@ def submit_quiz(submission: QuizSubmission):
 @app.get("/api/quiz/{quiz_id}", response_model=QuizResult)
 def get_quiz_result(quiz_id: str):
     """Get quiz results by ID"""
+    logger.debug("Fetching quiz result for session: %s", quiz_id)
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
@@ -273,8 +393,13 @@ def get_quiz_result(quiz_id: str):
     row = cursor.fetchone()
     
     if not row:
+        logger.warning("Quiz session not found: %s", quiz_id)
         raise HTTPException(status_code=404, detail="Quiz session not found")
     
+    logger.debug(
+        "Quiz session %s found: %d/%d correct (%.1f%%)",
+        quiz_id, row[2], row[1], row[3]
+    )
     conn.close()
     
     return QuizResult(
@@ -288,6 +413,14 @@ def get_quiz_result(quiz_id: str):
 @app.put("/api/questions/{question_id}", response_model=Question)
 def update_question(question_id: int, question_update: QuestionUpdate):
     """Update a question's fields"""
+    logger.info("Update requested for question ID: %d", question_id)
+    logger.debug(
+        "Update payload — text: %s, correct_answer: %s, category: %s, options_provided: %s",
+        question_update.text is not None,
+        question_update.correct_answer,
+        question_update.category,
+        question_update.options is not None,
+    )
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
@@ -297,6 +430,7 @@ def update_question(question_id: int, question_update: QuestionUpdate):
         row = cursor.fetchone()
         
         if not row:
+            logger.warning("Question not found for update: ID=%d", question_id)
             raise HTTPException(status_code=404, detail="Question not found")
         
         # Get current question data
@@ -342,8 +476,15 @@ def update_question(question_id: int, question_update: QuestionUpdate):
             set_clause = ", ".join([f"{key} = ?" for key in update_data.keys()])
             query = f"UPDATE questions SET {set_clause} WHERE id = ?"
             values = list(update_data.values()) + [question_id]
+            logger.debug(
+                "Executing update for question %d: fields=%s",
+                question_id, list(update_data.keys())
+            )
             cursor.execute(query, values)
             conn.commit()
+            logger.info("Question %d updated successfully: fields=%s", question_id, list(update_data.keys()))
+        else:
+            logger.debug("No fields changed for question %d", question_id)
         
         # Return updated question
         cursor.execute("SELECT * FROM questions WHERE id = ?", (question_id,))
@@ -365,12 +506,14 @@ def update_question(question_id: int, question_update: QuestionUpdate):
 @app.get("/api/categories")
 def get_categories():
     """Get available quiz categories"""
+    logger.debug("Fetching available quiz categories")
     conn = sqlite3.connect('quiz.db')
     cursor = conn.cursor()
     
     cursor.execute("SELECT DISTINCT category FROM questions")
     categories = [row[0] for row in cursor.fetchall()]
     
+    logger.info("Returning %d categories: %s", len(categories), categories)
     conn.close()
     return {"categories": categories}
 
