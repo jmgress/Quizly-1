@@ -12,11 +12,42 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-# Activate virtual environment if it exists
-if [ -d ".venv" ]; then
-    echo "🐍 Activating virtual environment..."
-    source .venv/bin/activate
+# Pick a Python interpreter that the pinned dependencies support.
+# The pinned requirements (pydantic-core, etc.) do not yet ship wheels for
+# very new Python versions, so prefer a known-good interpreter when creating
+# the virtual environment.
+select_python() {
+    for candidate in python3.12 python3.11 python3.10 python3; do
+        if command -v "$candidate" &> /dev/null; then
+            echo "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# Ensure a Python virtual environment exists (create one if needed)
+if [ ! -d ".venv" ]; then
+    PYTHON_BIN="$(select_python)"
+    echo "🐍 No virtual environment found. Creating one at .venv using $PYTHON_BIN..."
+    if ! "$PYTHON_BIN" -m venv .venv; then
+        echo "❌ Failed to create Python virtual environment."
+        exit 1
+    fi
+    echo "✅ Virtual environment created."
 fi
+
+# Activate the virtual environment
+echo "🐍 Activating virtual environment..."
+# shellcheck disable=SC1091
+source .venv/bin/activate
+
+# Verify the application is running inside a virtual environment
+if [ -z "$VIRTUAL_ENV" ]; then
+    echo "❌ Failed to activate the virtual environment. The application must not run outside a virtual env."
+    exit 1
+fi
+echo "✅ Using virtual environment: $VIRTUAL_ENV"
 
 # Check for required Python packages
 echo "🔍 Checking Python dependencies..."

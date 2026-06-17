@@ -68,4 +68,20 @@ def get_available_models(provider_type: str = None) -> List[str]:
     if provider_type is None:
         provider_type = os.getenv("LLM_PROVIDER", "ollama").lower()
 
+    if provider_type == "ollama":
+        # Query the running Ollama server so the list reflects what is actually
+        # installed locally instead of a hardcoded guess.
+        try:
+            import ollama
+
+            host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+            client = ollama.Client(host=host)
+            models = client.list().get("models", [])
+            installed = [m.get("model") or m.get("name") for m in models]
+            installed = [m for m in installed if m]
+            if installed:
+                return installed
+        except Exception as e:  # pragma: no cover - network/optional dependency
+            logger.warning(f"Could not query Ollama models: {e}")
+
     return AVAILABLE_MODELS.get(provider_type, [])

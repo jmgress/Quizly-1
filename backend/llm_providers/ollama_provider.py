@@ -32,8 +32,12 @@ class OllamaProvider(LLMProvider):
         """Initialize Ollama client."""
         try:
             import ollama
-            self._ollama = ollama
-            logger.info(f"Ollama provider initialized with model: {self.model}")
+            # Use an explicit client bound to the configured host so a custom
+            # OLLAMA_HOST / ollama_host setting is actually honored.
+            self._ollama = ollama.Client(host=self.host)
+            logger.info(
+                f"Ollama provider initialized with model: {self.model} at host: {self.host}"
+            )
         except ImportError:
             logger.error("Ollama package not installed. Install with: pip install ollama")
             raise ImportError("Ollama package not available")
@@ -104,16 +108,24 @@ class OllamaProvider(LLMProvider):
             raise RuntimeError(f"Ollama question generation failed: {str(e)}")
 
     def health_check(self) -> bool:
-        """Check if Ollama is available."""
+        """Check if Ollama is reachable and the configured model is available."""
         if not self._ollama:
             return False
 
         try:
-            response = self._ollama.chat(
-                model=self.model,
-                messages=[{"role": "user", "content": "Test connection"}],
-            )
-            return "message" in response
+            # A lightweight call that verifies connectivity without loading a model.
+            models_response = self._ollama.list()
+            available = [
+                m.get("model") or m.get("name")
+                for m in models_response.get("models", [])
+            ]
+            if self.model not in available and available:
+                logger.warning(
+                    f"Ollama is reachable but model '{self.model}' is not installed. "
+                    f"Available models: {available}"
+                )
+                return False
+            return True
         except Exception as e:
             logger.warning(f"Ollama health check failed: {str(e)}")
             return False
