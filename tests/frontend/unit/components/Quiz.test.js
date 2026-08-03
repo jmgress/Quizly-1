@@ -77,7 +77,7 @@ describe('Quiz Component', () => {
       expect(screen.getByText('What is the capital of France?')).toBeInTheDocument();
     });
 
-    // Check if API was called with correct URL for database questions
+    // Check if API was called with correct URL for database questions (default limit 10)
     expect(axios.get).toHaveBeenCalledWith('http://localhost:8000/api/questions?category=geography&limit=10');
   });
 
@@ -90,8 +90,32 @@ describe('Quiz Component', () => {
       expect(screen.getByText('What is the capital of France?')).toBeInTheDocument();
     });
 
-    // Check if API was called with correct URL for AI questions
+    // Check if API was called with correct URL for AI questions (default limit 5)
     expect(axios.get).toHaveBeenCalledWith('http://localhost:8000/api/questions/ai?subject=geography&limit=5&model=llama3.2');
+  });
+
+  it('uses custom limit prop for database questions', async () => {
+    axios.get.mockResolvedValueOnce({ data: mockQuestions });
+
+    render(<Quiz onRestart={mockOnRestart} category="geography" source="database" limit={3} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('What is the capital of France?')).toBeInTheDocument();
+    });
+
+    expect(axios.get).toHaveBeenCalledWith('http://localhost:8000/api/questions?category=geography&limit=3');
+  });
+
+  it('uses custom limit prop for AI questions', async () => {
+    axios.get.mockResolvedValueOnce({ data: mockQuestions });
+
+    render(<Quiz onRestart={mockOnRestart} category="geography" source="ai" limit={7} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('What is the capital of France?')).toBeInTheDocument();
+    });
+
+    expect(axios.get).toHaveBeenCalledWith('http://localhost:8000/api/questions/ai?subject=geography&limit=7');
   });
 
   it('progresses through questions when answers are selected', async () => {
