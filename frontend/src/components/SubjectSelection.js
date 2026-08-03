@@ -8,6 +8,7 @@ const SubjectSelection = ({ onSelectionComplete }) => {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [customTopic, setCustomTopic] = useState('');
   const [questionSource, setQuestionSource] = useState('database'); // 'database' or 'ai'
+  const [questionCount, setQuestionCount] = useState(5);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -41,6 +42,7 @@ const SubjectSelection = ({ onSelectionComplete }) => {
     const config = {
       category: selectedTopic,
       source: questionSource,
+      questionCount,
     };
 
     onSelectionComplete(config);
@@ -136,6 +138,32 @@ const SubjectSelection = ({ onSelectionComplete }) => {
             </small>
           </div>
         )}
+
+        <div className="form-group">
+          <label htmlFor="question-count-slider">
+            Number of Questions: <span className="question-count-value">{questionCount}</span>
+          </label>
+          <div className="question-count-slider">
+            <input
+              id="question-count-slider"
+              type="range"
+              min="1"
+              max="20"
+              step="1"
+              value={questionCount}
+              onChange={(e) => setQuestionCount(Number(e.target.value))}
+              aria-label="Number of questions"
+              style={{ '--val': questionCount }}
+            />
+            <div className="question-count-labels">
+              <span>1</span>
+              <span>5</span>
+              <span>10</span>
+              <span>15</span>
+              <span>20</span>
+            </div>
+          </div>
+        </div>
 
         <button 
           className="button"

@@ -5,7 +5,7 @@ import ScoreDisplay from './ScoreDisplay';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000';
 
-const Quiz = ({ onRestart, category, source, model }) => {
+const Quiz = ({ onRestart, category, source, model, questionCount = 5 }) => {
   const [questions, setQuestions] = useState([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState([]);
@@ -18,7 +18,7 @@ const Quiz = ({ onRestart, category, source, model }) => {
 
   useEffect(() => {
     fetchQuestions();
-  }, [category, source, model]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [category, source, model, questionCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchQuestions = async () => {
     try {
@@ -27,13 +27,13 @@ const Quiz = ({ onRestart, category, source, model }) => {
       
       if (source === 'ai') {
         // Fetch AI-generated questions
-        url = `${API_BASE_URL}/api/questions/ai?subject=${encodeURIComponent(category)}&limit=5`;
+        url = `${API_BASE_URL}/api/questions/ai?subject=${encodeURIComponent(category)}&limit=${questionCount}`;
         if (model) {
           url += `&model=${encodeURIComponent(model)}`;
         }
       } else {
         // Fetch database questions with category filter
-        url = `${API_BASE_URL}/api/questions?category=${encodeURIComponent(category)}&limit=10`;
+        url = `${API_BASE_URL}/api/questions?category=${encodeURIComponent(category)}&limit=${questionCount}`;
       }
       
       const response = await axios.get(url);
