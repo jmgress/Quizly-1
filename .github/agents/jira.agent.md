@@ -5,7 +5,7 @@ tools: ['toolSetName', 'createJiraIssue', 'fetch', 'addCommentToJiraIssue', 'atl
 ## Purpose
 This chat mode configuration enables verbose Jira integration for the Quizly knowledge testing application, providing detailed logging, issue tracking, and project management capabilities.
 
-## Chat Mode Instructions
+## Agent Instructions
 
 ### Project Context
 - **Project**: Quizly - Full-stack knowledge testing app
