@@ -24,6 +24,7 @@ An interactive web-based quiz application that allows users to test their knowle
 - 🎨 **Modern UI**: Clean, gradient-based design with smooth animations
 - 🔄 **Multiple Categories**: Questions across geography, science, math, and literature
 - 🎯 **Subject Selection**: Choose your preferred quiz category before starting
+- 🎚️ **Question Count Slider**: Select 1–20 questions per quiz with a range slider
 - 🤖 **AI-Powered Questions**: Generate fresh questions using multiple LLM providers
 - 📚 **Dual Question Sources**: Select between curated database questions or AI-generated content
 - 🔌 **Provider-Based Architecture**: Easy switching between Ollama and OpenAI providers
@@ -300,7 +301,8 @@ This will return:
 | `OLLAMA_HOST` | Ollama server URL | http://localhost:11434 |
 | `OPENAI_API_KEY` | OpenAI API key | - |
 | `OPENAI_MODEL` | OpenAI model name | gpt-4o-mini |
-| `DEFAULT_QUESTION_LIMIT` | Default number of questions | 5 |
+| `DEFAULT_QUESTION_LIMIT` | Default number of questions per quiz (backend) | 5 |
+| `REACT_APP_DEFAULT_QUESTION_LIMIT` | Default slider value for number of questions in the frontend | 10 |
 | `LOG_LEVEL` | Logging level | INFO |
 
 ### AI Question Generation Setup (Optional)

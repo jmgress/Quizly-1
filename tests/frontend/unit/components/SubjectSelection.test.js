@@ -73,10 +73,12 @@ describe('SubjectSelection Component', () => {
     fireEvent.click(startButton);
 
     // Check that callback was called with correct parameters
-    expect(mockOnSelectionComplete).toHaveBeenCalledWith({
-      category: 'geography',
-      source: 'database'
-    });
+    expect(mockOnSelectionComplete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'geography',
+        source: 'database',
+      })
+    );
   });
 
   test('handles custom topic input for AI questions', async () => {
@@ -105,10 +107,12 @@ describe('SubjectSelection Component', () => {
     fireEvent.click(startButton);
 
     // Check that callback was called with correct parameters (no model anymore)
-    expect(mockOnSelectionComplete).toHaveBeenCalledWith({
-      category: 'Ancient Rome',
-      source: 'ai'
-    });
+    expect(mockOnSelectionComplete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'Ancient Rome',
+        source: 'ai',
+      })
+    );
   });
 
   test('shows no model dropdown for AI questions since model is now managed in admin panel', async () => {
@@ -226,5 +230,68 @@ describe('SubjectSelection Component', () => {
     // Should show dropdown again
     expect(screen.getByLabelText('Subject:')).toBeInTheDocument();
     expect(screen.queryByLabelText('Custom Topic:')).not.toBeInTheDocument();
+  });
+
+  test('renders question count slider with default value', async () => {
+    setupMocks(['geography']);
+
+    render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Geography')).toBeInTheDocument();
+    });
+
+    const slider = screen.getByRole('slider');
+    expect(slider).toBeInTheDocument();
+    expect(slider).toHaveAttribute('aria-valuemin', '1');
+    expect(slider).toHaveAttribute('aria-valuemax', '20');
+    expect(Number(slider.value)).toBeGreaterThanOrEqual(1);
+    expect(Number(slider.value)).toBeLessThanOrEqual(20);
+  });
+
+  test('slider updates displayed value live', async () => {
+    setupMocks(['geography']);
+
+    render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Geography')).toBeInTheDocument();
+    });
+
+    const slider = screen.getByRole('slider');
+    fireEvent.change(slider, { target: { value: '7' } });
+
+    // The label should display the updated value
+    expect(screen.getByText('7')).toBeInTheDocument();
+    expect(slider).toHaveAttribute('aria-valuenow', '7');
+  });
+
+  test('onSelectionComplete receives limit in config', async () => {
+    setupMocks(['geography']);
+
+    render(<SubjectSelection onSelectionComplete={mockOnSelectionComplete} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Geography')).toBeInTheDocument();
+    });
+
+    // Set question count to 3
+    const slider = screen.getByRole('slider');
+    fireEvent.change(slider, { target: { value: '3' } });
+
+    // Select a category
+    const categorySelect = screen.getByLabelText('Subject:');
+    fireEvent.change(categorySelect, { target: { value: 'geography' } });
+
+    const startButton = screen.getByText('Start Quiz');
+    fireEvent.click(startButton);
+
+    expect(mockOnSelectionComplete).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'geography',
+        source: 'database',
+        limit: 3,
+      })
+    );
   });
 });

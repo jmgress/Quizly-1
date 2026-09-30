@@ -172,9 +172,19 @@ def health_check():
         "timestamp": datetime.now().isoformat()
     }
 
+
+def _validate_limit(limit: Optional[int], max_limit: Optional[int] = None) -> None:
+    """Validate a question limit parameter, raising HTTP 400 on invalid values."""
+    if limit is not None and limit <= 0:
+        raise HTTPException(status_code=400, detail="limit must be a positive integer")
+    if max_limit is not None and limit is not None and limit > max_limit:
+        raise HTTPException(status_code=400, detail=f"limit must not exceed {max_limit}")
+
+
 @app.get("/api/questions", response_model=List[Question])
 def get_questions(category: Optional[str] = None, limit: Optional[int] = 10):
     """Get quiz questions, optionally filtered by category"""
+    _validate_limit(limit)
     logger.info(f"Getting questions - category: {category}, limit: {limit}")
     
     conn = sqlite3.connect('quiz.db')
@@ -402,12 +412,12 @@ def check_llm_health():
 @app.get("/api/questions/ai", response_model=List[Question])
 def generate_ai_questions(subject: str, limit: Optional[int] = 5, provider_type: Optional[str] = None, model: Optional[str] = None):
     """Generate AI-powered questions for a specific subject using configured LLM provider"""
+    # Resolve and validate limit before entering the provider try/except block
+    if limit is None:
+        limit = int(os.getenv("DEFAULT_QUESTION_LIMIT", "5"))
+    _validate_limit(limit, max_limit=100)
+
     try:
-        # Get default limit from environment if not provided
-        if limit is None:
-            limit = int(os.getenv("DEFAULT_QUESTION_LIMIT", "5"))
-        
-        # Use provider from config manager or query parameter
         config = config_manager.get_config()
         provider_type = provider_type or config["llm_provider"]
         

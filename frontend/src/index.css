@@ -389,6 +389,22 @@ body {
   font-weight: 600;
 }
 
+/* Question count slider styles */
+.question-count-slider {
+  width: 100%;
+  accent-color: #667eea;
+  cursor: pointer;
+  margin: 0.5rem 0;
+}
+
+.slider-range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #666;
+  margin-top: 0.25rem;
+}
+
 /* Admin Interface Styles */
 .admin-container {
   width: 100%;

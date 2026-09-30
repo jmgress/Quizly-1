@@ -128,6 +128,7 @@ function App() {
           onRestart={restartQuiz}
           category={quizConfig.category}
           source={quizConfig.source}
+          limit={quizConfig.limit}
         />
       )}
 
